@@ -3,32 +3,23 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line.h                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Kirill <kpanfero@student.42madrid.com>     +#+  +:+       +#+        */
+/*   By: kpanfero <kpanfero@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/11/10 19:47:10 by Kirill            #+#    #+#             */
-/*   Updated: 2025/11/10 19:47:11 by Kirill           ###   ########.fr       */
+/*   Created: 2025/10/28 11:30:15 by kpanfero          #+#    #+#             */
+/*   Updated: 2025/11/11 13:05:53 by kpanfero         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef GET_NEXT_LINE_H
 # define GET_NEXT_LINE_H
+# define BUFFER_SIZE 3
 
-# ifndef BUFFER_SIZE
-#  define BUFFER_SIZE 1000000
-# endif
-
+# include <stddef.h>
 # include <stdlib.h>
-# include <sys/types.h>
-# include <sys/uio.h>
-# include <unistd.h>
 
-char	*get_next_line(int fd);
-char	*extract_line(char *backup);
-char	*update_backup(char *backup);
-char	*ft_strchr(char const *s, int c);
-char	*ft_strjoin(char const *s1, char const *s2);
-char	*read_to_backup(int fd, char *backup);
-char	*ft_strdup(const char *str);
 size_t	ft_strlen(const char *str);
+char	*ft_strchr(const char *s, int c);
+char	*ft_strdup(const char *s);
+char	*ft_strjoin(const char *s1, const char *s2);
 
 #endif
