@@ -1,19 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   main_bonus.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: Kirill <kpanfero@student.42madrid.com>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/11/10 19:47:13 by Kirill            #+#    #+#             */
-/*   Updated: 2025/11/12 20:58:42 by Kirill           ###   ########.fr       */
+/*   Created: 2025/11/10 15:59:54 by Kirill            #+#    #+#             */
+/*   Updated: 2025/11/12 20:59:54 by Kirill           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include <stdio.h>
 #include <fcntl.h>
 #include <string.h>
-#include "get_next_line.h"
+#include <stdlib.h>
+#include "get_next_line_bonus.h"
 
 void test_only_newlines() {
     int fd = open("only_newlines.txt", O_RDONLY);
@@ -127,7 +129,51 @@ void test_multiple_lines() {
     close(fd);
 }
 
-void test_stdin(void) {
+void test_files_bonus(char **files, int count)
+{
+    int *fds = malloc(sizeof(int) * count);
+    char **lines = malloc(sizeof(char *) * count);
+    int finished = 0;
+
+    for (int i = 0; i < count; i++)
+    {
+        fds[i] = open(files[i], O_RDONLY);
+        if (fds[i] < 0)
+        {
+            printf("Error opening file: %s\n", files[i]);
+            lines[i] = NULL;
+        }
+        else
+            lines[i] = NULL;
+    }
+
+    while (!finished)
+    {
+        finished = 1;
+        for (int i = 0; i < count; i++)
+        {
+            if (!lines[i])
+            {
+                lines[i] = get_next_line(fds[i]);
+                if (lines[i])
+                {
+                    printf("[%s] %s", files[i], lines[i]);
+                    free(lines[i]);
+                    lines[i] = NULL;
+                    finished = 0;
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < count; i++)
+        if (fds[i] >= 0) close(fds[i]);
+
+    free(fds);
+    free(lines);
+}
+
+void test_stdin_bonus(void) {
     
     char *line;
     printf("Type something , Ctrl + C to exit or \"all\" for all tests \n\n");
@@ -148,28 +194,15 @@ void test_stdin(void) {
     }
 }
 
-int main(int argc,char **argv) {
- 
-    printf("Starting test...\n\n");
-    if (argc == 2)
-    {
-        if (strcmp(argv[1],"emptyfile.txt") == 0)
-            test_empty_file();
-        else if (strcmp(argv[1],"only_newlines.txt") == 0)
-            test_only_newlines();
-        else if (strcmp(argv[1],"empty_line.txt") == 0)
-            test_empty_line();
-        else if (strcmp(argv[1],"multiple_lines.txt") == 0)
-            test_multiple_lines();
-        else
-            test_custom_file(argv[1]);       
-    }
-    else if (argc == 1)
-        test_stdin(); 
-    else
-        printf("Error\n");
-        
-    printf("\nAll tests completed.\n");
+int main(int argc, char **argv)
+{
+    printf("Starting test (BONUS)...\n\n");
 
+    if (argc > 1)
+        test_files_bonus(argv + 1, argc - 1);
+    else
+        test_stdin_bonus();
+
+    printf("\nAll tests completed.\n");
     return 0;
 }

@@ -11,7 +11,7 @@
 /* ************************************************************************** */
 
 #include <unistd.h>
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
 char	*extract_line(char *stash)
 {
@@ -91,16 +91,16 @@ char	*fill_stash(int fd, char *stash)
 
 char	*get_next_line(int fd)
 {
-	static char	*stash;
+	static char	*stash[OPEN_MAX];
 	char		*line;
 
-	if (fd < 0 || BUFFER_SIZE <= 0)
+	if (fd < 0 || BUFFER_SIZE <= 0 || fd >= OPEN_MAX)
 		return (NULL);
-	stash = fill_stash(fd, stash);
-	if (!stash || stash[0] == '\0')
-		return (free(stash), stash = NULL, NULL);
-	line = extract_line(stash);
-	stash = update_stash(stash);
+	stash[fd] = fill_stash(fd, stash[fd]);
+	if (!stash[fd] || stash[fd][0] == '\0')
+		return (free(stash[fd]), stash[fd] = NULL, NULL);
+	line = extract_line(stash[fd]);
+	stash[fd] = update_stash(stash[fd]);
 	if (!line || line[0] == '\0')
 		return (free (line), NULL);
 	return (line);
