@@ -3,16 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Kirill <kpanfero@student.42madrid.com>     +#+  +:+       +#+        */
+/*   By: kpanfero <kpanfero@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/10 19:47:13 by Kirill            #+#    #+#             */
-/*   Updated: 2025/11/12 20:58:42 by Kirill           ###   ########.fr       */
+/*   Updated: 2025/11/13 10:02:20 by kpanfero         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <stdio.h>
 #include <fcntl.h>
 #include <string.h>
+#include <unistd.h>
 #include "get_next_line.h"
 
 void test_only_newlines() {
@@ -72,7 +73,7 @@ void test_custom_file(char  *file) {
         printf("File doesnt exist\n");
     }
         
-    while (line = get_next_line(fd))
+    while ((line = get_next_line(fd)))
     {
         printf("%s\n",line);
         free(line);  
@@ -153,7 +154,7 @@ int main(int argc,char **argv) {
     printf("Starting test...\n\n");
     if (argc == 2)
     {
-        if (strcmp(argv[1],"emptyfile.txt") == 0)
+        if (strcmp(argv[1],"empty_file.txt") == 0)
             test_empty_file();
         else if (strcmp(argv[1],"only_newlines.txt") == 0)
             test_only_newlines();

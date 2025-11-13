@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main_bonus.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Kirill <kpanfero@student.42madrid.com>     +#+  +:+       +#+        */
+/*   By: kpanfero <kpanfero@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/10 15:59:54 by Kirill            #+#    #+#             */
-/*   Updated: 2025/11/12 20:59:54 by Kirill           ###   ########.fr       */
+/*   Updated: 2025/11/13 10:03:13 by kpanfero         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "get_next_line_bonus.h"
 
 void test_only_newlines() {
@@ -74,7 +75,7 @@ void test_custom_file(char  *file) {
         printf("File doesnt exist\n");
     }
         
-    while (line = get_next_line(fd))
+    while ((line = get_next_line(fd)))
     {
         printf("%s\n",line);
         free(line);  
