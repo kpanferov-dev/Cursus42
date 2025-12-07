@@ -29,28 +29,30 @@ void	free_split(char **res)
 
 char	*join_args(int argc, char **argv)
 {
-	int		i;
 	char	*joined;
-	char	*tmp;
+	char	*ptr;
+	int		i;
+	int		j;
+	int		len;
 
-	i = 0;
-	joined = ft_strdup("");
+	len = 0;
+	i = -1;
+	while (++i < argc)
+		len += ft_strlen(argv[i]) + (i < argc - 1);
+	joined = malloc(len + 1);
 	if (!joined)
 		return (NULL);
-	while (i < argc)
+	ptr = joined;
+	i = -1;
+	while (++i < argc)
 	{
-		tmp = ft_strjoin(joined, argv[i]);
-		free(joined);
-		joined = tmp;
+		j = -1;
+		while (argv[i][++j])
+			*ptr++ = argv[i][j];
 		if (i < argc - 1)
-		{
-			tmp = ft_strjoin(joined, " ");
-			free(joined);
-			joined = tmp;
-		}
-		i++;
+			*ptr++ = ' ';
 	}
-	return (joined);
+	return (*ptr = '\0', joined);
 }
 
 char	**split_args(int argc, char **argv)
