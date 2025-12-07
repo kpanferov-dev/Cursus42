@@ -30,7 +30,7 @@ INCLUDE = ./push_swap.h
 
 OBJ = $(SRC:.c=.o)
 
-CC = gcc
+CC = cc
 CFLAGS = -Wall -Wextra -Werror
 INCLUDES = -I./include -I$(LIBFT_DIR)
 

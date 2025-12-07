@@ -79,12 +79,10 @@ int	main(int argc, char **argv)
 	if (argc < 2)
 		return (0);
 	a = create_stack(argc, argv);
-	print_stack(a);
 	if (!a)
 		return (1);
 	assign_indices(a);
 	sort(&a, &b);
-	print_stack(a);
 	clear_stack(&a);
 	clear_stack(&b);
 	return (0);
