@@ -12,57 +12,35 @@
 
 #include "../push_swap.h"
 
-void	sa(t_stack **a)
+static void	swap(t_stack **stack)
 {
 	t_stack	*first;
 	t_stack	*second;
-	int		temp;
 
-	if (!a || !*a || !(*a)->next)
+	if (!stack || !*stack || !(*stack)->next)
 		return ;
-	first = *a;
-	second = (*a)->next;
-	temp = first->value;
-	first->value = second->value;
-	second->value = temp;
-	write (1, "sa\n", 3);
+	first = *stack;
+	second = first->next;
+	first->next = second->next;
+	second->next = first;
+	*stack = second;
+}
+
+void	sa(t_stack **a)
+{
+	swap(a);
+	write(1, "sa\n", 3);
 }
 
 void	sb(t_stack **b)
 {
-	t_stack	*first;
-	t_stack	*second;
-	int		temp;
-
-	if (!b || !*b || !(*b)->next)
-		return ;
-	first = *b;
-	second = (*b)->next;
-	temp = first->value;
-	first->value = second->value;
-	second->value = temp;
-	write (1, "sb\n", 3);
+	swap(b);
+	write(1, "sb\n", 3);
 }
 
 void	ss(t_stack **a, t_stack **b)
 {
-	t_stack	*first;
-	t_stack	*second;
-	int		temp;
-
-	if (!a || !*a || !(*a)->next)
-		return ;
-	first = *a;
-	second = (*a)->next;
-	temp = first->value;
-	first->value = second->value;
-	second->value = temp;
-	if (!b || !*b || !(*b)->next)
-		return ;
-	first = *b;
-	second = (*b)->next;
-	temp = first->value;
-	first->value = second->value;
-	second->value = temp;
-	write (1, "ss\n", 3);
+	swap(a);
+	swap(b);
+	write(1, "ss\n", 3);
 }
