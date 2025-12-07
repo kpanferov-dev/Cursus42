@@ -23,17 +23,16 @@ int	is_sorted(t_stack *a)
 	return (0);
 }
 
-int	list_size(t_stack *begin_list)
+int list_size(t_stack *stack)
 {
-	int	i;
+    int i = 0;
 
-	i = 1;
-	while (begin_list->next)
-	{
-		begin_list = begin_list->next;
-		i++;
-	}
-	return (i);
+    while (stack)
+    {
+        i++;
+        stack = stack->next;
+    }
+    return i;
 }
 
 int	find_min(t_stack *a)
