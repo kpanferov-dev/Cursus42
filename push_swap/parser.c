@@ -85,37 +85,40 @@ int	is_valid_int(char *str)
 			sign = -1;
 		i++;
 	}
+	if (!ft_isdigit(str[i]))
+		return (0);
 	while (ft_isdigit(str[i]))
 	{
 		n = n * 10 + (str[i++] - '0');
-		if ((sign == 1 && n > INT_MAX) || (sign == -1 && -(n) < INT_MIN))
+		if (n * sign > INT_MAX || n * sign < INT_MIN)
 			return (0);
 	}
-	if (str[i] != '\0')
-		return (0);
-	return (1);
+	return (str[i] == '\0');
 }
 
 int	check_duplicates(char **values)
 {
-	int	i;
-	int	n1;
-	int	j;
-	int	n2;
+	int		i;
+	int		j;
+	int		*nums;
+	int		count;
 
-	i = 0;
-	while (values[i])
+	count = 0;
+	while (values[count])
+		count++;
+	nums = malloc(sizeof(int) * count);
+	if (!nums)
+		return (0);
+	i = -1;
+	while (++i < count)
+		nums[i] = atoi_safe(values[i]);
+	i = -1;
+	while (++i < count)
 	{
-		n1 = atoi_safe(values[i]);
-		j = i + 1;
-		while (values[j])
-		{
-			n2 = atoi_safe(values[j]);
-			if (n1 == n2)
-				return (0);
-			j++;
-		}
-		i++;
+		j = i;
+		while (++j < count)
+			if (nums[i] == nums[j])
+				return (free(nums), 0);
 	}
-	return (1);
+	return (free(nums), 1);
 }
