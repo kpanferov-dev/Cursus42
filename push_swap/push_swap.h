@@ -50,7 +50,7 @@ char	*join_args(int argc, char **argv);
 char	**split_args(int argc, char **argv);
 char	**validate_args(int argc, char **argv);
 int		check_duplicates(char **values);
-int		is_int_atoi(char *str);
+int		is_valid_int(char *str);
 int		atoi_safe(char *str);
 int		is_sorted(t_stack *a);
 int		list_size(t_stack *begin_list);

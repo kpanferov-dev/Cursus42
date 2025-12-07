@@ -24,7 +24,7 @@ char	**validate_args(int argc, char **argv)
 	i = 0;
 	while (values[i])
 	{
-		if (!is_int_atoi(values[i]))
+		if (!is_valid_int(values[i]))
 			return (free_split(values), write(2, "Error\n", 6), NULL);
 		i++;
 	}
@@ -41,7 +41,6 @@ void	print_stack(t_stack *stack)
 	while (stack)
 	{
 		printf("Node[%d]: %d\n", i, stack->value);
-		// printf("index[%d]: %d\n", i, stack->index);
 		stack = stack->next;
 		i++;
 	}

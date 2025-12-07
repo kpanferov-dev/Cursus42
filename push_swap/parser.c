@@ -66,7 +66,7 @@ char	**split_args(int argc, char **argv)
 	return (values);
 }
 
-int	is_int_atoi(char *str)
+int	is_valid_int(char *str)
 {
 	int		i;
 	int		sign;
