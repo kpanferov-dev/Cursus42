@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   sort_utils.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Kirill <kpanfero@student.42madrid.com>     +#+  +:+       +#+        */
+/*   By: kpanfero <kpanfero@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/07 12:38:21 by Kirill            #+#    #+#             */
-/*   Updated: 2025/12/07 12:38:21 by Kirill           ###   ########.fr       */
+/*   Updated: 2025/12/08 09:23:16 by kpanfero         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,16 +23,17 @@ int	is_sorted(t_stack *a)
 	return (0);
 }
 
-int list_size(t_stack *stack)
+int	list_size(t_stack *stack)
 {
-    int i = 0;
+	int	i;
 
-    while (stack)
-    {
-        i++;
-        stack = stack->next;
-    }
-    return i;
+	i = 0;
+	while (stack)
+	{
+		i++;
+		stack = stack->next;
+	}
+	return (i);
 }
 
 int	find_min(t_stack *a)

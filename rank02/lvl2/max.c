@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   max.c                                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Kirill <kpanfero@student.42madrid.com>     +#+  +:+       +#+        */
+/*   By: kpanfero <kpanfero@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/10 18:12:22 by Kirill            #+#    #+#             */
-/*   Updated: 2025/12/10 18:12:22 by Kirill           ###   ########.fr       */
+/*   Updated: 2025/12/11 15:28:26 by kpanfero         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <limits.h>
+
 int		max(int* tab, unsigned int len)
 {
     unsigned int max;
