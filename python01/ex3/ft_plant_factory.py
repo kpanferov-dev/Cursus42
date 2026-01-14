@@ -17,8 +17,10 @@ plant_data = [
     ["Sunflower", 80, 45],
     ["Fern", 15, 120]
 ]
+num_plants = 0
 factory = [Plant(name, height, age) for name, height, age in plant_data]
 print("=== Plant Factory Output ===")
 for plant in factory:
+    num_plants += 1
     plant.get_info()
-print(f"\nTotal plants created: {len(factory)}")
+print(f"\nTotal plants created: {num_plants}")
