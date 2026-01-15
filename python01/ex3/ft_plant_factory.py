@@ -1,12 +1,21 @@
 #!/usr/bin/env python3
+"""
+ft_plant_factory.py
+A script to create and manage plants using a factory pattern-like approach.
+"""
+
 
 class Plant:
+    """A class to represent a plant with a name, height, and age."""
+
     def __init__(self, name: str, height: int, age: int):
+        """Initialize a plant with a name, height in cm, and age in days."""
         self.name = name
         self.height = height
         self.age = age
 
     def get_info(self):
+        """Print the plant's creation details."""
         print(f"Created: {self.name} ({self.height}cm, {self.age} days)")
 
 

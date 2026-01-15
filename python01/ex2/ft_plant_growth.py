@@ -1,18 +1,29 @@
 #!/usr/bin/env python3
+"""
+ft_plant_growth.py
+A script to define a Plant class with growth and aging functionality.
+"""
+
 
 class Plant:
+    """A class to represent a plant with a name, height, and age in days."""
+
     def __init__(self, name: str, height: int, age_in_days: int):
+        """Initialize a plant with a name, height in cm, and age in days."""
         self.name = name
         self.height = height
         self.age_in_days = age_in_days
 
     def grow(self, growth_amount: int):
+        """Increase the height of the plant."""
         self.height += growth_amount
 
     def age(self, age_increment: int):
+        """Increase the age of the plant in days."""
         self.age_in_days += age_increment
 
     def get_info(self):
+        """Print the plant's information."""
         print(f"{self.name}: {self.height}cm, {self.age_in_days} days old")
 
 

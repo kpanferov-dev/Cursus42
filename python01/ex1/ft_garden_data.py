@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
+"""
+ft_garden_data.py
+A script to define a Plant class and display information about multiple plants.
+"""
+
+
 class Plant:
+    """A class to represent a plant with a name, height, and age."""
+
     def __init__(self, name, height, age):
+        """Initialize a plant with a name, height in cm, and age in days."""
         self.name = name
         self.height = height
         self.age = age
