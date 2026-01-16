@@ -10,7 +10,8 @@ def garden_operations():
 
     print("Testing ValueError...")
     try:
-        int("abc")
+        lst = [1,2]
+        lst.index(4)
     except ValueError:
         print("Caught ValueError: invalid literal for int()\n")
 
