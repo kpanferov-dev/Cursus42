@@ -6,15 +6,15 @@ Cleaning after finishing
 
 
 def water_plants(plant_list):
-    "Watering plants function"
+    """Watering plants function"""
     print("Opening watering system")
     try:
         for plant in plant_list:
-            if plant is None or plant.strip() == "":
+            if not plant:
                 raise ValueError(f"Cannot water {plant} - invalid plant!")
             print(f"Watering {plant}")
-    except ValueError:
-        print(f"Error: Cannot water {plant} - invalid plant!")
+    except ValueError as e:
+        print("Error:", e)
     finally:
         print("Closing watering system (cleanup)")
 

@@ -7,13 +7,13 @@ Mix of the previous
 
 class GardenError(Exception):
     """General Errors"""
-    def __init__(self, message="General error"):
+    def __init__(self, message="Something is wrong in garden"):
         super().__init__(message)
 
 
 class PlantError(GardenError):
     """Plant Errors"""
-    def __init__(self, message="The tomato plant is wilting!"):
+    def __init__(self, message="The sunlight is not good"):
         super().__init__(message)
 
 
@@ -32,14 +32,22 @@ class GardenManager:
     def add_plant(self, name, water_level, sunlight_hours):
         """Function that adds and object"""
         try:
-            if name.strip() == "" or name is None:
+            if not name:
                 raise PlantError("Plant name cannot be empty!")
+            try:
+                water_level = int(water_level)
+            except ValueError:
+                raise ValueError("Water level must be an integer")
             if water_level < 1:
                 raise PlantError(f"Water level {water_level}" +
                                  " is too low (min 1)\n")
             elif water_level > 10:
                 raise PlantError(f"Water level {water_level}" +
                                  " is too high (max 10)\n")
+            try:
+                sunlight_hours = int(sunlight_hours)
+            except ValueError:
+                raise ValueError("Sunlight hours must be an integer")
             if sunlight_hours < 2:
                 raise PlantError(f"Sunlight hours {sunlight_hours}" +
                                  " is too low (min 2)\n")
@@ -51,6 +59,8 @@ class GardenManager:
                                  "sunlight_hours": sunlight_hours}
             print(f"Added {name} successfully")
         except PlantError as e:
+            print(f"Error adding plant: {e}")
+        except ValueError as e:
             print(f"Error adding plant: {e}")
 
     def water_plants(self):

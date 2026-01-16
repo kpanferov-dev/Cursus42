@@ -7,7 +7,7 @@ Creating personal errors
 
 def check_plant_health(plant_name, water_level, sunlight_hours):
     """Function to check all stats of plant"""
-    if plant_name.strip() == "" or plant_name is None:
+    if not plant_name:
         raise ValueError("Plant name cannot be empty!\n")
 
     if water_level < 1:

@@ -23,45 +23,36 @@ class WaterError(GardenError):
         super().__init__(message)
 
 
-def plant_problem():
-    """Function that calls plant error message"""
-    raise PlantError
-
-
-def water_error():
-    """Function that calls water error message"""
-    raise WaterError
-
-
-def test_errors():
-    """Function to test all errors"""
+def garden_operations():
+    """Function to catch errors"""
     print("Testing Plant Error...")
     try:
-        plant_problem()
+        raise PlantError
     except PlantError as e:
         print("Caught PlantError: ", e)
 
     print("\nTesting WaterError...")
     try:
-        water_error()
+        raise WaterError
     except WaterError as e:
         print("Caught WaterError: ", e)
 
     print("\nTesting catching all garden errors...")
     try:
-        plant_problem()
+        raise PlantError
     except GardenError as e:
         print("Caught a garden error: ", e)
     try:
-        water_error()
+        raise WaterError
     except GardenError as e:
         print("Caught a garden error: ", e)
 
 
-def main():
+def test_error():
+    """Function to test all errors"""
     print("=== Custom Garden Errors Demo ===\n")
-    test_errors()
+    garden_operations()
     print("\nAll custom error types work correctly!")
 
 
-main()
+test_error()

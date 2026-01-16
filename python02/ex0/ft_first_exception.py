@@ -18,18 +18,19 @@ def check_temperature(temp_str):
         return temp
     except ValueError:
         print(f"Error: '{temp_str}' is not a valid number\n")
-        return None
 
 
 def test_temperature_input():
     """Temperature tester"""
-    test = [25, "abc", 100, -50]
+
+    test = [25, "abs", 100, -50]
 
     print("=== Garden Temperature Checker ===\n")
-    for value in test:
-        print(f"Testing temperature: {value}")
-        if check_temperature(value) is not None:
-            print(f"Temperature {value}°C is perfect for plants!\n")
+
+    for temp in test:
+        print(f"Testing temperature: {temp}")
+        if check_temperature(temp) is not None:
+            print(f"Temperature {temp}°C is perfect for plants!\n")
 
     print("All tests completed - program didn't crash!")
 
