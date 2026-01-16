@@ -39,10 +39,10 @@ class GardenManager:
             except ValueError:
                 raise ValueError("Water level must be an integer")
             if water_level < 1:
-                raise PlantError(f"Water level {water_level}" +
+                raise WaterError(f"Water level {water_level}" +
                                  " is too low (min 1)\n")
             elif water_level > 10:
-                raise PlantError(f"Water level {water_level}" +
+                raise WaterError(f"Water level {water_level}" +
                                  " is too high (max 10)\n")
             try:
                 sunlight_hours = int(sunlight_hours)
@@ -59,6 +59,8 @@ class GardenManager:
                                  "sunlight_hours": sunlight_hours}
             print(f"Added {name} successfully")
         except PlantError as e:
+            print(f"Error adding plant: {e}")
+        except WaterError as e:
             print(f"Error adding plant: {e}")
         except ValueError as e:
             print(f"Error adding plant: {e}")
@@ -87,10 +89,10 @@ class GardenManager:
                 sunlight_hours = info["sunlight_hours"]
 
                 if water_level < 1:
-                    raise PlantError(f"Water level {water_level}" +
+                    raise WaterError(f"Water level {water_level}" +
                                      " is too low (min 1)\n")
                 elif water_level > 10:
-                    raise PlantError(f"Water level {water_level}" +
+                    raise WaterError(f"Water level {water_level}" +
                                      " is too high (max 10)\n")
                 if sunlight_hours < 2:
                     raise PlantError(f"Sunlight hours {sunlight_hours}" +
@@ -102,6 +104,8 @@ class GardenManager:
                 print(f"{name}: healthy (water: {water_level}" +
                       f", sun: {sunlight_hours})")
             except PlantError as e:
+                print(f"Error checking {name}: {e}")
+            except WaterError as e:
                 print(f"Error checking {name}: {e}")
 
 
