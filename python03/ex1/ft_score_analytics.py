@@ -39,6 +39,3 @@ def score_cruncher():
         print(f"High score: {high_score}")
         print(f"Low score: {low_score}")
         print(f"Score range: {score_range}")
-
-
-score_cruncher()

@@ -1,97 +1,112 @@
 """
-Docstring for python03.ex6.ft_analytics_dashboard
+ex6.ft_analytics_dashboard
+lists dicts and sets comprehensions
 """
 
 
 def player_key(player):
+    """get player key"""
     return (player["score"], player["achievements"])
 
 
-def main():
-    """Main"""
-    print("=== Game Analytics Dashboard ===")
+def get_high_scorers(players):
+    """get high scores"""
+    return [p["name"] for p in players if p["score"] > 2000]
 
-    players = [
-        {"name": "alice", "score": 2300, "achievements": 5,
-         "active": True, "region": "north"},
-        {"name": "bob", "score": 1800, "achievements": 3,
-         "active": True, "region": "east"},
-        {"name": "charlie", "score": 2150, "achievements": 7,
-         "active": True, "region": "central"},
-        {"name": "diana", "score": 2050, "achievements": 2,
-         "active": False, "region": "north"}
-    ]
 
-    achievements = [
-        {"achievement": "first_kill", "player": "alice"},
-        {"achievement": "level_10", "player": "bob"},
-        {"achievement": "boss_slayer", "player": "charlie"},
-        {"achievement": "first_kill", "player": "diana"},
-        {"achievement": "level_10", "player": "alice"},
-        {"achievement": "boss_slayer", "player": "bob"}
-    ]
+def get_doubled_scores(players):
+    """doubles the scores"""
+    return [p["score"] * 2 for p in players]
 
+
+def get_active_players(players):
+    """active players"""
+    return [p["name"] for p in players if p["active"]]
+
+
+def get_player_scores(players):
+    """player scores"""
+    return {p["name"]: p["score"] for p in players}
+
+
+def get_score_categories(players):
+    """return scores by category"""
+    return {
+        "high": sum(1 for p in players if p["score"] > 2000),
+        "medium": sum(1 for p in players if 1500 <= p["score"] <= 2000),
+        "low": sum(1 for p in players if p["score"] < 1500),
+    }
+
+
+def get_achievement_counts(players, achievements):
+    """counts achievements """
+    return {
+        p["name"]: sum(1 for a in achievements if a["player"] == p["name"])
+        for p in players
+    }
+
+
+def get_unique_players(players):
+    """get unique players"""
+    return {p["name"] for p in players}
+
+
+def get_unique_achievements(achievements):
+    """get unique achievements"""
+    return {a["achievement"] for a in achievements}
+
+
+def get_active_regions(players):
+    """get active regions."""
+    return {p["region"] for p in players if p["active"]}
+
+
+def get_average_score(players):
+    """get average scores"""
+    return sum(p["score"] for p in players) / len(players)
+
+
+def get_top_player(players):
+    """get best player"""
+    return max(players, key=player_key)
+
+
+def show_list_comprehensions(players):
+    """show lists info"""
     print("\n=== List Comprehension Examples ===")
+    print("High scorers (>2000):", get_high_scorers(players))
+    print("Scores doubled:", get_doubled_scores(players))
+    print("Active players:", get_active_players(players))
 
-    high_scorers = [
-        player["name"] for player in players if player["score"] > 2000
-    ]
-    print("High scorers (>2000):", high_scorers)
 
-    scores_doubled = [player["score"] * 2 for player in players]
-    print("Scores doubled:", scores_doubled)
-
-    active_players = [player["name"] for player in players if player["active"]]
-    print("Active players:", active_players)
-
+def show_dict_comprehensions(players, achievements):
+    """show dicts info"""
     print("\n=== Dict Comprehension Examples ===")
-    player_scores = {player["name"]: player["score"] for player in players}
-    print("Player scores:", player_scores)
+    print("Player scores:", get_player_scores(players))
+    print("Score categories:", get_score_categories(players))
+    print("Achievement counts:",
+          get_achievement_counts(players, achievements))
 
-    score_categories = {
-        "high": sum(1 for player in players if player["score"] > 2000),
-        "medium": sum(
-            1 for player in players if 1500 <= player["score"] <= 2000),
-        "low": sum(1 for player in players if player["score"] < 1500)
-    }
-    print("Score categories:", score_categories)
 
-    achievement_counts = {
-        player["name"]: sum(
-            1 for ach in achievements if ach["player"] == player["name"])
-        for player in players
-    }
-    print("Achievement counts:", achievement_counts)
-
+def show_set_comprehensions(players, achievements):
+    """show sets info"""
     print("\n=== Set Comprehension Examples ===")
-    unique_players = {player["name"] for player in players}
-    print("Unique players:", unique_players)
+    print("Unique players:", get_unique_players(players))
+    print("Unique achievements:", get_unique_achievements(achievements))
+    print("Active regions:", get_active_regions(players))
 
-    unique_achievements = {ach["achievement"] for ach in achievements}
-    print("Unique achievements:", unique_achievements)
 
-    active_regions = {
-        player["region"] for player in players if player["active"]}
-    print("Active regions:", active_regions)
-
+def show_combined_analysis(players, achievements):
+    """show analysis"""
     print("\n=== Combined Analysis ===")
+    print("Total players:", len(get_unique_players(players)))
+    print("Total unique achievements:",
+          len(get_unique_achievements(achievements)))
+    print("Average score:", get_average_score(players))
 
-    total_players = len(unique_players)
-    print("Total players:", total_players)
-
-    total_unique_achievements = len(unique_achievements)
-    print("Total unique achievements:", total_unique_achievements)
-
-    average_score = sum(player["score"] for player in players) / len(players)
-    print("Average score:", average_score)
-
-    top_player = max(players, key=player_key)
+    top_player = get_top_player(players)
     print(
-        f"Top performer: {top_player['name']} " +
-        f"({top_player['score']} points, " +
+        f"Top performer: {top_player['name']} "
+        f"({top_player['score']} points, "
         f"{top_player['achievements']} achievements)"
     )
-
-
-if __name__ == "__main__":
-    main()

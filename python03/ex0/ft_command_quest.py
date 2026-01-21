@@ -21,6 +21,3 @@ def explore_command_line():
     else:
         print("No arguments provided!")
     print(f"Total arguments: {length}")
-
-
-explore_command_line()

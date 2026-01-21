@@ -93,7 +93,7 @@ def get_item_info(name, inventories, item):
         print("No params")
         return
     if item in inventories[name]["items"]:
-        print(f"{name} {item}s: {inventories[name]["items"][item]["amount"]}")
+        print(f"{name} {item}s: {inventories[name]['items'][item]['amount']}")
     else:
         print(f"{name} {item}s: 0")
 
@@ -149,67 +149,3 @@ def get_rarest_items_by_rarity(inventories):
             return
 
     print("No items found for any defined rarity.")
-
-
-def main():
-    inventories = {
-            "Alice": {
-                    "items": {
-                        "sword": {
-                                    "category": "weapon",
-                                    "rarity": "rare",
-                                    "amount": 1,
-                                    "price": 500
-                                 },
-                        "potion": {
-                                    "category": "consumable",
-                                    "rarity": "common",
-                                    "amount": 5,
-                                    "price": 50
-                                 },
-                        "shield": {
-                                    "category": "armor",
-                                    "rarity": "uncommon",
-                                    "amount": 1,
-                                    "price": 200
-                                 }
-                     }
-                },
-            "Bob": {
-                    "items": {
-                        "shield": {
-                                    "category": "armor",
-                                    "rarity": "uncommon",
-                                    "amount": 1,
-                                    "price": 200
-                                 },
-                        "magic_ring": {
-                                    "category": "accesory",
-                                    "rarity": "rare",
-                                    "amount": 1,
-                                    "price": 300
-                                 }
-                     }
-                }
-            }
-    p1_name = "Alice"
-    p2_name = "Bob"
-    item = "potion"
-
-    print("=== Player Inventory System ===\n")
-    print_inventory(p1_name, inventories)
-
-    calculate_inventory_stats(p1_name, inventories)
-    print(transaction(p1_name, p2_name, inventories, item, 2))
-
-    print("=== Updated Inventories ===")
-    get_item_info(p1_name, inventories, item)
-    get_item_info(p2_name, inventories, item)
-
-    print("\n=== Inventory Analytics ===")
-    get_most_valuable_player(inventories)
-    get_most_items_player(inventories)
-    get_rarest_items_by_rarity(inventories)
-
-
-main()

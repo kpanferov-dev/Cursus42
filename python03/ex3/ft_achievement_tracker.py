@@ -80,24 +80,3 @@ def achievement_analytics(players):
     print(f"Alice unique: {alice_unique_achiev}")
     bob_unique_achiev = get_unique_ach_two_players(players, "bob", "alice")
     print(f"Bob unique: {bob_unique_achiev}")
-
-
-def main():
-    """Main function"""
-    players = [
-               ("alice", {'first_kill', 'level_10',
-                'treasure_hunter', 'speed_demon'}),
-               ("bob", {'first_kill', 'level_10', 'boss_slayer', 'collector'}),
-               ("charlie", {'level_10', 'treasure_hunter',
-                'boss_slayer', 'speed_demon', 'perfectionist'})
-              ]
-
-    print("=== Achievement Tracker System ===")
-    print()
-    achievement_tracker(players)
-
-    print("=== Achievement Analytics ===")
-    achievement_analytics(players)
-
-
-main()
