@@ -1,4 +1,4 @@
-# Python05 Rules
+# Rules
 
 ## Introduction:
 
