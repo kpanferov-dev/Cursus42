@@ -95,19 +95,104 @@ class LogProcessor(DataProcessor):
         string"""
         key = list(data.keys())[0]
         value = list(data.values())[0]
-        return f"Processing data: \"{key}: {value}\""
+        return f"{key}: {value}"
 
     def validate(self, data: Dict[str, str]) -> bool:
         """Validate if data is appropriate for
         this processor"""
+        try:
+            for key, value in data.items():
+                key + ""
+                value + ""
+            valid_keys = {"ERROR", "INFO", "WARNING", "SUCCESS"}
+            if key.upper() not in valid_keys:
+                raise ValueError(f"Invalid key: {key}. Allowed keys: {', '.join(valid_keys)}")
+
+            if len(data) == 0:
+                raise ValueError("Data is an empty dictionary")
+                
+        except AttributeError:
+            print("Data is not a dictionary or does not support .items()")
+            return False
+        except TypeError:
+            print("Keys or values are not strings")
+            return False
+        except ValueError as e:
+            print("Error:", e)
+        except Exception as e:
+            print(f"Validation failed due to: {e}")
+            return False
+
+
         return True
 
     def format_output(self, result: str) -> str:
         """Format the output result"""
-        return result
+        if ": " in result:
+            key, value = result.split(": ", 1)
+        else:
+            key, value = "UNKNOWN", result
+
+        if key.upper() == "ERROR":
+            prefix = "[ALERT]"
+        else:
+            prefix = f"[{key.upper()}]"
+        return f"Output: {prefix} {key.upper()} level detected: {value}"
 
 
-lista = {"Error": " Connection timeout"}
-processor = LogProcessor()
-if processor.validate(lista):
-    print(processor.format_output(processor.process(lista)))
+def main():
+    """main program"""
+    print("=== CODE NEXUS - DATA PROCESSOR FOUNDATION ===\n")
+
+    print("Initializing Numeric Processor...")
+    numeric_data = [1, 2, 3, 4, 5]
+    numeric_processor = NumericProcessor()
+    print(f"Processing data: {numeric_data}")
+    if numeric_processor.validate(numeric_data):
+        print("Validation: Numeric data verified")
+        result = numeric_processor.process(numeric_data)
+        print(numeric_processor.format_output(result))
+    else:
+        print("Validation failed: Invalid numeric data")
+
+    print("\nInitializing Text Processor...")
+    text_data = "Hello Nexus World"
+    text_processor = TextProcessor()
+    print(f'Processing data: "{text_data}"')
+    if text_processor.validate(text_data):
+        print("Validation: Text data verified")
+        result = text_processor.process(text_data)
+        print(text_processor.format_output(result))
+    else:
+        print("Validation failed: Invalid text data")
+
+    print("\nInitializing Log Processor...")
+    log_data = {"ERROR": "Connection timeout"}
+    log_processor = LogProcessor()
+    print(f'Processing data: "{log_processor.process(log_data)}"')
+    if log_processor.validate(log_data):
+        print("Validation: Log entry verified")
+        result = log_processor.process(log_data)
+        print(log_processor.format_output(result))
+    else:
+        print("Validation failed: Invalid log data")
+
+    print("\n=== Polymorphic Processing Demo ===")
+    processors = [
+        (NumericProcessor(), [1, 2, 3]),
+        (TextProcessor(), "Hello World"),
+        (LogProcessor(), {"INFO": "System ready"})
+    ]
+
+    for i, (processor, data) in enumerate(processors, start=1):
+        if processor.validate(data):
+            result = processor.process(data)
+            print(f"Result {i}: {processor.format_output(result)}")
+        else:
+            print(f"Result {i}: Validation failed")
+
+    print("\nFoundation systems online. Nexus ready for advanced streams.")
+
+
+if __name__ == "__main__":
+    main()
