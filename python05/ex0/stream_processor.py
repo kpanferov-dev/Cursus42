@@ -56,7 +56,8 @@ class NumericProcessor(DataProcessor):
         total = sum(n for n in numbers)
         length = len(numbers)
         avg = total / length
-        return f"{super().format_output('')}Processed {length} numeric values, sum={total}, avg={avg}"
+        return (f"{super().format_output('')}Processed" +
+                f" {length} numeric values, sum={total}, avg={avg}")
 
 
 class TextProcessor(DataProcessor):
@@ -106,11 +107,12 @@ class LogProcessor(DataProcessor):
                 value + ""
             valid_keys = {"ERROR", "INFO", "WARNING", "SUCCESS"}
             if key.upper() not in valid_keys:
-                raise ValueError(f"Invalid key: {key}. Allowed keys: {', '.join(valid_keys)}")
+                raise ValueError(f"Invalid key: {key}." +
+                                 f" Allowed keys: {', '.join(valid_keys)}")
 
             if len(data) == 0:
                 raise ValueError("Data is an empty dictionary")
-                
+
         except AttributeError:
             print("Data is not a dictionary or does not support .items()")
             return False
@@ -122,8 +124,6 @@ class LogProcessor(DataProcessor):
         except Exception as e:
             print(f"Validation failed due to: {e}")
             return False
-
-
         return True
 
     def format_output(self, result: str) -> str:
