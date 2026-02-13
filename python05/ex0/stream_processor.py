@@ -5,20 +5,20 @@
 
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Union
+from typing import List, Dict, Any
 
 
 class DataProcessor(ABC):
     """abstract class to process all kind of datas"""
 
     @abstractmethod
-    def process(self, data: Union[List[int], str, Dict[str, str]]) -> str:
+    def process(self, data: Any) -> str:
         """Process the data and return result
         string"""
         pass
 
     @abstractmethod
-    def validate(self, data: Union[List[int], str, Dict[str, str]]) -> bool:
+    def validate(self, data: Any) -> bool:
         """Validate if data is appropriate for
         this processor"""
         pass
