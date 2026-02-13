@@ -1,5 +1,4 @@
-"""__init__.py: manage directory as a package"""
-
+"""__init__.py: manage directory alchemy as a package"""
 
 __version__ = "1.0.0"
 __author__ = "Master Pythonicus"

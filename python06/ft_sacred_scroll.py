@@ -2,7 +2,9 @@
 ft_sacred_scroll: main program part1
 """
 
+
 import alchemy
+
 
 print("=== Sacred Scroll Mastery ===\n")
 
