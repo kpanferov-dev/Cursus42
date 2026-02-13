@@ -208,7 +208,8 @@ def main() -> None:
 
     print("Data flow: Raw -> Processed -> Analyzed -> Stored\n")
     print("Chain result: 100 records processed through 3-stage pipeline")
-    print(f"Performance: 95% efficiency, {round(end - start, 1)}s total processing time\n")
+    print("Performance: 95% efficiency," +
+          f"{round(end - start, 1)}s total processing time\n")
 
     print("=== Error Recovery Test ===")
     print("Simulating pipeline failure...")
