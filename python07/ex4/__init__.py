@@ -1,0 +1,8 @@
+"""
+ex4 package - Tournament Platform with Advanced Interface Composition
+"""
+from .Rankable import Rankable
+from .TournamentCard import TournamentCard
+from .TournamentPlatform import TournamentPlatform
+
+__all__ = ['Rankable', 'TournamentCard', 'TournamentPlatform']

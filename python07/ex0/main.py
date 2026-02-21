@@ -6,12 +6,13 @@ Tests the abstract base class design
 
 from ex0.CreatureCard import CreatureCard
 
+
 def main():
     """Main demonstration function"""
-    
+
     print("\n=== DataDeck Card Foundation ===\n")
     print("Testing Abstract Base Class Design:\n")
-    
+
     game_state = {
         "mana": 6,
         "battlefield": []
@@ -29,7 +30,7 @@ def main():
         print(creature1.get_card_info())
     except Exception as e:
         print(f"Error getting card info: {e}")
-    
+
     try:
         print(f"\nPlaying {creature1.name} with" +
               f" {game_state['mana']} mana available:")
@@ -38,23 +39,24 @@ def main():
         print(f"Play result: {result}")
     except Exception as e:
         print(f"Error playing card: {e}")
-    
+
     try:
         print(f"\n{creature1.name} attacks {creature2.name}")
         result = creature1.attack_target(creature2)
         print(f"Attack result: {result}")
     except Exception as e:
         print(f"Error during attack: {e}")
-    
+
     try:
         game_state["mana"] = 3
         print(f"\nTesting insufficient mana ({game_state['mana']} available):")
         print(f"Playable: {creature1.is_playable(game_state['mana'])}")
     except Exception as e:
         print(f"Error checking mana: {e}")
-    
+
     print()
     print("Abstract pattern successfully demonstrated!")
+
 
 if __name__ == "__main__":
     main()

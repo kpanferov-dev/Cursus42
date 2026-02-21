@@ -4,7 +4,7 @@ File that contains CreatureCard Class
 """
 
 from ex0.Card import Card
-from typing import Dict
+from typing import Dict, Any
 
 
 class CreatureCard(Card):
@@ -46,7 +46,7 @@ class CreatureCard(Card):
         self.set_attack(attack)
         self.set_health(health)
 
-    def attack_target(self, target: CreatureCard) -> Dict:
+    def attack_target(self, target: Any) -> Dict:
         """
         Attacks another creature card and updates its health.
 
@@ -60,9 +60,8 @@ class CreatureCard(Card):
                   and whether the combat has
                   resolved (i.e., if the target is still alive).
         """
-        if not isinstance(target, CreatureCard):
-            raise TypeError("Target must be a CreatureCard instance.")
-
+        if not target:
+            raise ValueError("No target provided")
         rest_hp = target.health - self.attack
         health = 0 if rest_hp < 0 else rest_hp
 
@@ -90,33 +89,36 @@ class CreatureCard(Card):
             dict: A dictionary with the result of the card play,
             including the card played, mana used, and the effect.
         """
-        if not isinstance(game_state, dict):
-            raise TypeError(f"game_state must be a dictionary, got {type(game_state).__name__}")
+        if not game_state:
+            raise ValueError("No game_state provided")
+        if not isinstance(game_state, Dict):
+            raise TypeError("game_state must be a " +
+                            f"dictionary, got {type(game_state).__name__}")
 
         required_keys = ['mana']
         missing_keys = [key for key in required_keys if key not in game_state]
         if missing_keys:
-            raise ValueError(f"game_state missing required key(s): {missing_keys}")
-        
+            raise ValueError("game_state missing " +
+                             f"required key(s): {missing_keys}")
+
         available_mana = game_state.get('mana', 0)
         if available_mana < 0:
             raise ValueError(f"Mana cannot be negative, got {available_mana}")
 
-        if available_mana < self.cost:
-
+        if self.is_playable(available_mana):
+            game_state['mana'] -= self.cost
+            game_state['battlefield'].append(self)
+            return {
+                "card_played": self.name,
+                "mana_used": self.cost,
+                "effect": "Creature summoned to battlefield"
+            }
+        else:
             return {
                 "card_played": None,
                 "mana_used": 0,
                 "effect": "Not enough mana to play the card"
             }
-
-        game_state['mana'] -= self.cost
-
-        return {
-            "card_played": self.name,
-            "mana_used": self.cost,
-            "effect": "Creature summoned to battlefield"
-        }
 
     def get_card_info(self) -> Dict:
         """
@@ -145,7 +147,7 @@ class CreatureCard(Card):
         Raises:
             ValueError: If health is not a positive integer.
         """
-        if health < 0 or not isinstance(health, int):
+        if health is None or health < 0 or not isinstance(health, int):
             raise ValueError("Health must be a positive integer.")
         self.health = health
 
@@ -160,6 +162,6 @@ class CreatureCard(Card):
         Raises:
             ValueError: If attack is not a positive integer.
         """
-        if attack < 0 or not isinstance(attack, int):
+        if attack is None or attack < 0 or not isinstance(attack, int):
             raise ValueError("Attack must be a positive integer.")
         self.attack = attack

@@ -1,5 +1,5 @@
 """
-Root __init__.py - Makes ex0 repository a Python package
+ex0 __init__.py - Makes ex0 repository a Python package
 This allows importing from Card and CreatureCard
 """
 from .Card import Card
