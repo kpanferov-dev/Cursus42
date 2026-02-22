@@ -50,7 +50,7 @@ class AlienContact(BaseModel):
         return self
 
 
-def demonstrate_alien_contact_reports():
+def demonstrate_alien_contact_reports() -> None:
     """Main"""
     valid_report = AlienContact(
         contact_id="AC_2024_001",
