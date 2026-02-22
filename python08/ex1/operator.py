@@ -30,6 +30,14 @@ def generate_data(pd, np, n=1000):
     return data
 
 
+def load_silent(import_name):
+    """Load a module silently without printing anything"""
+    try:
+        return importlib.import_module(import_name)
+    except ImportError:
+        return None
+
+
 def visualize_data(plt, df, filename="matrix_analysis.png") -> None:
     """Visualize data"""
     plt.scatter(df['matrix_x'], df['matrix_y'], alpha=0.5)
@@ -52,9 +60,9 @@ def main() -> None:
     print("OPERATOR STATUS: Loading programs...\n\nChecking dependencies:")
 
     pd = check_dependency("pandas")
-    np = check_dependency("numpy")
     plt = check_dependency("matplotlib", "matplotlib.pyplot")
     requests = check_dependency("requests")
+    np = load_silent("numpy")
 
     if not all([pd, np, plt, requests]):
         print("\nSome dependencies are missing. Install them with:")
