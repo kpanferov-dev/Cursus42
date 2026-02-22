@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
-
+"""
+construct.py
+Has functions to check if we are in an environment or not
+"""
 import sys
 import os
 import site
 
 
 def is_virtual_environment():
+    """Check current env with global env"""
     return sys.prefix != getattr(sys, "base_prefix", sys.prefix)
 
 
 def get_venv_name():
+    """Get name of env"""
     return os.path.basename(sys.prefix)
 
 
 def main():
+    """main to test if we are in or out of venv"""
     print()
 
     try:

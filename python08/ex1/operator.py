@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
+"""
+operator.py
+contains functions to get create show data and that
+"""
 import importlib
 
+
 def check_dependency(pkg_name, import_name=None):
+    """To import modules later and not on top"""
     import_name = import_name or pkg_name
     try:
         module = importlib.import_module(import_name)
@@ -9,8 +15,10 @@ def check_dependency(pkg_name, import_name=None):
         print(f"[OK] {pkg_name} ({version}) ready")
         return module
     except ImportError:
-        print(f"[MISSING] {pkg_name} not installed. Install with pip or Poetry!")
+        print(f"[MISSING] {pkg_name} not " +
+              "installed. Install with pip or Poetry!")
         return None
+
 
 def generate_data(pd, np, n=1000):
     """Genera un DataFrame simulado"""
@@ -21,7 +29,9 @@ def generate_data(pd, np, n=1000):
     print(f"Processing {n} data points...")
     return data
 
+
 def visualize_data(plt, df, filename="matrix_analysis.png"):
+    """Visualize data"""
     plt.scatter(df['matrix_x'], df['matrix_y'], alpha=0.5)
     plt.title("Matrix Data Visualization")
     plt.xlabel("X values")
@@ -29,18 +39,18 @@ def visualize_data(plt, df, filename="matrix_analysis.png"):
     plt.savefig(filename)
     print(f"Results saved to: {filename}")
 
+
 def main():
     """
     python -m pip install poetry
     Main program
-    run from dir above as operator is builtin 
+    run from dir above as operator is builtin
     python -m venv ex1/matrix_env
     source matrix_env/Scripts/activate
     python -m ex01.operator
     """
     print("OPERATOR STATUS: Loading programs...\n\nChecking dependencies:")
 
-    # Intentamos importar los paquetes opcionales
     pd = check_dependency("pandas")
     np = check_dependency("numpy")
     plt = check_dependency("matplotlib", "matplotlib.pyplot")
@@ -57,6 +67,7 @@ def main():
     print("Generating visualization...")
     visualize_data(plt, df)
     print("Analysis complete!")
+
 
 if __name__ == "__main__":
     main()
