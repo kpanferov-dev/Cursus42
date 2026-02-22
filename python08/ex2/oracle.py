@@ -8,7 +8,7 @@ import sys
 # from dotenv import load_dotenv
 
 
-def load_env():
+def load_env() -> None:
     """Load environment variables from the .env file"""
     env_file = '.env'
     if os.path.exists(env_file):
@@ -31,7 +31,7 @@ CONFIG = {
 }
 
 
-def check_required_config():
+def check_required_config() -> None:
     """Function to check for required environment variables"""
     missing_configs = []
     if not CONFIG["API_KEY"]:
@@ -46,7 +46,7 @@ def check_required_config():
         sys.exit(1)
 
 
-def show_config():
+def show_config() -> None:
     """Function to display the configuration"""
     print("Accessing the Mainframe")
     print("ORACLE STATUS: Reading the Matrix...\n")
@@ -63,7 +63,7 @@ def show_config():
                            else 'Offline'}")
 
 
-def check_security():
+def check_security() -> None:
     """Function to check environment security"""
     print("\nEnvironment security check:")
 
@@ -86,7 +86,7 @@ def check_security():
         print("[INFO] Development configuration in use")
 
 
-def main():
+def main() -> None:
     """Main !!!!!!!!"""
     check_required_config()
 

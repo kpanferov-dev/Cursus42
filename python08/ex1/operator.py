@@ -30,7 +30,7 @@ def generate_data(pd, np, n=1000):
     return data
 
 
-def visualize_data(plt, df, filename="matrix_analysis.png"):
+def visualize_data(plt, df, filename="matrix_analysis.png") -> None:
     """Visualize data"""
     plt.scatter(df['matrix_x'], df['matrix_y'], alpha=0.5)
     plt.title("Matrix Data Visualization")
@@ -40,7 +40,7 @@ def visualize_data(plt, df, filename="matrix_analysis.png"):
     print(f"Results saved to: {filename}")
 
 
-def main():
+def main() -> None:
     """
     python -m pip install poetry
     Main program

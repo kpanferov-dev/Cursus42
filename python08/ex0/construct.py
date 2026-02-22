@@ -8,17 +8,17 @@ import os
 import site
 
 
-def is_virtual_environment():
+def is_virtual_environment() -> str:
     """Check current env with global env"""
     return sys.prefix != getattr(sys, "base_prefix", sys.prefix)
 
 
-def get_venv_name():
+def get_venv_name() -> str:
     """Get name of env"""
     return os.path.basename(sys.prefix)
 
 
-def main():
+def main() -> None:
     """main to test if we are in or out of venv"""
     print()
 
