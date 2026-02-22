@@ -30,7 +30,7 @@ class AlienContact(BaseModel):
     is_verified: bool = False
 
     @model_validator(mode='after')
-    def validate_contact(self):
+    def validate_contact(self) -> None:
         """Validate automatically after Pydantic def validations"""
         if not self.contact_id.startswith("AC"):
             raise ValueError("Contact ID must start with 'AC' (Alien Contact)")
