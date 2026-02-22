@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+import importlib
+
+def check_dependency(pkg_name, import_name=None):
+    import_name = import_name or pkg_name
+    try:
+        module = importlib.import_module(import_name)
+        version = getattr(module, '__version__', 'Unknown')
+        print(f"[OK] {pkg_name} ({version}) ready")
+        return module
+    except ImportError:
+        print(f"[MISSING] {pkg_name} not installed. Install with pip or Poetry!")
+        return None
+
+def generate_data(pd, np, n=1000):
+    """Genera un DataFrame simulado"""
+    data = pd.DataFrame({
+        'matrix_x': np.random.randn(n),
+        'matrix_y': np.random.randn(n)
+    })
+    print(f"Processing {n} data points...")
+    return data
+
+def visualize_data(plt, df, filename="matrix_analysis.png"):
+    plt.scatter(df['matrix_x'], df['matrix_y'], alpha=0.5)
+    plt.title("Matrix Data Visualization")
+    plt.xlabel("X values")
+    plt.ylabel("Y values")
+    plt.savefig(filename)
+    print(f"Results saved to: {filename}")
+
+def main():
+    """
+    python -m pip install poetry
+    Main program
+    run from dir above as operator is builtin 
+    python -m venv ex1/matrix_env
+    source matrix_env/Scripts/activate
+    python -m ex01.operator
+    """
+    print("OPERATOR STATUS: Loading programs...\n\nChecking dependencies:")
+
+    # Intentamos importar los paquetes opcionales
+    pd = check_dependency("pandas")
+    np = check_dependency("numpy")
+    plt = check_dependency("matplotlib", "matplotlib.pyplot")
+    requests = check_dependency("requests")
+
+    if not all([pd, np, plt, requests]):
+        print("\nSome dependencies are missing. Install them with:")
+        print("pip install -r requirements.txt")
+        print("or use Poetry: poetry install")
+        return
+
+    print("\nAnalyzing Matrix data...")
+    df = generate_data(pd, np, 1000)
+    print("Generating visualization...")
+    visualize_data(plt, df)
+    print("Analysis complete!")
+
+if __name__ == "__main__":
+    main()
