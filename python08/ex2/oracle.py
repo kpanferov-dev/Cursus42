@@ -5,11 +5,10 @@ oracle.py
 """
 import os
 import sys
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
-
+"""
 def load_env() -> None:
-    """Load environment variables from the .env file"""
     env_file = '.env'
     if os.path.exists(env_file):
         with open(env_file, 'r') as file:
@@ -17,9 +16,10 @@ def load_env() -> None:
                 if line.strip() and not line.startswith('#'):
                     key, value = line.strip().split('=', 1)
                     os.environ[key] = value
+"""
 
 
-load_env()
+load_dotenv()
 
 
 CONFIG = {
@@ -48,19 +48,18 @@ def check_required_config() -> None:
 
 def show_config() -> None:
     """Function to display the configuration"""
-    print("Accessing the Mainframe")
-    print("ORACLE STATUS: Reading the Matrix...\n")
+    print("\nORACLE STATUS: Reading the Matrix...\n")
     print("Configuration loaded:")
     print(f"Mode: {CONFIG['MATRIX_MODE']}")
     if CONFIG['MATRIX_MODE'] == "development":
         print("Database: Connected to local instance")
     else:
         print("Database: Connected to production instance")
-    print(f"API Access: {'Authenticated' if CONFIG['API_KEY']
-                         else 'Not Authenticated'}")
+    print("API Access: " +
+          f"{'Authenticated' if CONFIG['API_KEY'] else 'Not Authenticated'}")
     print(f"Log Level: {CONFIG['LOG_LEVEL']}")
-    print(f"Zion Network: {'Online' if CONFIG['ZION_ENDPOINT']
-                           else 'Offline'}")
+    print("Zion Network: " +
+          f"{'Online' if CONFIG['ZION_ENDPOINT'] else 'Offline'}")
 
 
 def check_security() -> None:
@@ -80,10 +79,10 @@ def check_security() -> None:
         print("[WARNING] .env file not found")
 
     # Check if the environment can be overridden
-    if CONFIG["MATRIX_MODE"] == "production":
+    if CONFIG["MATRIX_MODE"] == "development":
         print("[OK] Production overrides available")
     else:
-        print("[INFO] Development configuration in use")
+        print("[INFO] No configuration used")
 
 
 def main() -> None:

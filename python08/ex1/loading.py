@@ -6,17 +6,16 @@ contains functions to get create show data and that
 import importlib
 
 
-def check_dependency(pkg_name, import_name=None):
-    """To import modules later and not on top"""
+def check_dependency(pkg_name, description, import_name=None):
+    """Import module and print custom ready message"""
     import_name = import_name or pkg_name
     try:
         module = importlib.import_module(import_name)
         version = getattr(module, '__version__', 'Unknown')
-        print(f"[OK] {pkg_name} ({version}) ready")
+        print(f"[OK] {pkg_name} ({version}) - {description} ready")
         return module
     except ImportError:
-        print(f"[MISSING] {pkg_name} not " +
-              "installed. Install with pip or Poetry!")
+        print(f"[MISSING] {pkg_name} not installed.")
         return None
 
 
@@ -59,9 +58,10 @@ def main() -> None:
     """
     print("OPERATOR STATUS: Loading programs...\n\nChecking dependencies:")
 
-    pd = check_dependency("pandas")
-    plt = check_dependency("matplotlib", "matplotlib.pyplot")
-    requests = check_dependency("requests")
+    pd = check_dependency("pandas", "Data manipulation")
+    plt = load_silent("matplotlib.pyplot")
+    check_dependency("matplotlib", "Visualization")
+    requests = check_dependency("requests", "Network access")
     np = load_silent("numpy")
 
     if not all([pd, np, plt, requests]):

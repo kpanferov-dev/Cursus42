@@ -38,8 +38,9 @@ def main() -> None:
         print(f"Crew: {station.crew_size} people")
         print(f"Power: {station.power_level}%")
         print(f"Oxygen: {station.oxygen_level}%")
-        print(f"Status: {'Operational' if station.is_operational
-                         else 'Non-operational'}")
+        op = 'Operational'
+        no_op = 'Non-operational'
+        print("Status: " + f"{(op if station.is_operational else no_op)}")
     except Exception as e:
         print(f"Error creating valid station: {e}")
 
@@ -58,7 +59,7 @@ def main() -> None:
     except Exception as e:
         print("Error creating valid station:")
         for error in e.errors():
-            print(f"{error["msg"]}")
+            print(f"{error['msg']}")
 
 
 if __name__ == "__main__":
