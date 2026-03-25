@@ -1,0 +1,14 @@
+[project]
+name = "mazegen"
+version = "1.0.0"
+description = "Reusable maze generator"
+authors = [{name="Marcos, Kirill"}]
+readme = "README.md"
+requires-python = ">=3.10.12"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["mazegen"]

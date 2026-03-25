@@ -26,9 +26,9 @@ def main() -> None:
         info = arcane_warrior.get_card_info()
         combat_info = arcane_warrior.get_combat_stats()
         magic_info = arcane_warrior.get_magic_stats()
-        print(f"-{info["stats_type"]} : {info["card"]}")
-        print(f"-{combat_info["stats_type"]} : {combat_info["combatable"]}")
-        print(f"-{magic_info["stats_type"]} : {magic_info["magical"]}")
+        print(f"-{info['stats_type']} : {info['card']}")
+        print(f"-{combat_info['stats_type']} : {combat_info['combatable']}")
+        print(f"-{magic_info['stats_type']} : {magic_info['magical']}")
 
         enemy = CreatureCard("Enemy", 0, "Common", 3, 5)
 
@@ -49,7 +49,7 @@ def main() -> None:
         enemy2 = CreatureCard("Enemy2", 0, "Common", 2, 3)
 
         print("Spell cast: " +
-              f"{arcane_warrior.cast_spell("fireball", [enemy1, enemy2])}")
+              f"{arcane_warrior.cast_spell('fireball', [enemy1, enemy2])}")
 
         channel_result = arcane_warrior.channel_mana(3)
         print(f"Mana channel: {channel_result}")

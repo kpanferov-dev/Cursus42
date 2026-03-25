@@ -1,5 +1,5 @@
 """
-nexus_pipeline.py: Program that play with 
+nexus_pipeline.py: Program that play with
 different pipelines with 3 different stages
 """
 from abc import ABC, abstractmethod

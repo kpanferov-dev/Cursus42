@@ -42,7 +42,7 @@ class EliteCard(Card, Combatable, Magical):
         self.set_attack(attack)
         self.set_health(health)
         self.set_mana(mana)
-        self.defense = attack // 2
+        self.defense = attack - 2
 
     def attack(self, target: Any) -> Dict:
         """

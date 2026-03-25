@@ -2,6 +2,8 @@
 scope_mysteries.py
 Playing with closures
 """
+
+
 def mage_counter() -> callable:
     """counter with static count"""
     count = 0
@@ -34,8 +36,10 @@ def enchantment_factory(enchantment_type: str) -> callable:
 def memory_vault() -> dict[str, callable]:
     """Return a dict with 'store' and 'recall' closure functions."""
     vault = {}
+
     def store(key, value):
         vault[key] = value
+
     def recall(key):
         return vault.get(key, "Memory not found")
     return {"store": store, "recall": recall}
