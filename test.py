@@ -35,11 +35,11 @@ def reverse_matrix(matrix):
 
 def vowel_count(s):
     vowels = "aeiouAEIOU"
-    return sum(c for c in s if c in vowels)
+    return sum(1 for c in s if c in vowels)
 
 
 def sort_strings(lst):
-    return sorted(lst, lambda s: (len(s), s, vowel_count(s)))
+    return sorted(lst, key=lambda s: (len(s), s, vowel_count(s)))
 
 
 def containsDuplicate(nums):
@@ -59,7 +59,7 @@ def alternate_case(s):
             if upper:
                 result.append(c.upper())
             else:
-                result.append(c.islower())
+                result.append(c.lower())
             upper = not upper
         else:
             result.append(c)
@@ -68,19 +68,8 @@ def alternate_case(s):
 
 
 def isPalindrome(s: str) -> bool:
-    l, r = 0, len(s) - 1
-
-    while l < r:
-        while l < r and not s[l].isalnum():
-            l += 1
-        while l < r and not s[r].isalnum():
-            r += 1
-        if s[l].lower() != s[r].lower():
-            return False
-        l += 1
-        r += 1
-
-    return True
+    filtered = ''.join(c.lower() for c in s if c.isalnum())
+    return filtered == filtered[::-1]
 
 
 def convert_base(num_str, b1, b2):
