@@ -1,5 +1,5 @@
 NAME        = codexion
-CC          = gcc
+CC          = cc
 CFLAGS      = -Wall -Wextra -Werror -pthread
 INC         = -I inc
 SRC_DIR     = src
