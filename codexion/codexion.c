@@ -14,9 +14,34 @@ long long get_current_ms(void)
 void log_message(t_sim *sim, long long timestamp, int coder_id, const char *action)
 {
     pthread_mutex_lock(&sim->log_mutex);
+    // FIX: suppress all non-burnout messages after stop_flag
+    if (sim->stop_flag && strcmp(action, "burned out") != 0)
+    {
+        pthread_mutex_unlock(&sim->log_mutex);
+        return;
+    }
     printf("%lld %d %s\n", timestamp - sim->sim_start_ms, coder_id, action);
     fflush(stdout);
     pthread_mutex_unlock(&sim->log_mutex);
+}
+
+// FIX: interruptible sleep using stop condition variable
+int interruptible_sleep(t_sim *sim, int ms)
+{
+    struct timespec ts;
+    pthread_mutex_lock(&sim->stop_mutex);
+    long long end = get_current_ms() + ms;
+    while (!sim->stop_flag && get_current_ms() < end)
+    {
+        long long remaining = end - get_current_ms();
+        if (remaining <= 0) break;
+        ts.tv_sec = remaining / 1000;
+        ts.tv_nsec = (remaining % 1000) * 1000000;
+        pthread_cond_timedwait(&sim->stop_cond, &sim->stop_mutex, &ts);
+    }
+    int stopped = sim->stop_flag;
+    pthread_mutex_unlock(&sim->stop_mutex);
+    return stopped;
 }
 
 // ----------------------------------------------------------------------------
@@ -120,7 +145,8 @@ int compare_edf(t_heap_node a, t_heap_node b)
 {
     if (a.key != b.key)
         return a.key < b.key;
-    return a.coder_id < b.coder_id;
+    // FIX: tie-breaker – higher coder_id gets priority (as requested)
+    return a.coder_id > b.coder_id;
 }
 
 // ----------------------------------------------------------------------------
@@ -254,18 +280,31 @@ void *coder_routine(void *arg)
         long long compile_start = get_current_ms();
         log_message(sim, compile_start, coder_id, "is compiling");
         coder->last_compile_start = compile_start;
-        usleep(sim->time_to_compile * 1000);
-
+        // FIX: use interruptible sleep
+        if (interruptible_sleep(sim, sim->time_to_compile))
+        {
+            // stop_flag set during compile – release dongles and exit
+            dongle_release(sim, first);
+            dongle_release(sim, second);
+            break;
+        }
         dongle_release(sim, first);
         dongle_release(sim, second);
-
         coder->compiles_done++;
 
+        if (sim->stop_flag)
+            break;
+
         log_message(sim, get_current_ms(), coder_id, "is debugging");
-        usleep(sim->time_to_debug * 1000);
+        if (interruptible_sleep(sim, sim->time_to_debug))
+            break;
+
+        if (sim->stop_flag)
+            break;
 
         log_message(sim, get_current_ms(), coder_id, "is refactoring");
-        usleep(sim->time_to_refactor * 1000);
+        if (interruptible_sleep(sim, sim->time_to_refactor))
+            break;
     }
     return NULL;
 }
@@ -290,9 +329,11 @@ void *monitor_routine(void *arg)
                 {
                     sim->stop_flag = 1;
                     log_message(sim, now, i + 1, "burned out");
+                    // FIX: broadcast on global stop condition to wake all sleeping coder threads
+                    pthread_cond_broadcast(&sim->stop_cond);
                 }
                 pthread_mutex_unlock(&sim->stop_mutex);
-                // Wake all waiting threads
+                // Wake all dongle waiters
                 for (int j = 0; j < sim->num_coders; j++)
                 {
                     pthread_mutex_lock(&sim->dongles[j].mutex);
@@ -316,6 +357,7 @@ void *monitor_routine(void *arg)
         {
             pthread_mutex_lock(&sim->stop_mutex);
             sim->stop_flag = 1;
+            pthread_cond_broadcast(&sim->stop_cond);   // FIX: wake all sleeping threads
             pthread_mutex_unlock(&sim->stop_mutex);
             for (int j = 0; j < sim->num_coders; j++)
             {
@@ -362,6 +404,7 @@ void init_simulation(t_sim *sim)
 {
     sim->stop_flag = 0;
     pthread_mutex_init(&sim->stop_mutex, NULL);
+    pthread_cond_init(&sim->stop_cond, NULL);   // FIX: initialise stop condition
     pthread_mutex_init(&sim->log_mutex, NULL);
     sim->sim_start_ms = get_current_ms();
 
@@ -409,6 +452,7 @@ void cleanup_simulation(t_sim *sim)
         heap_free(&sim->dongles[i].wait_queue);
     }
     pthread_mutex_destroy(&sim->stop_mutex);
+    pthread_cond_destroy(&sim->stop_cond);   // FIX: destroy stop condition
     pthread_mutex_destroy(&sim->log_mutex);
     free(sim->coders);
     free(sim->dongles);

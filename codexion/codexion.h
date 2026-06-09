@@ -49,6 +49,7 @@ typedef struct s_sim {
     long long sim_start_ms;
     int stop_flag;
     pthread_mutex_t stop_mutex;
+    pthread_cond_t stop_cond;   // FIX: global condition to wake all sleeping threads
     pthread_mutex_t log_mutex;
     t_coder *coders;
     t_dongle *dongles;
@@ -79,5 +80,6 @@ t_heap_node *heap_peek(t_heap *h);
 int heap_is_empty(t_heap *h);
 void heap_free(t_heap *h);
 void heap_swap(t_heap_node *a, t_heap_node *b);
+int interruptible_sleep(t_sim *sim, int ms);   // FIX: new function
 
 #endif
