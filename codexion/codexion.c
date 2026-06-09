@@ -408,8 +408,8 @@ void init_simulation(t_sim *sim)
     pthread_mutex_init(&sim->log_mutex, NULL);
     sim->sim_start_ms = get_current_ms();
 
-    sim->coders = calloc(sim->num_coders, sizeof(t_coder));
-    sim->dongles = calloc(sim->num_coders, sizeof(t_dongle));
+    sim->coders = malloc(sim->num_coders * sizeof(t_coder));
+    sim->dongles = malloc(sim->num_coders * sizeof(t_dongle));
     sim->coder_threads = malloc(sim->num_coders * sizeof(pthread_t));
 
     for (int i = 0; i < sim->num_coders; i++)
