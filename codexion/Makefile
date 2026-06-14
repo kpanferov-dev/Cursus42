@@ -1,7 +1,7 @@
 NAME = codexion
-CC = gcc
-CFLAGS = -Wall -Wextra -Werror -pthread
-
+CC = cc
+CFLAGS = -Wall -Wextra -Werror -pthread -fsanitize=thread
+# -g3(te dice la linea) -O0(te dice la traza) -fsanitize=leak -fsanitize=thread o uno u otro pero no los dos y no mezclar con valgrind
 SRCS = codexion.c
 OBJS = $(SRCS:.c=.o)
 
