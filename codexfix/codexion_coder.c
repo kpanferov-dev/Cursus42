@@ -1,0 +1,114 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   codexion_coder.c                                   :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/01/01 00:00:00 by marvin            #+#    #+#             */
+/*   Updated: 2024/01/01 00:00:00 by marvin           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "codexion.h"
+
+static void	coder_set_dongles(t_sim *sim, t_coder *coder,
+				t_dongle **first, t_dongle **second)
+{
+	t_dongle	*left;
+	t_dongle	*right;
+
+	left = &sim->dongles[coder->left_dongle_id - 1];
+	right = &sim->dongles[coder->right_dongle_id - 1];
+	if (coder->left_dongle_id < coder->right_dongle_id)
+	{
+		*first = left;
+		*second = right;
+	}
+	else
+	{
+		*first = right;
+		*second = left;
+	}
+}
+
+static int	coder_take_dongles(t_sim *sim, t_dongle *first,
+				t_dongle *second, int id)
+{
+	long long	key;
+
+	if (sim->scheduler == 0)
+		key = get_current_ms();
+	else
+		key = sim->coders[id - 1].last_compile_start + sim->time_to_burnout;
+	if (dongle_acquire(sim, first, id, key) == -1)
+		return (-1);
+	log_message(sim, get_current_ms(), id, "has taken a dongle");
+	if (dongle_acquire(sim, second, id, key) == -1)
+	{
+		dongle_release(sim, first);
+		return (-1);
+	}
+	log_message(sim, get_current_ms(), id, "has taken a dongle");
+	return (0);
+}
+
+static int	coder_compile(t_sim *sim, t_coder *coder, t_dongle *first,
+				t_dongle *second)
+{
+	int	id;
+
+	id = coder->id;
+	if (coder_take_dongles(sim, first, second, id) == -1)
+		return (-1);
+	coder->last_compile_start = get_current_ms();
+	log_message(sim, coder->last_compile_start, id, "is compiling");
+	if (interruptible_sleep(sim, sim->time_to_compile))
+	{
+		dongle_release(sim, first);
+		dongle_release(sim, second);
+		return (-1);
+	}
+	dongle_release(sim, first);
+	dongle_release(sim, second);
+	coder->compiles_done++;
+	return (0);
+}
+
+static int	coder_think(t_sim *sim, int id)
+{
+	if (sim->stop_flag)
+		return (-1);
+	log_message(sim, get_current_ms(), id, "is debugging");
+	if (interruptible_sleep(sim, sim->time_to_debug))
+		return (-1);
+	if (sim->stop_flag)
+		return (-1);
+	log_message(sim, get_current_ms(), id, "is refactoring");
+	if (interruptible_sleep(sim, sim->time_to_refactor))
+		return (-1);
+	return (0);
+}
+
+void	*coder_routine(void *arg)
+{
+	t_thread_arg	*thread_arg;
+	t_sim			*sim;
+	t_coder			*coder;
+	t_dongle		*first;
+	t_dongle		*second;
+
+	thread_arg = (t_thread_arg *)arg;
+	sim = thread_arg->sim;
+	coder = &sim->coders[thread_arg->coder_id - 1];
+	free(arg);
+	coder_set_dongles(sim, coder, &first, &second);
+	while (!sim->stop_flag && coder->compiles_done < sim->compiles_required)
+	{
+		if (coder_compile(sim, coder, first, second) == -1)
+			break ;
+		if (coder_think(sim, coder->id) == -1)
+			break ;
+	}
+	return (NULL);
+}
