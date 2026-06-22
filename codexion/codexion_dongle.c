@@ -6,12 +6,22 @@
 /*   By: kpanfero <kpanfero@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/01 00:00:00 by marvin            #+#    #+#             */
-/*   Updated: 2026/06/15 12:40:29 by kpanfero         ###   ########.fr       */
+/*   Updated: 2026/06/20 16:40:03 by kpanfero         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
+/*
+** Wait until this coder is allowed to use the dongle.
+**
+** Conditions to acquire the dongle:
+** - this coder is at the top of the priority queue
+** - dongle is not currently in use
+** - cooldown time has passed
+**
+** If not ready → sleep using condition variable (efficient wait)
+*/
 static int	dongle_wait_turn(t_sim *sim, t_dongle *d, int id)
 {
 	t_heap_node		*top;
@@ -36,6 +46,15 @@ static int	dongle_wait_turn(t_sim *sim, t_dongle *d, int id)
 	return (0);
 }
 
+/*
+** Try to acquire a dongle for a coder.
+**
+** Steps:
+** 1. Add coder to priority queue (wait list)
+** 2. Wait until it's their turn
+** 3. If allowed → take dongle
+** 4. If not → remove from queue and fail
+*/
 int	dongle_acquire(t_sim *sim, t_dongle *d, int id, long long key)
 {
 	t_heap_node	node;
@@ -58,6 +77,14 @@ int	dongle_acquire(t_sim *sim, t_dongle *d, int id, long long key)
 	return (-1);
 }
 
+/*
+** Release a dongle after use.
+**
+** Steps:
+** - mark dongle as free
+** - set cooldown (prevents immediate reuse)
+** - wake all waiting coders
+*/
 void	dongle_release(t_sim *sim, t_dongle *d)
 {
 	pthread_mutex_lock(&d->mutex);

@@ -6,12 +6,16 @@
 /*   By: kpanfero <kpanfero@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/01 00:00:00 by marvin            #+#    #+#             */
-/*   Updated: 2026/06/15 12:40:32 by kpanfero         ###   ########.fr       */
+/*   Updated: 2026/06/20 14:56:50 by kpanfero         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
+/*
+** Swap the contents of two heap nodes.
+** Used when restoring the heap property.
+*/
 void	heap_swap(t_heap_node *a, t_heap_node *b)
 {
 	t_heap_node	tmp;
@@ -21,6 +25,19 @@ void	heap_swap(t_heap_node *a, t_heap_node *b)
 	*b = tmp;
 }
 
+/*
+** Move a node upward in the heap until the heap property is restored.
+**
+** Example:
+**     Parent
+**        5
+**       /
+**      10
+**
+** If cmp(10, 5) is true, swap them.
+**
+** Returns the final index of the node after bubbling up.
+*/
 int	heapify_up(t_heap *h, int idx)
 {
 	int	parent;
@@ -39,6 +56,11 @@ int	heapify_up(t_heap *h, int idx)
 	return (idx);
 }
 
+/*
+** Move a node downward until the heap property is restored.
+**
+** Used after removing the root.
+*/
 void	heapify_down(t_heap *h, int idx)
 {
 	int	left;
@@ -64,29 +86,27 @@ void	heapify_down(t_heap *h, int idx)
 	}
 }
 
+/*
+** Insert a new node into the heap.
+*/
 void	heap_push(t_heap *h, t_heap_node node)
 {
-	t_heap_node	*new_arr;
-	int			new_cap;
-	int			idx;
+	int	idx;
 
 	if (h->size >= h->capacity)
-	{
-		if (h->capacity == 0)
-			new_cap = 4;
-		else
-			new_cap = h->capacity * 2;
-		new_arr = realloc(h->arr, new_cap * sizeof(t_heap_node));
-		if (!new_arr)
-			return ;
-		h->arr = new_arr;
-		h->capacity = new_cap;
-	}
+		return ;
 	idx = h->size++;
 	h->arr[idx] = node;
 	heapify_up(h, idx);
 }
 
+/*
+** Remove and return the root node.
+**
+** Root always contains:
+** - maximum element in a max-heap
+** - minimum element in a min-heap
+*/
 t_heap_node	heap_pop(t_heap *h)
 {
 	t_heap_node	top;

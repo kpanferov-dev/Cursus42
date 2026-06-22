@@ -6,12 +6,18 @@
 /*   By: kpanfero <kpanfero@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/01 00:00:00 by marvin            #+#    #+#             */
-/*   Updated: 2026/06/15 12:40:02 by kpanfero         ###   ########.fr       */
+/*   Updated: 2026/06/20 16:29:00 by kpanfero         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
+/*
+** Wakes up all coders waiting on dongles.
+**
+** This is used when the simulation is stopping,
+** so no thread stays blocked forever in pthread_cond_wait().
+*/
 static void	monitor_wake_dongles(t_sim *sim)
 {
 	int	j;
@@ -26,6 +32,18 @@ static void	monitor_wake_dongles(t_sim *sim)
 	}
 }
 
+/*
+** Checks if any coder has "burned out" (died).
+**
+** Condition:
+** - current_time - last_compile_start >= time_to_burnout
+**
+** If a coder is dead:
+** - sets stop_flag
+** - logs death
+** - wakes all threads
+** - stops simulation
+*/
 static int	monitor_check_burnout(t_sim *sim, long long now)
 {
 	int	i;
@@ -51,6 +69,14 @@ static int	monitor_check_burnout(t_sim *sim, long long now)
 	return (0);
 }
 
+/*
+** Checks if ALL coders have completed required number of compiles.
+**
+** If yes:
+** - stop simulation gracefully
+** - wake all threads
+** - return 1
+*/
 static int	monitor_all_done(t_sim *sim)
 {
 	int	i;
@@ -70,6 +96,18 @@ static int	monitor_all_done(t_sim *sim)
 	return (1);
 }
 
+/*
+** MONITOR THREAD MAIN LOOP
+**
+** This thread runs in parallel with all coders.
+**
+** Responsibilities:
+** - Detect coder burnout (death)
+** - Detect completion of all tasks
+** - Stop simulation when needed
+**
+** It continuously checks the state of the system.
+*/
 void	*monitor_routine(void *arg)
 {
 	t_sim		*sim;
