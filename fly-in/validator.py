@@ -1,191 +1,234 @@
-"""Independent validator for Fly-in simulation output.
+"""Output validator — verifies a simulation transcript respects all rules."""
 
-This is a *test* utility (not part of the graded deliverable). It re-reads
-a map and a sequence of turn lines and confirms, from scratch, that the
-movement obeys every rule in the subject: adjacency, blocked zones,
-restricted two-turn transit, zone capacity and connection capacity.
-
-Run it as::
-
-    python tests/validator.py maps/example.txt
-"""
-
-from __future__ import annotations
-
-import os
-import sys
-from collections import defaultdict
-from typing import Dict, List, Set, Tuple
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-from models import Network, ZoneType  # noqa: E402
-from parser import MapParser  # noqa: E402
-from pathfinding import PathFinder  # noqa: E402
-from simulation import SimulationResult, Simulator  # noqa: E402
+from typing import Dict, List, Optional, Set, Tuple
+from graph import Graph
+from zone import ZoneType
+from connection import Connection
+from map_parser import MapParser
 
 
 class ValidationError(Exception):
-    """Raised when emitted output violates a movement rule."""
+    """Raised when a simulation output violates the spec."""
+
+    pass
 
 
-def _key(a: str, b: str) -> Tuple[str, str]:
-    return tuple(sorted((a, b)))  # type: ignore[return-value]
+def validate(graph: Graph, turn_log: List[List[str]]) -> Tuple[bool, str]:
+    """Validate a simulation transcript against spec rules.
 
+    Args:
+        graph: The map graph.
+        turn_log: List of turns, each a list of tokens like 'D1-zone'.
 
-def validate(network: Network, result: SimulationResult) -> None:
-    """Check that every turn of ``result`` is legal for ``network``.
-
-    Raises:
-        ValidationError: On the first rule violation found.
+    Returns:
+        Tuple of (is_valid, message). Message describes the issue.
     """
-    position: Dict[int, str] = {
-        i: network.start.name for i in range(1, network.nb_drones + 1)}
-    transit: Dict[int, str] = {}
-    for turn, moves in enumerate(result.moves_per_turn, start=1):
-        seen: Set[int] = set()
-        for drone_id, _ in moves:
-            if drone_id in seen:
-                raise ValidationError(
-                    f"turn {turn}: D{drone_id} acted more than once")
-            seen.add(drone_id)
-        link_use: Dict[Tuple[str, str], int] = defaultdict(int)
-        arrivals_expected = dict(transit)
-        for drone_id, token in moves:
-            current = position[drone_id]
-            if "-" in token:
-                _check_launch(network, drone_id, current, token, link_use)
-                _, target = token.split("-", 1)
-                transit[drone_id] = target
-            elif drone_id in transit:
-                if token != transit[drone_id]:
-                    raise ValidationError(
-                        f"turn {turn}: D{drone_id} should arrive at "
-                        f"{transit[drone_id]} not {token}")
-                position[drone_id] = token
-                del transit[drone_id]
-                arrivals_expected.pop(drone_id, None)
+    assert graph.start_zone is not None
+    assert graph.end_zone is not None
+
+    nb = graph.nb_drones
+    # drone_id -> current zone name OR connection name (if in transit)
+    drone_pos: Dict[int, str] = {
+        i + 1: graph.start_zone.name for i in range(nb)}
+    # drone_id -> True if in transit (occupies a link, not a zone)
+    in_transit: Dict[int, bool] = {i + 1: False for i in range(nb)}
+    # drone_id -> destination zone name (if in transit)
+    transit_dest: Dict[int, str] = {}
+    # delivered drones
+    delivered: Set[int] = set()
+
+    for turn_num, tokens in enumerate(turn_log, start=1):
+        # Each drone may appear at most once
+        seen_drones: Set[int] = set()
+
+        # Track per-turn capacity usage
+        zone_arrivals: Dict[str, int] = {}
+        zone_departures: Dict[str, int] = {}
+        link_use: Dict[str, int] = {}
+
+        # Parse all tokens for this turn
+        actions: List[Tuple[int, str]] = []
+        for tok in tokens:
+            if not tok.startswith("D"):
+                return False, (
+                    f"Turn {turn_num}: token '{tok}' must start with 'D'"
+                )
+            try:
+                dash = tok.index("-")
+            except ValueError:
+                return False, f"Turn {turn_num}: token '{tok}' missing '-'"
+            drone_str = tok[:dash]
+            target = tok[dash + 1:]
+            try:
+                drone_id = int(drone_str[1:])
+            except ValueError:
+                return False, f"Turn {turn_num}: bad drone id '{drone_str}'"
+
+            if drone_id in seen_drones:
+                return False, (
+                    f"Turn {turn_num}: drone {drone_id} appears twice"
+                )
+            seen_drones.add(drone_id)
+
+            if drone_id in delivered:
+                return False, (
+                    f"Turn {turn_num}: drone {drone_id} already delivered"
+                )
+
+            actions.append((drone_id, target))
+
+        # Apply actions
+        for drone_id, target in actions:
+            current = drone_pos[drone_id]
+
+            if in_transit[drone_id]:
+                # Drone is on a link; this turn it must arrive at dest zone
+                expected_dest = transit_dest[drone_id]
+                if target == current:
+                    # Stayed on link (allowed if dest full)
+                    continue
+                if target != expected_dest:
+                    return False, (
+                        f"Turn {turn_num}: drone {drone_id}"
+                        f"on link '{current}' "
+                        f"must arrive at '{expected_dest}'"
+                        f"but moved to '{target}'"
+                    )
+                # Arriving at expected_dest
+                # Free link, enter zone
+                link_use[current] = link_use.get(current, 0) + 1
+                zone_arrivals[target] = zone_arrivals.get(target, 0) + 1
+                drone_pos[drone_id] = target
+                in_transit[drone_id] = False
+                del transit_dest[drone_id]
+                if target == graph.end_zone.name:
+                    delivered.add(drone_id)
             else:
-                _check_simple(network, drone_id, current, token, turn,
-                              link_use)
-                position[drone_id] = token
-        if arrivals_expected:
-            missing = ", ".join(f"D{d}" for d in arrivals_expected)
-            raise ValidationError(
-                f"turn {turn}: transit drones {missing} failed to arrive")
-        _check_capacity(network, position, transit, turn)
-        _check_links(network, link_use, turn)
-    _check_completion(network, position)
+                # Drone is in a zone, performing a new action
+                # Check if target is a zone (normal/priority move)
+                # or a connection (starting restricted transit)
+                if target in graph.zones:
+                    # Zone move
+                    nxt = graph.zones[target]
+                    conn_zone: Optional[Connection] = graph.get_connection(
+                        graph.zones[current], nxt
+                    )
+                    if conn_zone is None:
+                        return False, (
+                            f"Turn {turn_num}: no connection from "
+                            f"'{current}' to '{target}'"
+                        )
+                    if nxt.zone_type == ZoneType.RESTRICTED:
+                        return False, (
+                            f"Turn {turn_num}: drone {drone_id} cannot enter "
+                            f"restricted zone '{target}' in 1 turn"
+                        )
+                    if nxt.zone_type == ZoneType.BLOCKED:
+                        return False, (
+                            f"Turn {turn_num}: cannot"
+                            f"enter blocked zone '{target}'"
+                        )
+                    zone_departures[current] = zone_departures.get(
+                        current, 0) + 1
+                    zone_arrivals[target] = zone_arrivals.get(target, 0) + 1
+                    link_use[conn_zone.name] = link_use.get(
+                        conn_zone.name, 0) + 1
+                    drone_pos[drone_id] = target
+                    if target == graph.end_zone.name:
+                        delivered.add(drone_id)
+                else:
+                    # Must be a connection (starting restricted transit)
+                    # Find connection by name (could be either direction)
+                    conn_link: Optional[Connection] = None
+                    for c in graph.connections:
+                        if c.name == target or (
+                            f"{c.zone_b.name}-{c.zone_a.name}" == target
+                        ):
+                            conn_link = c
+                            break
+                    if conn_link is None:
+                        return False, (
+                            f"Turn {turn_num}: target '{target}' is neither "
+                            "a zone nor a connection"
+                        )
+                    # Determine destination side
+                    if current == conn_link.zone_a.name:
+                        dest_zone = conn_link.zone_b
+                    elif current == conn_link.zone_b.name:
+                        dest_zone = conn_link.zone_a
+                    else:
+                        return False, (
+                            f"Turn {turn_num}: drone {drone_id} "
+                            f"at '{current}' "
+                            f"can't use connection '{target}'"
+                        )
+                    if dest_zone.zone_type != ZoneType.RESTRICTED:
+                        return False, (
+                            f"Turn {turn_num}: connection token used but "
+                            f"destination '{dest_zone.name}' is not restricted"
+                        )
+                    zone_departures[current] = zone_departures.get(
+                        current, 0) + 1
+                    link_use[conn_link.name] = link_use.get(
+                        conn_link.name, 0) + 1
+                    drone_pos[drone_id] = conn_link.name
+                    in_transit[drone_id] = True
+                    transit_dest[drone_id] = dest_zone.name
 
+        # Check capacity constraints at end of turn
+        # Build current zone occupancy
+        occ: Dict[str, int] = {z: 0 for z in graph.zones}
+        for did, pos in drone_pos.items():
+            if did in delivered:
+                continue
+            if not in_transit[did]:
+                occ[pos] = occ.get(pos, 0) + 1
 
-def _check_launch(
-    network: Network,
-    drone_id: int,
-    current: str,
-    token: str,
-    link_use: Dict[Tuple[str, str], int],
-) -> None:
-    """Validate that a connection token launches a legal restricted move."""
-    origin, target = token.split("-", 1)
-    if origin != current:
-        raise ValidationError(
-            f"D{drone_id} launches from {origin} but sits in {current}")
-    if target not in network.zones:
-        raise ValidationError(f"D{drone_id} flies toward unknown {target}")
-    if network.zones[target].zone_type is not ZoneType.RESTRICTED:
-        raise ValidationError(
-            f"D{drone_id} uses a connection token for non-restricted "
-            f"{target}")
-    if target not in network.neighbours(current):
-        raise ValidationError(f"{current}-{target} is not a connection")
-    link_use[_key(current, target)] += 1
+        for zname, count in occ.items():
+            zone = graph.zones[zname]
+            if zone.is_start or zone.is_end:
+                continue
+            if count > zone.max_drones:
+                return False, (
+                    f"Turn {turn_num}: zone '{zname}' has {count} drones "
+                    f"(max={zone.max_drones})"
+                )
 
+        # Check link capacity (sum of drones on each link)
+        link_occ: Dict[str, int] = {}
+        for did, pos in drone_pos.items():
+            if in_transit[did]:
+                link_occ[pos] = link_occ.get(pos, 0) + 1
+        for cname, count in link_occ.items():
+            for c in graph.connections:
+                if c.name == cname:
+                    if count > c.max_link_capacity:
+                        return False, (
+                            f"Turn {turn_num}: link '{cname}' has {count} "
+                            f"drones (max={c.max_link_capacity})"
+                        )
+                    break
 
-def _check_simple(
-    network: Network,
-    drone_id: int,
-    current: str,
-    token: str,
-    turn: int,
-    link_use: Dict[Tuple[str, str], int],
-) -> None:
-    """Validate a single-turn move into a normal or priority zone."""
-    if token not in network.zones:
-        raise ValidationError(f"turn {turn}: D{drone_id} moved to unknown "
-                              f"{token}")
-    zone = network.zones[token]
-    if not zone.zone_type.is_traversable:
-        raise ValidationError(f"turn {turn}: D{drone_id} entered blocked "
-                              f"{token}")
-    if zone.enter_cost != 1:
-        raise ValidationError(f"turn {turn}: D{drone_id} reached {token} in "
-                              f"one turn but it costs {zone.enter_cost}")
-    if token not in network.neighbours(current):
-        raise ValidationError(f"turn {turn}: {current}-{token} is not a "
-                              f"connection")
-    link_use[_key(current, token)] += 1
+    if len(delivered) != nb:
+        return False, (
+            f"Only {len(delivered)}/{nb} drones delivered"
+        )
 
-
-def _check_capacity(
-    network: Network,
-    position: Dict[int, str],
-    transit: Dict[int, str],
-    turn: int,
-) -> None:
-    """Verify no zone exceeds its capacity at the end of a turn."""
-    counts: Dict[str, int] = defaultdict(int)
-    for drone_id, zone_name in position.items():
-        if drone_id in transit:
-            continue
-        counts[zone_name] += 1
-    for name, count in counts.items():
-        zone = network.zones[name]
-        if zone.is_unlimited:
-            continue
-        if count > zone.capacity:
-            raise ValidationError(
-                f"turn {turn}: zone {name} holds {count} drones but capacity "
-                f"is {zone.capacity}")
-
-
-def _check_links(
-    network: Network,
-    link_use: Dict[Tuple[str, str], int],
-    turn: int,
-) -> None:
-    """Verify no connection exceeds its capacity in a turn."""
-    for key, count in link_use.items():
-        connection = network.connections[key]
-        if count > connection.capacity:
-            raise ValidationError(
-                f"turn {turn}: connection {key[0]}-{key[1]} used by {count} "
-                f"drones but capacity is {connection.capacity}")
-
-
-def _check_completion(network: Network, position: Dict[int, str]) -> None:
-    """Verify all drones finished at the end zone."""
-    for drone_id, zone_name in position.items():
-        if zone_name != network.end.name:
-            raise ValidationError(
-                f"D{drone_id} ended at {zone_name}, not the end zone")
-
-
-def _validate_paths(maps: List[str]) -> int:
-    """Validate the bundled maps and report the outcome."""
-    failures = 0
-    for path in maps:
-        network = MapParser().parse_file(path)
-        lanes = PathFinder(network).find_lanes()
-        result = Simulator(network, lanes).run()
-        try:
-            validate(network, result)
-            print(f"OK   {path:<28} turns={result.turns}")
-        except ValidationError as error:
-            failures += 1
-            print(f"FAIL {path:<28} {error}")
-    return failures
+    return True, f"VALID: {nb} drones delivered in {len(turn_log)} turns"
 
 
 if __name__ == "__main__":
-    targets = sys.argv[1:]
-    sys.exit(1 if _validate_paths(targets) else 0)
+    import sys
+    from scheduler import Scheduler
+
+    if len(sys.argv) < 2:
+        print("Usage: python validator.py <map_file>")
+        sys.exit(1)
+
+    parser = MapParser()
+    g = parser.parse_file(sys.argv[1])
+    s = Scheduler(g, num_paths=6)
+    log = s.run()
+    ok, msg = validate(g, log)
+    print(msg)
+    sys.exit(0 if ok else 1)

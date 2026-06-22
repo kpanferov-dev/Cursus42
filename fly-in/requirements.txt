@@ -1,2 +1,8 @@
+# Core: stdlib only (no external graph libraries used).
+# Optional: enables --graph visualisation
+matplotlib>=3.5
+
+# Dev tools
 flake8>=6.0
 mypy>=1.0
+pytest>=7.0
