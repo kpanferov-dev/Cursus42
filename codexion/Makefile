@@ -1,21 +1,34 @@
-NAME = codexion
-CC = cc
-CFLAGS = -Wall -Wextra -Werror -pthread -fsanitize=thread
-# -g3(te dice la linea) -O0(te dice la traza) -fsanitize=leak -fsanitize=thread o uno u otro pero no los dos y no mezclar con valgrind
-SRCS = codexion.c
-OBJS = $(SRCS:.c=.o)
+NAME		= codexion
 
-all: $(NAME)
+CC			= cc
+CFLAGS		= -Wall -Wextra -Werror
+LDFLAGS		= -pthread
 
-$(NAME): $(OBJS)
-	$(CC) $(CFLAGS) -o $(NAME) $(OBJS)
+SRCS		= codexion_main.c \
+			  codexion_init.c \
+			  codexion_utils.c \
+			  codexion_heap.c \
+			  codexion_heap2.c \
+			  codexion_dongle.c \
+			  codexion_coder.c \
+			  codexion_monitor.c
+
+OBJS		= $(SRCS:.c=.o)
+
+all:		$(NAME)
+
+$(NAME):	$(OBJS)
+			$(CC) $(CFLAGS) $(OBJS) -o $(NAME) $(LDFLAGS)
+
+%.o:		%.c codexion.h
+			$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS)
+			rm -f $(OBJS)
 
-fclean: clean
-	rm -f $(NAME)
+fclean:		clean
+			rm -f $(NAME)
 
-re: fclean all
+re:			fclean all
 
-.PHONY: all clean fclean re
+.PHONY:		all clean fclean re

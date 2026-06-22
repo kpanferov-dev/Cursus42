@@ -6,12 +6,19 @@
 /*   By: kpanfero <kpanfero@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/01 00:00:00 by marvin            #+#    #+#             */
-/*   Updated: 2026/06/15 12:41:01 by kpanfero         ###   ########.fr       */
+/*   Updated: 2026/06/20 16:22:24 by kpanfero         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
+/*
+** Starts the simulation by creating:
+** - one thread per coder (coder_routine)
+** - one monitor thread (monitor_routine)
+**
+** Then waits for all threads to finish using pthread_join.
+*/
 static void	run_simulation(t_sim *sim)
 {
 	int				i;
@@ -36,6 +43,12 @@ static void	run_simulation(t_sim *sim)
 	pthread_join(sim->monitor_thread, NULL);
 }
 
+/*
+** Frees all resources used by the simulation:
+** - destroys mutexes and condition variables
+** - frees priority queues (heaps)
+** - frees allocated memory
+*/
 void	cleanup_simulation(t_sim *sim)
 {
 	int	i;
@@ -56,6 +69,15 @@ void	cleanup_simulation(t_sim *sim)
 	free(sim->coder_threads);
 }
 
+/*
+** Entry point of the program.
+**
+** Flow:
+** 1. Parse arguments
+** 2. Initialize simulation structures
+** 3. Run simulation (threads start here)
+** 4. Cleanup all resources
+*/
 int	main(int argc, char **argv)
 {
 	t_sim	sim;

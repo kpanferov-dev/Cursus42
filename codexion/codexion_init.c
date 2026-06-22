@@ -6,12 +6,21 @@
 /*   By: kpanfero <kpanfero@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/01 00:00:00 by marvin            #+#    #+#             */
-/*   Updated: 2026/06/15 12:40:44 by kpanfero         ###   ########.fr       */
+/*   Updated: 2026/06/20 15:46:13 by kpanfero         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
+/*
+** Check that all simulation parameters are valid.
+**
+** Returns:
+**     1 -> valid
+**     0 -> invalid
+**
+** Prevents impossible or nonsensical values.
+*/
 static int	args_are_valid(t_sim *sim)
 {
 	if (sim->num_coders <= 0 || sim->time_to_burnout <= 0)
@@ -25,6 +34,11 @@ static int	args_are_valid(t_sim *sim)
 	return (1);
 }
 
+/*
+** Parse command-line arguments and store them
+** inside the simulation structure.
+** Convert strings into integers.
+*/
 int	parse_arguments(int argc, char **argv, t_sim *sim)
 {
 	if (argc != 9)
@@ -45,6 +59,9 @@ int	parse_arguments(int argc, char **argv, t_sim *sim)
 	return (args_are_valid(sim));
 }
 
+/*
+** Initialize all dongles.
+*/
 static void	init_dongles(t_sim *sim)
 {
 	int	i;
@@ -58,13 +75,18 @@ static void	init_dongles(t_sim *sim)
 		pthread_mutex_init(&sim->dongles[i].mutex, NULL);
 		pthread_cond_init(&sim->dongles[i].cond, NULL);
 		if (sim->scheduler == 0)
-			heap_init(&sim->dongles[i].wait_queue, compare_fifo);
+			heap_init(&sim->dongles[i].wait_queue,
+				compare_fifo, sim->num_coders);
 		else
-			heap_init(&sim->dongles[i].wait_queue, compare_edf);
+			heap_init(&sim->dongles[i].wait_queue,
+				compare_edf, sim->num_coders);
 		i++;
 	}
 }
 
+/*
+** Initialize all coder structures
+*/
 static void	init_coders(t_sim *sim)
 {
 	int	i;
@@ -89,6 +111,9 @@ static void	init_coders(t_sim *sim)
 	}
 }
 
+/*
+** Initialize simulation
+*/
 void	init_simulation(t_sim *sim)
 {
 	sim->stop_flag = 0;

@@ -6,12 +6,18 @@
 /*   By: kpanfero <kpanfero@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/01 00:00:00 by marvin            #+#    #+#             */
-/*   Updated: 2026/06/15 12:40:17 by kpanfero         ###   ########.fr       */
+/*   Updated: 2026/06/20 16:49:57 by kpanfero         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
+/*
+** Assigns the two dongles a coder needs.
+**
+** Also enforces a consistent order (first < second)
+** to reduce deadlock risk when acquiring resources.
+*/
 static void	coder_set_dongles(t_sim *sim, t_coder *coder,
 				t_dongle **first, t_dongle **second)
 {
@@ -32,6 +38,15 @@ static void	coder_set_dongles(t_sim *sim, t_coder *coder,
 	}
 }
 
+/*
+** Tries to acquire both dongles needed for compilation.
+**
+** Steps:
+** 1. Compute scheduling key (FIFO or EDF)
+** 2. Acquire first dongle
+** 3. Acquire second dongle
+** 4. If second fails → release first (avoid deadlock / partial hold)
+*/
 static int	coder_take_dongles(t_sim *sim, t_dongle *first,
 				t_dongle *second, int id)
 {
@@ -53,6 +68,16 @@ static int	coder_take_dongles(t_sim *sim, t_dongle *first,
 	return (0);
 }
 
+/*
+** Handles the compilation phase of a coder.
+**
+** Flow:
+** 1. Take both dongles
+** 2. Start compiling
+** 3. Sleep (simulate compile time)
+** 4. Release dongles
+** 5. Update compile counter
+*/
 static int	coder_compile(t_sim *sim, t_coder *coder, t_dongle *first,
 				t_dongle *second)
 {
@@ -75,6 +100,13 @@ static int	coder_compile(t_sim *sim, t_coder *coder, t_dongle *first,
 	return (0);
 }
 
+/*
+** Simulates non-critical work phases:
+** - debugging
+** - refactoring
+**
+** These do NOT require dongles.
+*/
 static int	coder_think(t_sim *sim, int id)
 {
 	if (sim->stop_flag)
@@ -90,6 +122,18 @@ static int	coder_think(t_sim *sim, int id)
 	return (0);
 }
 
+/*
+** MAIN LOOP OF EACH CODER THREAD
+**
+** Each coder repeatedly:
+** 1. Takes dongles
+** 2. Compiles
+** 3. Thinks (debug + refactor)
+**
+** Stops when:
+** - simulation ends
+** - or required number of compiles is reached
+*/
 void	*coder_routine(void *arg)
 {
 	t_thread_arg	*thread_arg;
