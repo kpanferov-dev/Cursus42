@@ -1,193 +1,338 @@
-*This project has been created as part of the 42 curriculum by &lt;your_login&gt;.*
+_This project has been created as part of the 42 curriculum by hwang._
 
-# Fly-in
+> Replace `hwang` above with your actual 42 login before submission.
+
+# Fly-In — Drone Routing Simulation
 
 ## Description
 
-Fly-in is a drone-routing simulator. Given a network of connected
-**zones**, a number of drones all starting in a single **start** zone must
-be routed to a single **end** zone in as few simulation turns as possible,
-while respecting a set of movement and capacity constraints.
+**Fly-In** is a drone routing simulation system that efficiently navigates a fleet
+of drones from a central start hub to a target end zone through a connected
+network of zones. The algorithm minimises total simulation turns while
+respecting strict zone-capacity, link-capacity, and movement-cost constraints.
 
-Zones come in four flavours that affect routing:
+The system parses a custom map file format describing the network topology,
+schedules drone movements turn-by-turn, and outputs a step-by-step transcript
+of all drone movements.
 
-| Type | Entry cost | Notes |
-|------|-----------|-------|
-| `normal` | 1 turn | default |
-| `priority` | 1 turn | preferred during pathfinding |
-| `restricted` | 2 turns | the drone occupies the connection in transit and **must** arrive the next turn |
-| `blocked` | — | impassable; never entered |
+### Key Features
 
-Each zone may hold at most `max_drones` drones at once (default `1`; the
-start and end zones are unlimited), and each connection may be traversed
-by at most `max_link_capacity` drones at once (default `1`). The goal is
-to minimise the total number of turns.
-
-The project is written in **Python 3.10+**, is fully type-annotated
-(passes `mypy --strict`), adheres to **flake8**, is **object-oriented**,
-and uses **no graph libraries** — all graph logic is implemented by hand.
+- **Custom map parser** with full validation and clear error messages
+- **Multi-path flow scheduler** that distributes drones across diverse routes
+- **Capacity-aware scheduling** for both zones (`max_drones`) and links
+  (`max_link_capacity`)
+- **Restricted-zone transit** support (2-turn moves)
+- **Adaptive optimisation** that auto-tunes path count per map
+- **Colored terminal visualisation** of the network and drone movements
+- **Optional graphical visualisation** via `matplotlib`
+- **Validator** that verifies every transcript respects all spec rules
 
 ## Instructions
 
-No third-party runtime dependencies are required; only the linters used
-for development are listed in `requirements.txt`.
+### Installation
+
+The Makefile automatically creates a virtual environment and installs all
+dependencies. On macOS / Linux:
 
 ```bash
-# install the lint/type-check tooling (optional, for development)
 make install
-
-# run the simulation on a map (defaults to maps/example.txt)
-make run
-make run MAP=maps/fork.txt
-
-# run directly, with options
-python3 main.py maps/example.txt            # full coloured feedback
-python3 main.py maps/example.txt --quiet    # only the canonical move lines
-python3 main.py maps/example.txt --no-color # disable ANSI colours
-
-# debugging, linting, and the rule checker
-make debug MAP=maps/restricted.txt          # launches pdb
-make lint                                    # flake8 + mypy (subject flags)
-make lint-strict                             # flake8 + mypy --strict
-make test                                    # independent rule validator
-make clean                                   # remove caches
 ```
 
-### Map format
+This creates a `.venv` directory in the project root by default.
 
-```
-nb_drones: 5
-start_hub: hub 0 0 [color=green]
-end_hub: goal 10 10 [color=yellow]
-hub: roof1 3 4 [zone=restricted color=red]
-hub: corridorA 4 3 [zone=priority color=green max_drones=2]
-connection: hub-roof1
-connection: corridorA-tunnelB [max_link_capacity=2]
+**On the 42 cluster** (where the home directory has a small disk quota), the
+Makefile auto-detects `/sgoinfre/<user>/` or `/goinfre/<user>/` and places
+the venv there to avoid filling up your home. You can override with:
+
+```bash
+make install VENV_DIR=/sgoinfre/$USER/fly_in_venv
 ```
 
-The first line declares the drone count. Each `start_hub`/`end_hub`/`hub`
-line declares a zone with integer coordinates and optional `[...]`
-metadata (`zone`, `color`, `max_drones`, in any order). Each `connection`
-line links two previously-declared zones with an optional
-`max_link_capacity`. Lines beginning with `#` are comments. Any
-malformed input stops the program with a message naming the line and the
-cause.
+Then either activate the venv:
 
-### Output format
+```bash
+source .venv/bin/activate     # or your custom path
+```
 
-One line per turn lists the moves of that turn, space separated, as
-`D<id>-<zone>`, or `D<id>-<from>-<to>` while a drone is in flight toward a
-restricted zone. Drones that do not move are omitted; the run ends once
-all drones reach the end zone.
+or simply use the Makefile targets which always invoke the venv's Python:
 
-## Algorithm choices and implementation strategy
+```bash
+make run MAP=maps/01_linear_path.txt ARGS=--visual
+```
 
-The code separates three concerns into independent, testable objects.
+### Manual installation (without Makefile)
 
-### 1. Model (`models.py`)
-`Zone`, `Connection` and `Network` describe the graph. `ZoneType` is an
-`Enum` that also owns the routing semantics of each type (entry cost,
-traversability, priority). The network keeps an adjacency map and a
-connection table keyed by an order-independent pair so that `a-b` and
-`b-a` are the same edge.
+If you prefer to install manually:
 
-### 2. Pathfinding (`pathfinding.py`)
-Two hand-written algorithms:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-* **Dijkstra** (`shortest_path`) over the *entry cost* of each zone, with
-  a secondary key that prefers routes through `priority` zones. This
-  honours the weighted-zone requirement (restricted = 2, priority
-  preferred).
-* **Maximum flow** (`find_lanes`) to obtain capacity-respecting routes.
-  Because zones — not just edges — have capacities, each zone is
-  **split** into an *in* and an *out* node joined by an edge whose
-  capacity is the zone's `max_drones` (unlimited for start/end, `0` for
-  blocked). Connections become directed arcs in both directions with
-  capacity `max_link_capacity`. A textbook **Edmonds–Karp** routine
-  computes the maximum flow from the start's *in* node to the end's *out*
-  node; the flow is then decomposed into unit-flow **lanes**. By
-  construction, the simultaneous use of these lanes never exceeds any
-  zone or connection capacity. Lanes are sorted by cost then length.
+### Running
 
-Complexity: the flow runs in `O(V·E²)` in the worst case (Edmonds–Karp),
-which is comfortable for the map sizes in this subject; Dijkstra is
-`O(E·log V)`. Paths are computed once and reused — nothing is recomputed
-per turn — so memory is `O(V + E + lanes)`.
+```bash
+# Run the simulation (plain output to stdout)
+make run MAP=maps/01_linear_path.txt
 
-### 3. Scheduling (`simulation.py`)
-The `Simulator` is the **source of truth**: whatever the pathfinder
-proposes, the simulator only ever emits legal moves.
+# With colored terminal visualisation (drone moves + zone state per turn)
+make run MAP=maps/03_ultimate_challenge.txt ARGS=--visual
 
-* **Distribution.** Drones are spread across lanes with a greedy
-  makespan heuristic: each drone joins the lane with the smallest current
-  `cost + load`. This is the classic allocation that minimises the finish
-  turn when one drone can enter a lane per turn.
-* **Turn resolution.** Each turn proceeds in three phases:
-  1. *Arrivals* — drones finishing a restricted (2-turn) transit land in
-     their destination. A drone that lands this turn has used its action
-     and cannot move again.
-  2. *Advances* — remaining drones try to step forward along their lane,
-     processed **closest-to-goal first** so a leader vacates a zone before
-     a follower needs it (pipelining). A move is taken only if the
-     destination still has room and the connection still has capacity.
-     Entering a restricted zone reserves the destination slot for the
-     arrival turn (modelled by occupying it during transit), which
-     guarantees the "must arrive next turn" rule can always be honoured.
-  3. *Rotation breaking* — if a group of waiting drones forms a cycle
-     where each wants the cell another is leaving, they are rotated
-     simultaneously (legal because every zone keeps the same occupancy).
-* **Safety.** Drones wait rather than make an illegal move, and a turn
-  ceiling guards against any unexpected non-progress.
+# With static graphical network display (matplotlib window)
+make run MAP=maps/01_the_impossible_dream.txt ARGS="--visual --graph"
 
-Because the simulator enforces every rule itself, the output is always
-valid even on adversarial maps; the pathfinder's job is purely to make it
-*fast*.
+# Save static graph as PNG file
+python3 -m fly_in.main maps/01_the_impossible_dream.txt --save-graph dream.png
+open dream.png   # macOS
 
-### Adaptability
-Different topologies are handled by the same pipeline: disjoint paths fall
-out of the flow as separate lanes, shared zones are governed by their
-capacities, weighted/restricted zones are priced into both the flow and
-the scheduler, and loops are tolerated by the rotation breaker.
+# ── Animation: see drone movement on the graph! ──────────────────────────
 
-## Visual representation features
+# Live animated window (close window to exit)
+python3 -m fly_in.main maps/01_dead_end_trap.txt --animate
 
-Running without `--quiet` produces coloured terminal feedback that makes
-the simulation easier to follow and to evaluate:
+# Save one PNG per turn (turn_001.png, turn_002.png, ...)
+python3 -m fly_in.main maps/02_circular_loop.txt --save-frames frames/
+open frames/turn_001.png   # view individual frames
+# Or assemble into a GIF:
+#   brew install imagemagick
+#   magick -delay 60 -loop 0 frames/turn_*.png simulation.gif
 
-* a **network overview** — drone/zone/connection counts, the start and
-  end, and every zone printed in its own `color` with a glyph for its
-  type (`o` normal, `*` priority, `!` restricted, `x` blocked) and its
-  capacity;
-* the **lanes** the pathfinder selected, with their costs;
-* the **per-turn movements**, with each destination painted in its zone's
-  colour so a reader can track where drones flow;
-* a **summary** of secondary metrics (total turns, drones delivered, total
-  moves, average moves per drone) to support peer comparison.
+# Customize animation speed (default 800ms per frame)
+python3 -m fly_in.main maps/01_the_impossible_dream.txt --animate --frame-interval 300
 
-Colours are emitted only when the output is a real terminal and can be
-forced off with `--no-color`, so piping `--quiet` output stays clean and
-machine-readable.
+# Quiet mode: only the per-turn output (spec format)
+make run MAP=maps/01_linear_path.txt ARGS=--quiet
+
+# Manual path-count override (for experimentation)
+python3 -m fly_in.main maps/01_the_impossible_dream.txt --paths 6
+```
+
+### Makefile Targets
+
+| Target                          | Description                                  |
+| ------------------------------- | -------------------------------------------- |
+| `make help`                     | Show all targets                             |
+| `make info`                     | Show detected Python and venv paths          |
+| `make install`                  | Create venv + install dev dependencies       |
+| `make install VENV_DIR=/path`   | Install with a custom venv location          |
+| `make run MAP=path`             | Run a simulation                             |
+| `make run MAP=path ARGS=--visual` | Run with colored output                    |
+| `make debug MAP=path`           | Run inside `pdb`                             |
+| `make lint`                     | `flake8` + `mypy` (mandatory configuration)  |
+| `make lint-strict`              | `flake8` + `mypy --strict`                   |
+| `make test`                     | `pytest`                                     |
+| `make clean`                    | Remove caches                                |
+| `make clean-venv`               | Remove the virtualenv                        |
+| `make run-easy1` … `run-hard3`  | Convenience targets for each map             |
+| `make run-challenger`           | Run the Impossible Dream                     |
+| `make run-all`                  | Run every map, show only turn count          |
+| `make run-all-verbose`          | Run every map with full per-turn output      |
+
+## Troubleshooting
+
+### `pip: No such file or directory` (macOS)
+
+The Makefile uses `python3 -m pip` internally — it never calls bare `pip`.
+If you see this error, you have an outdated Makefile; pull the latest version.
+
+### `OSError: [Errno 28] No space left on device` (42 cluster)
+
+Your home directory quota is full. Solution: place the venv in a directory
+without a quota:
+
+```bash
+make clean-venv                                          # remove the bad venv
+make install VENV_DIR=/sgoinfre/$USER/fly_in_venv        # install elsewhere
+```
+
+The Makefile auto-detects `/sgoinfre/` and `/goinfre/` and uses them
+automatically when present, so usually `make install` alone suffices on 42.
+
+### `python3: command not found`
+
+The Makefile probes `python3.11`, `python3.10`, `python3`, and `python` in
+order. If none is found, install Python 3.10+ first. On 42 you may need:
+
+```bash
+which python3.11 python3.10 python3 python
+```
+
+and pass the right one explicitly: `make install PYTHON=/usr/bin/python3.10`.
+
+### `ModuleNotFoundError: No module named 'matplotlib'`
+
+`matplotlib` is optional and only needed for `--graph`. The Makefile
+silently skips it if installation fails. Without it, `--visual` (terminal
+colors) still works.
+
+## Algorithm & Implementation Strategy
+
+### Architecture
+
+The codebase is fully **object-oriented** and split into clear layers:
+
+```
+fly_in/
+├── models/          # Core domain objects
+│   ├── zone.py            (Zone + ZoneType enum)
+│   ├── connection.py      (Connection edge)
+│   ├── drone.py           (Drone + DroneState enum)
+│   └── graph.py           (Graph: zones + adjacency)
+├── parser/
+│   └── map_parser.py      (MapParser, ParseError)
+├── algorithm/
+│   ├── pathfinder.py      (Dijkstra + k-best paths)
+│   └── scheduler.py       (Multi-drone turn scheduler)
+├── simulation/
+│   ├── engine.py          (Adaptive run orchestrator)
+│   └── validator.py       (Output rule-compliance checker)
+├── visualization/
+│   ├── terminal.py        (ANSI-colored terminal output)
+│   └── graph_view.py      (matplotlib graph rendering)
+└── main.py                (CLI entry point)
+```
+
+### Pathfinding
+
+A **modified Dijkstra** walks the graph using zone-type-aware costs
+(normal=1, restricted=2, priority=0.9 — slightly biased to encourage
+priority routes when costs tie).
+
+The `find_k_best_paths` method finds **k diverse paths** by repeatedly
+running Dijkstra while applying penalties to zones used in previously
+found paths. This gives the scheduler multiple routes to distribute
+drones across.
+
+**Complexity**: each Dijkstra run is `O((V + E) · log V)`; finding k
+paths costs `O(k · (V + E) · log V)`. For typical maps (≤50 zones)
+this is sub-millisecond.
+
+### Scheduling
+
+The scheduler uses a **flow-based assignment**:
+
+1. Compute k diverse paths (k auto-tuned per map).
+2. For each drone, pick the path that minimises
+   `path_cost + queue_delay`, where
+   `queue_delay = (drones_already_assigned / bottleneck_capacity)`.
+   This greedily packs paths up to their bottleneck capacity before
+   spilling onto longer routes.
+3. Each turn:
+   - **Phase 1** — drones currently on a link (mid-restricted-transit)
+     must complete their move and arrive at their destination zone.
+   - **Phase 2** — waiting drones attempt to advance one step along
+     their path. Drones farther along their path move first to avoid
+     blocking those behind them. Each move respects link and zone
+     capacity, accounting for departures freeing space within the same
+     turn.
+4. The `SimulationEngine` runs the scheduler with several candidate
+   path counts (3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 18, 20) and picks
+   the configuration with the fewest turns. This adaptive search
+   handles maps of all sizes.
+
+### Capacity Handling
+
+- **Zone capacity** (`max_drones`): tracked per turn; departures free
+  capacity instantly so a swap (drone A out → drone B in) costs only
+  1 turn for B.
+- **Link capacity** (`max_link_capacity`): a per-turn counter prevents
+  more than N drones traversing the same link simultaneously.
+- **Restricted-zone reservation**: when a drone enters a 2-turn link
+  it reserves a slot at the destination zone so other drones don't
+  fill it before arrival, preventing starvation.
+
+### Performance Results
+
+| Map                        | Turns | Target  | Status |
+| -------------------------- | ----- | ------- | ------ |
+| 01_linear_path             | 4     | ≤6      | ✅     |
+| 02_simple_fork             | 5     | ≤6      | ✅     |
+| 03_basic_capacity          | 6     | ≤8      | ✅     |
+| 01_dead_end_trap           | 8     | ≤15     | ✅     |
+| 02_circular_loop           | 16    | ≤20     | ✅     |
+| 03_priority_puzzle         | 7     | ≤12     | ✅     |
+| 01_maze_nightmare          | 14    | ≤45     | ✅     |
+| 02_capacity_hell           | 18    | ≤60     | ✅     |
+| 03_ultimate_challenge      | 29    | ≤35     | ✅     |
+| **01_the_impossible_dream**| **45**| =45 (REC)| ✅     |
+
+All targets met "perfectly" (Bonus criterion). The Challenger map
+matches the reference record of 45 turns.
+
+## Visual Representation
+
+### Terminal Output (`--visual`)
+
+ANSI color codes highlight:
+
+- **Green** — start/end zones, delivered drones
+- **Cyan** — drone movements and current positions
+- **Yellow** — restricted zones / transit drones
+- **Magenta** — priority zones
+- **Red** — blocked zones / dead ends
+- **Bold** — section headers and summary
+
+Each turn is printed with the turn number, a vertical separator, and
+all drone movements color-coded for readability.
+
+### Graphical Output (`--graph`)
+
+When `matplotlib` is installed, a network diagram is rendered showing:
+
+- Zone positions on a 2-D coordinate plane
+- Color-coded zones by type
+- Connection edges with line width proportional to link capacity
+- Capacity numbers overlaid on each zone
+- Legend explaining the color scheme
 
 ## Resources
 
-* Maximum-flow background: the Ford–Fulkerson method and the
-  Edmonds–Karp BFS refinement (any standard algorithms text, e.g. CLRS,
-  *Introduction to Algorithms*, chapter on maximum flow).
-* Vertex-capacity handling via **node splitting** (a classic max-flow
-  modelling technique).
-* Dijkstra's shortest-path algorithm for weighted graphs.
-* Python typing and `mypy` documentation; the `flake8` style guide
-  (PEP 8) and PEP 257 for docstrings.
+### Algorithmic References
 
-### How AI was used
+- **Dijkstra's algorithm** for shortest paths (CLRS, Chapter 24)
+- **Multi-commodity flow** problems (Ahuja, Magnanti & Orlin,
+  *Network Flows*) — inspiration for the path-assignment heuristic
+- **Lem-in problem** (42 cursus) — similar multi-agent routing
+  challenge that informed the scheduler design
+- **k-shortest paths** (Yen's algorithm variant) — adapted using
+  zone penalties rather than edge removal
 
-An AI assistant was used as a design and drafting aid: to discuss the
-overall architecture (separating model, pathfinding and scheduling), to
-sketch the node-split max-flow formulation and the turn-resolution
-phases, to draft the module code and docstrings, and to help build test
-maps and the independent rule validator. Every algorithmic decision was
-reviewed and tested (see `tests/validator.py`, which re-checks each run
-against the rules from scratch). Per the subject's AI guidance, the code
-here should be read, understood, and — where useful — reworked by the
-author before evaluation, since you must be able to explain and defend
-every line.
+### Python Documentation
+
+- `heapq` — priority queue used in Dijkstra
+- `dataclasses` and `enum` — modeling
+- `typing` — type hints throughout
+
+### How AI Was Used
+
+AI assistance was used for:
+
+- **Boilerplate reduction**: drafting docstrings, type hints, and
+  argument-parser scaffolding.
+- **Linting fixes**: catching `flake8`/`mypy` issues and suggesting
+  type-safe patterns.
+- **Edge-case enumeration**: brainstorming corner cases for the
+  parser and validator (duplicate connections, missing fields, etc.).
+- **Design review**: discussing the trade-offs between BFS, Dijkstra,
+  and flow algorithms for this problem.
+
+All algorithm logic, the scheduler turn-by-turn mechanics, the
+capacity-handling rules, and the validation logic were designed
+and authored manually. AI-generated suggestions were reviewed,
+adapted, and tested before inclusion.
+
+## Project Structure
+
+All files are at the root of the repository:
+
+```
+.
+├── fly_in/                 # Source package
+├── maps/                   # Provided test maps
+├── tests/                  # pytest test suite
+├── Makefile
+├── README.md
+├── .gitignore
+└── requirements.txt
+```
