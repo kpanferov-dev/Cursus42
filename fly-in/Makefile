@@ -40,7 +40,7 @@ install: venv install-deps
 	@echo ""
 	@echo "Installation complete."
 	@echo "  Activate with : source $(VENV_DIR)/bin/activate"
-	@echo "  Or just use   : make run MAP=maps/01_linear_path.txt"
+	@echo "  Or just use   : python3 -m main maps/01_the_impossible_dream.txt --visual"
 
 venv:
 	@if [ -z "$(PYTHON)" ]; then \
