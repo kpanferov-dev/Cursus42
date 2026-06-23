@@ -153,8 +153,6 @@ class TerminalVisualizer:
         Returns:
             ANSI color code string, or a placeholder for rainbow.
         """
-        if zone.is_start or zone.is_end:
-            return Colors.BRIGHT_GREEN
 
         if zone.color:
             lower = zone.color.lower()
