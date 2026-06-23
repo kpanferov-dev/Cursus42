@@ -242,11 +242,26 @@ class TerminalVisualizer:
         print(f"  Links   : {links_colored}")
         assert self.graph.start_zone is not None
         assert self.graph.end_zone is not None
+        start_color = self.zone_color(self.graph.start_zone)
+        end_color = self.zone_color(self.graph.end_zone)
+
+        start_name = self.graph.start_zone.name
+        end_name = self.graph.end_zone.name
+
+        if start_color == "RAINBOW":
+            start_formatted = self._rainbow_text(start_name)
+        else:
+            start_formatted = self.colorize(start_name, start_color)
+
+        if end_color == "RAINBOW":
+            end_formatted = self._rainbow_text(end_name)
+        else:
+            end_formatted = self.colorize(end_name, end_color)
         print(
             f"  Route   : "
-            f"{self.colorize(self.graph.start_zone.name, Colors.BRIGHT_GREEN)}"
+            f"{start_formatted}"
             f" → "
-            f"{self.colorize(self.graph.end_zone.name, Colors.BRIGHT_GREEN)}"
+            f"{end_formatted}"
         )
         print(self.colorize("=" * 60, Colors.BOLD))
         print()
@@ -267,7 +282,7 @@ class TerminalVisualizer:
             colored = (
                 self.colorize(drone_name, Colors.BRIGHT_BLUE)
                 + "-"
-                + self.colorize(dest, Colors.BRIGHT_CYAN)
+                + self.colorize(dest, Colors.BRIGHT_WHITE)
             )
             formatted_tokens.append(colored)
 
