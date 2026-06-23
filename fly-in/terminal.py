@@ -36,6 +36,7 @@ class Colors:
     BRIGHT_CYAN = "\033[96m"
     BRIGHT_WHITE = "\033[97m"
 
+
 # Rainbow color sequence for 'rainbow' zones
 RAINBOW_COLORS = [
     Colors.BRIGHT_RED,
@@ -69,7 +70,8 @@ class TerminalVisualizer:
         "end": Colors.BRIGHT_GREEN,
     }
 
-    # Map color names to ANSI codes (excluding "rainbow" which is handled specially)
+    # Map color names to ANSI codes
+    # (excluding "rainbow" which is handled specially)
     COLOR_MAP: Dict[str, str] = {
         "green": Colors.BRIGHT_GREEN,
         "red": Colors.BRIGHT_RED,
@@ -121,7 +123,8 @@ class TerminalVisualizer:
         return f"{color}{text}{Colors.RESET}"
 
     def _rainbow_text(self, text: str) -> str:
-        """Return text with each character colored sequentially in rainbow hues.
+        """Return text with each character colored
+            sequentially in rainbow hues.
 
         Args:
             text: The string to rainbow‑color.
@@ -298,9 +301,11 @@ class TerminalVisualizer:
                 continue  # only show zones that have drones
             # Use format_zone which handles rainbow
             formatted = self.format_zone(zone, count)
-            # Remove the color from the count part if we want just a short version?
+            # Remove the color from the count
+            #  part if we want just a short version?
             # We'll keep full format.
-            # For brevity, we can shorten the zone name if too long, but format_zone does that already.
+            # For brevity, we can shorten the zone
+            #  name if too long, but format_zone does that already.
             state_parts.append(formatted)
         if state_parts:
             indent = " " * 14

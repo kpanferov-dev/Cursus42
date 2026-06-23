@@ -3,10 +3,10 @@ PYTHON ?= $(shell command -v python3 2>/dev/null || command -v python 2>/dev/nul
 
 # Always use .venv in the project root
 VENV_DIR := .venv
-#VENV_PYTHON := $(VENV_DIR)/bin/python
-#VENV_PIP    := $(VENV_DIR)/bin/pip
-VENV_PYTHON := $(VENV_DIR)/Scripts/python
-VENV_PIP    := $(VENV_DIR)/Scripts/pip
+VENV_PYTHON := $(VENV_DIR)/bin/python
+VENV_PIP    := $(VENV_DIR)/bin/pip
+#VENV_PYTHON := $(VENV_DIR)/Scripts/python
+#VENV_PIP    := $(VENV_DIR)/Scripts/pip
 
 .PHONY: help install venv install-deps run debug lint lint-strict \
         clean clean-venv test info \
