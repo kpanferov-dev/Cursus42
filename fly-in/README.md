@@ -79,34 +79,8 @@ make run MAP=maps/01_linear_path.txt
 # With colored terminal visualisation (drone moves + zone state per turn)
 make run MAP=maps/03_ultimate_challenge.txt ARGS=--visual
 
-# With static graphical network display (matplotlib window)
-make run MAP=maps/01_the_impossible_dream.txt ARGS="--visual --graph"
-
-# Save static graph as PNG file
-python3 -m fly_in.main maps/01_the_impossible_dream.txt --save-graph dream.png
-open dream.png   # macOS
-
-# ── Animation: see drone movement on the graph! ──────────────────────────
-
-# Live animated window (close window to exit)
-python3 -m fly_in.main maps/01_dead_end_trap.txt --animate
-
-# Save one PNG per turn (turn_001.png, turn_002.png, ...)
-python3 -m fly_in.main maps/02_circular_loop.txt --save-frames frames/
-open frames/turn_001.png   # view individual frames
-# Or assemble into a GIF:
-#   brew install imagemagick
-#   magick -delay 60 -loop 0 frames/turn_*.png simulation.gif
-
-# Customize animation speed (default 800ms per frame)
-python3 -m fly_in.main maps/01_the_impossible_dream.txt --animate --frame-interval 300
-
 # Quiet mode: only the per-turn output (spec format)
 make run MAP=maps/01_linear_path.txt ARGS=--quiet
-
-# Manual path-count override (for experimentation)
-python3 -m fly_in.main maps/01_the_impossible_dream.txt --paths 6
-```
 
 ### Makefile Targets
 

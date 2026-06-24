@@ -4,10 +4,8 @@ Provides colored output using ANSI escape codes to display
 drone movements and zone states in the terminal.
 """
 
-import sys
 from typing import Dict, List
 from zone import Zone, ZoneType
-from drone import Drone
 from graph import Graph
 
 
@@ -46,15 +44,6 @@ RAINBOW_COLORS = [
     Colors.BRIGHT_BLUE,
     Colors.BRIGHT_MAGENTA,
 ]
-
-
-def supports_color() -> bool:
-    """Check if the terminal supports ANSI color codes.
-
-    Returns:
-        True if color output is supported.
-    """
-    return hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
 
 
 class TerminalVisualizer:
@@ -201,21 +190,6 @@ class TerminalVisualizer:
 
         return f"{name_colored}{tag_colored} {count_colored}"
 
-    def format_drone(self, drone: Drone) -> str:
-        """Format a drone for display.
-
-        Args:
-            drone: Drone to format.
-
-        Returns:
-            Colored drone identifier string.
-        """
-        if drone.is_delivered:
-            return self.colorize(drone.name, Colors.GREEN)
-        if drone.is_in_transit:
-            return self.colorize(drone.name, Colors.YELLOW)
-        return self.colorize(drone.name, Colors.BRIGHT_BLUE)
-
     def print_header(self, filepath: str) -> None:
         """Print simulation header with map info.
 
@@ -323,33 +297,6 @@ class TerminalVisualizer:
         if state_parts:
             indent = " " * 14
             print(f"{indent}└─ {'  '.join(state_parts)}")
-
-    def print_turn_raw(self, turn_num: int, tokens: List[str]) -> None:
-        """Print a single turn in required output format (no color).
-
-        Args:
-            turn_num: Turn number (1-indexed).
-            tokens: List of output tokens.
-        """
-        print(" ".join(sorted(tokens)))
-
-    def print_graph_state(self, drones: List[Drone]) -> None:
-        """Print current state of all zones and drones.
-
-        Args:
-            drones: Current list of all drones.
-        """
-        print(self.colorize("\n  Network State:", Colors.BOLD))
-        zone_counts: Dict[str, int] = {}
-        for d in drones:
-            if not d.is_delivered and not d.is_in_transit:
-                z = d.current_zone.name
-                zone_counts[z] = zone_counts.get(z, 0) + 1
-
-        for zone in self.graph.zones.values():
-            count = zone_counts.get(zone.name, 0)
-            if count > 0 or zone.is_start or zone.is_end:
-                print(f"    {self.format_zone(zone, count)}")
 
     def print_summary(
         self,

@@ -1,7 +1,7 @@
 """Parser for the fly_in drone network map file format."""
 
 import re
-from typing import Optional, Tuple, Dict
+from typing import Optional, Dict
 from zone import Zone, ZoneType
 from connection import Connection
 from graph import Graph
@@ -285,23 +285,3 @@ class MapParser:
                 f"'{field_name}' must be a positive integer, got {value}.",
                 line_num)
         return value
-
-    def _parse_tuple(self, raw: str, line_num: int) -> Tuple[str, str]:
-        """Split a raw connection string into two zone names.
-
-        Args:
-            raw: Raw connection string like 'zone1-zone2'.
-            line_num: Line number for error context.
-
-        Returns:
-            Tuple of (zone_a_name, zone_b_name).
-
-        Raises:
-            ParseError: If syntax is invalid.
-        """
-        parts = raw.split("-", 1)
-        if len(parts) != 2:
-            raise ParseError(
-                f"Connection must be 'zone1-zone2', got '{raw}'.", line_num
-            )
-        return parts[0].strip(), parts[1].strip()

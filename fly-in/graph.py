@@ -1,6 +1,6 @@
 """Graph model representing the complete drone routing network."""
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 from zone import Zone
 from connection import Connection
 
@@ -100,42 +100,6 @@ class Graph:
                 return conn
         return None
 
-    def find_all_paths(
-        self,
-        start: Zone,
-        end: Zone,
-        max_depth: int = 100,
-    ) -> List[List[Zone]]:
-        """Find all simple paths from start to end using DFS.
-
-        Args:
-            start: Starting zone.
-            end: Target zone.
-            max_depth: Maximum path length to prevent infinite loops.
-
-        Returns:
-            List of paths, each being an ordered list of zones.
-        """
-        all_paths: List[List[Zone]] = []
-        visited: Set[str] = set()
-
-        def dfs(current: Zone, path: List[Zone]) -> None:
-            if len(path) > max_depth:
-                return
-            if current is end:
-                all_paths.append(list(path))
-                return
-            visited.add(current.name)
-            for neighbor, _ in self.get_neighbors(current):
-                if neighbor.name not in visited:
-                    path.append(neighbor)
-                    dfs(neighbor, path)
-                    path.pop()
-            visited.discard(current.name)
-
-        dfs(start, [start])
-        return all_paths
-
     def shortest_path(
         self, start: Zone, end: Zone
     ) -> Optional[List[Zone]]:
@@ -175,87 +139,6 @@ class Graph:
                     )
 
         return None
-
-    def path_cost(self, path: List[Zone]) -> int:
-        """Calculate total turn cost for a given path.
-
-        Args:
-            path: Ordered list of zones.
-
-        Returns:
-            Sum of movement costs for all transitions.
-        """
-        total = 0
-        for i in range(1, len(path)):
-            total += path[i].zone_type.movement_cost
-        return total
-
-    def find_disjoint_paths(
-        self, start: Zone, end: Zone, num_paths: int
-    ) -> List[List[Zone]]:
-        """Find multiple paths with minimal zone
-        overlap using cost-based search.
-
-        Uses a greedy approach: repeatedly find shortest paths while
-        penalizing already-used zones.
-
-        Args:
-            start: Starting zone.
-            end: Target zone.
-            num_paths: Desired number of paths.
-
-        Returns:
-            List of paths (may be fewer than num_paths if topology limits).
-        """
-        import heapq
-
-        used_zones: Dict[str, int] = {}
-        result_paths: List[List[Zone]] = []
-
-        for _ in range(num_paths):
-            # Weighted Dijkstra with penalty for used zones
-            heap: List[Tuple[float, str, List[str]]] = [
-                (0.0, start.name, [start.name])
-            ]
-            best: Dict[str, float] = {start.name: 0.0}
-
-            found_path: Optional[List[Zone]] = None
-
-            while heap:
-                cost, current_name, path = heapq.heappop(heap)
-                current = self.zones[current_name]
-
-                if current is end:
-                    found_path = [self.zones[n] for n in path]
-                    break
-
-                if cost > best.get(current_name, 999999.0):
-                    continue
-
-                for neighbor, _ in self.get_neighbors(current):
-                    if neighbor.name in path:  # Avoid cycles
-                        continue
-                    penalty = used_zones.get(neighbor.name, 0) * 10.0
-                    new_cost = (
-                        cost
-                        + neighbor.zone_type.movement_cost
-                        + penalty
-                    )
-                    if new_cost < best.get(neighbor.name, 999999.0):
-                        best[neighbor.name] = new_cost
-                        heapq.heappush(
-                            heap,
-                            (new_cost, neighbor.name, path + [neighbor.name]),
-                        )
-
-            if found_path is None:
-                break
-
-            result_paths.append(found_path)
-            for zone in found_path[1:-1]:  # Don't penalize start/end
-                used_zones[zone.name] = used_zones.get(zone.name, 0) + 1
-
-        return result_paths
 
     def __repr__(self) -> str:
         """Return string representation."""

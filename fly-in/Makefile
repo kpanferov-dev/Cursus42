@@ -8,13 +8,6 @@ VENV_PIP    := $(VENV_DIR)/bin/pip
 #VENV_PYTHON := $(VENV_DIR)/Scripts/python
 #VENV_PIP    := $(VENV_DIR)/Scripts/pip
 
-.PHONY: help install venv install-deps run debug lint lint-strict \
-        clean clean-venv test info \
-        run-easy1 run-easy2 run-easy3 \
-        run-medium1 run-medium2 run-medium3 \
-        run-hard1 run-hard2 run-hard3 run-challenger \
-        run-all run-all-verbose
-
 help:
 	@echo "fly_in — Drone routing simulation"
 	@echo ""
@@ -93,7 +86,7 @@ debug:
 lint:
 	@if [ -x "$(VENV_PYTHON)" ]; then PY="$(VENV_PYTHON)"; \
 	 else PY="$(PYTHON)"; fi; \
-	"$$PY" -m flake8 . && \
+	"$$PY" -m flake8 . --exclude=.venv && \
 	"$$PY" -m mypy . \
 	  --warn-return-any \
 	  --warn-unused-ignores \
@@ -104,19 +97,8 @@ lint:
 lint-strict:
 	@if [ -x "$(VENV_PYTHON)" ]; then PY="$(VENV_PYTHON)"; \
 	 else PY="$(PYTHON)"; fi; \
-	"$$PY" -m flake8 . && \
+	"$$PY" -m flake8 . --exclude=.venv && \
 	"$$PY" -m mypy . --strict
-
-# ── Testing ─────────────────────────────────────────────────────────────────
-
-test:
-	@if [ -x "$(VENV_PYTHON)" ]; then \
-	  "$(VENV_PYTHON)" -m pytest tests/ -v; \
-	else \
-	  "$(PYTHON)" -m pytest tests/ -v; \
-	fi
-
-# ── Cleaning ────────────────────────────────────────────────────────────────
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
@@ -134,49 +116,9 @@ clean-venv:
 	  echo "No venv to remove at $(VENV_DIR)"; \
 	fi
 
-# ── Convenience map runners ─────────────────────────────────────────────────
-
-run-easy1:
-	@$(MAKE) run MAP=maps/01_linear_path.txt ARGS=--visual
-
-run-easy2:
-	@$(MAKE) run MAP=maps/02_simple_fork.txt ARGS=--visual
-
-run-easy3:
-	@$(MAKE) run MAP=maps/03_basic_capacity.txt ARGS=--visual
-
-run-medium1:
-	@$(MAKE) run MAP=maps/01_dead_end_trap.txt ARGS=--visual
-
-run-medium2:
-	@$(MAKE) run MAP=maps/02_circular_loop.txt ARGS=--visual
-
-run-medium3:
-	@$(MAKE) run MAP=maps/03_priority_puzzle.txt ARGS=--visual
-
-run-hard1:
-	@$(MAKE) run MAP=maps/01_maze_nightmare.txt ARGS=--visual
-
-run-hard2:
-	@$(MAKE) run MAP=maps/02_capacity_hell.txt ARGS=--visual
-
-run-hard3:
-	@$(MAKE) run MAP=maps/03_ultimate_challenge.txt ARGS=--visual
-
-run-challenger:
-	@$(MAKE) run MAP=maps/01_the_impossible_dream.txt ARGS=--visual
-
-run-all:
-	@if [ -x "$(VENV_PYTHON)" ]; then PY="$(VENV_PYTHON)"; \
-	 else PY="$(PYTHON)"; fi; \
-	for m in maps/*.txt; do \
-	  printf "\n=== %s ===\n" "$$m"; \
-	  TURNS=$$("$$PY" main.py "$$m" --quiet | wc -l); \
-	  printf "  Solved in %s turns\n" "$$TURNS"; \
-	done
-
-run-all-verbose:
-	@for m in maps/*.txt; do \
-	  printf "\n=== %s ===\n" "$$m"; \
-	  $(MAKE) -s run MAP="$$m"; \
-	done
+.PHONY: help install venv install-deps run debug lint lint-strict \
+        clean clean-venv test info \
+        run-easy1 run-easy2 run-easy3 \
+        run-medium1 run-medium2 run-medium3 \
+        run-hard1 run-hard2 run-hard3 run-challenger \
+        run-all run-all-verbose

@@ -11,7 +11,6 @@ from typing import Dict, List, Optional
 from map_parser import MapParser, ParseError
 from scheduler import Scheduler
 from terminal import TerminalVisualizer
-from graph_view import GraphVisualizer
 
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
@@ -41,36 +40,6 @@ Examples:
         "--visual",
         action="store_true",
         help="Enable colored terminal output",
-    )
-    parser.add_argument(
-        "--graph",
-        action="store_true",
-        help="Show static graphical network visualization (matplotlib)",
-    )
-    parser.add_argument(
-        "--save-graph",
-        type=str,
-        metavar="PATH",
-        default=None,
-        help="Save the static network graph to a PNG file",
-    )
-    parser.add_argument(
-        "--animate",
-        action="store_true",
-        help="Show animated drone movement window (matplotlib)",
-    )
-    parser.add_argument(
-        "--save-frames",
-        type=str,
-        metavar="DIR",
-        default=None,
-        help="Save one PNG per turn to DIR (turn_001.png, turn_002.png, ...)",
-    )
-    parser.add_argument(
-        "--frame-interval",
-        type=int,
-        default=800,
-        help="Animation frame interval in ms (default: 800)",
     )
     parser.add_argument(
         "--quiet",
@@ -113,23 +82,6 @@ def run(argv: Optional[List[str]] = None) -> int:
 
     if not args.quiet:
         vis.print_header(args.map_file)
-
-    # ── Graphical visualization (static map) ──────────────────────────────
-    if args.graph or args.save_graph:
-        gv = GraphVisualizer(graph)
-        if gv.available:
-            if args.save_graph:
-                gv.render_static(output_path=args.save_graph)
-                print(f"[Info] Network graph saved to: {args.save_graph}")
-            else:
-                print("[Info] Opening graph window — close it to continue...")
-                gv.render_static()
-        else:
-            print(
-                "[Warning] matplotlib not installed. "
-                "Run: pip install matplotlib",
-                file=sys.stderr,
-            )
 
     # ── Run simulation ─────────────────────────────────────────────────────
     occupancy_log: List[Dict[str, int]] = []
@@ -193,49 +145,6 @@ def run(argv: Optional[List[str]] = None) -> int:
             nb_drones=graph.nb_drones,
             total_moves=int(stats["total_moves"]),
         )
-
-    # ── Animation / per-turn frames ────────────────────────────────────────
-    if args.save_frames:
-        import os
-        gv = GraphVisualizer(graph)
-        if not gv.available:
-            print(
-                "[Warning] matplotlib not installed; cannot save frames.",
-                file=sys.stderr,
-            )
-        else:
-            os.makedirs(args.save_frames, exist_ok=True)
-            n_digits = max(3, len(str(len(occupancy_log))))
-            for i, occ in enumerate(occupancy_log, start=1):
-                fname = os.path.join(
-                    args.save_frames,
-                    f"turn_{i:0{n_digits}d}.png",
-                )
-                gv.render_with_drones(
-                    occ, turn=i, output_path=fname,
-                    total_turns=len(occupancy_log),
-                )
-            print(
-                f"[Info] Saved {len(occupancy_log)} frames to "
-                f"{args.save_frames}/"
-            )
-
-    if args.animate:
-        gv = GraphVisualizer(graph)
-        if not gv.available:
-            print(
-                "[Warning] matplotlib not installed; cannot animate.",
-                file=sys.stderr,
-            )
-        else:
-            print(
-                "[Info] Opening animation window "
-                f"({len(occupancy_log)} turns @ {args.frame_interval}ms)"
-                " — close window to exit."
-            )
-            gv.animate(occupancy_log, interval_ms=args.frame_interval)
-
-    return 0
 
 
 if __name__ == "__main__":

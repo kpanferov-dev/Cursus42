@@ -300,14 +300,6 @@ class Scheduler:
 
     # ── Output helpers ─────────────────────────────────────────────────────
 
-    def get_simulation_output(self) -> str:
-        """Return formatted simulation output (one turn per line).
-
-        Returns:
-            Multi-line string conforming to the required output format.
-        """
-        return "\n".join(" ".join(sorted(t)) for t in self.turn_log)
-
     def get_stats(self) -> Dict[str, float]:
         """Return simulation statistics.
 
