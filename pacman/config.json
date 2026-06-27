@@ -1,0 +1,36 @@
+# Pac-Man configuration file.
+# Lines starting with '#' are comments and are ignored.
+# // and /* */ comments are also supported.
+{
+  "highscore_filename": "highscores.json",
+
+  // starting lives for the player
+  "lives": 3,
+
+  // scoring
+  "points_per_pacgum": 10,
+  "points_per_super_pacgum": 50,
+  "points_per_ghost": 200,
+
+  // seed for the FIRST level (later levels are random)
+  "seed": 42,
+
+  // seconds allowed per level
+  "level_max_time": 90,
+
+  /* At least 10 levels are required by the subject.
+     width/height are maze cells BEFORE expansion;
+     the real grid becomes (2*w+1) x (2*h+1) tiles. */
+  "levels": [
+    { "width": 21, "height": 21 },
+    { "width": 21, "height": 21 },
+    { "width": 23, "height": 23 },
+    { "width": 23, "height": 23 },
+    { "width": 25, "height": 25 },
+    { "width": 25, "height": 25 },
+    { "width": 27, "height": 27 },
+    { "width": 27, "height": 27 },
+    { "width": 29, "height": 29 },
+    { "width": 31, "height": 31 }
+  ]
+}
