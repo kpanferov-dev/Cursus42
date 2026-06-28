@@ -160,7 +160,7 @@ class Renderer:
             "",
             "Cheat keys (for review):",
             "F1 invincible   F2 skip level   F3 freeze ghosts",
-            "F4 +1 life      F5 speed boost",
+            "F4 +1 life      F5 speed boost  F6 more time",
             "",
             "Press any key to go back",
         ]

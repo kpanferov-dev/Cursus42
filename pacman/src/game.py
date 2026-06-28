@@ -198,6 +198,8 @@ class Game:
             self.player.speed = (PLAYER_BOOST_SPEED
                                  if self.cheats.speed_boost
                                  else PLAYER_BASE_SPEED)
+        elif key == pygame.K_F6:
+            self.time_left = 999
 
     def _pause_key(self, key: int) -> None:
         if key == pygame.K_p:
@@ -269,7 +271,7 @@ class Game:
                 continue
             if ghost.frightened:
                 ghost.get_eaten()
-                ghost.respawn_time = pygame.time.get_ticks() + 1
+                ghost.respawn_time = pygame.time.get_ticks() + 5000
                 self.score += int(self.config["points_per_ghost"])
             elif not self.cheats.invincible:
                 self._lose_life()
