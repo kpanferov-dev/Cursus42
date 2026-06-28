@@ -239,9 +239,16 @@ class Game:
 
         self.player.update(self.level.grid)
         self._eat_dots()
+        now = pygame.time.get_ticks()
+
         for ghost in self.ghosts:
-            ghost.update(self.level.grid, self.player.tile,
-                         self.cheats.freeze_ghosts)
+            if ghost.hidden and now >= ghost.respawn_time:
+                ghost.reset()
+                ghost.hidden = False
+        for ghost in self.ghosts:
+            if not ghost.hidden:
+                ghost.update(self.level.grid, self.player.tile,
+                             self.cheats.freeze_ghosts)
         self._check_collisions()
         if self.level.cleared:
             self._level_cleared()
@@ -258,10 +265,11 @@ class Game:
 
     def _check_collisions(self) -> None:
         for ghost in self.ghosts:
-            if ghost.tile != self.player.tile or ghost.eaten:
+            if ghost.tile != self.player.tile or ghost.eaten or ghost.hidden:
                 continue
             if ghost.frightened:
                 ghost.get_eaten()
+                ghost.respawn_time = pygame.time.get_ticks() + 1
                 self.score += int(self.config["points_per_ghost"])
             elif not self.cheats.invincible:
                 self._lose_life()

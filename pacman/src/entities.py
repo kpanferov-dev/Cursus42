@@ -111,6 +111,8 @@ class Ghost(MovingEntity):
         self.color_index = color_index
         self.frightened: bool = False
         self.eaten: bool = False
+        self.hidden: bool = False
+        self.respawn_time: float = 0.0
 
     def set_frightened(self, value: bool) -> None:
         """Toggle the frightened (edible) state, unless currently eaten."""
@@ -121,6 +123,7 @@ class Ghost(MovingEntity):
         """Mark the ghost as eaten; it heads back to its home corner."""
         self.eaten = True
         self.frightened = False
+        self.hidden = True
 
     def reset(self) -> None:
         """Send the ghost back to its home corner, alive and hostile."""

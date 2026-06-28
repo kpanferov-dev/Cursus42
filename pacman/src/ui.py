@@ -49,6 +49,8 @@ class Renderer:
         self._draw_dots(g.level.pacgums, C.COLOR_PACGUM, 3)
         self._draw_dots(g.level.super_pacgums, C.COLOR_SUPER, 7)
         for ghost in g.ghosts:
+            if ghost.hidden:
+                continue
             self._draw_ghost(ghost)
         self._draw_player(g.player)
         self._draw_hud(g)
