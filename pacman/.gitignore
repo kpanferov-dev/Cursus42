@@ -8,3 +8,4 @@ highscores.json
 *.whl
 build/
 dist/
+tests/

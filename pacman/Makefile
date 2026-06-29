@@ -16,14 +16,10 @@ debug:
 	$(PY) -m pdb pac-man.py $(CONFIG)
 
 lint:
-	flake8 .
+	flake8 --exclude=.venv,tests/* .
 	mypy . --warn-return-any --warn-unused-ignores \
 		--ignore-missing-imports --disallow-untyped-defs \
-		--check-untyped-defs
-
-lint-strict:
-	flake8 .
-	mypy . --strict
+		--check-untyped-defs --exclude='^tests/'
 
 clean:
 	rm -rf __pycache__ */__pycache__ .mypy_cache .pytest_cache
