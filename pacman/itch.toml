@@ -1,0 +1,5 @@
+# Itch.io app manifest (https://itch.io/docs/itch/integrating/manifest.html)
+# Bundled with the packaged build so the Itch app knows how to launch the game.
+[[actions]]
+name = "play"
+path = "pac-man"

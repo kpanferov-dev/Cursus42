@@ -1,0 +1,51 @@
+================================================================================
+ PAC-MAN — Ghosts! More ghosts!
+================================================================================
+
+HOW TO RUN
+----------
+- Packaged build (this folder): just launch the "pac-man" executable.
+  It already includes everything it needs and reads the bundled config.json.
+- From source:  python3 pac-man.py config.json
+
+GOAL
+----
+Eat every pacgum in the maze to clear a level. Clear all levels to win.
+Avoid the four ghosts — touching one costs a life. Eat a SUPER-pacgum
+(the big dots in the corners) to turn the ghosts blue and edible for a
+few seconds; eating a blue ghost scores big and sends it home. You start
+with 3 lives; lose them all and it's game over. Each level is also timed.
+
+CONTROLS
+--------
+  Arrow keys / WASD ... Move
+  P ................... Pause / resume
+  M ................... Return to the main menu
+  SPACE ............... Start game / continue from menus and end screens
+  I ................... Instructions (from the main menu)
+  ESC ................. Quit (from the main menu)
+
+CHEAT KEYS (for testing / peer review)
+--------------------------------------
+  F1 ... Toggle invincibility (ghosts can't take a life)
+  F2 ... Skip the current level (instant clear)
+  F3 ... Toggle ghost freeze (ghosts stop moving)
+  F4 ... Add one extra life
+  F5 ... Toggle player speed boost
+  F6 ... Refill the level timer
+
+CONFIGURATION
+-------------
+The game is configured by config.json (JSON with # / // / /* */ comments).
+Editable keys include: highscore_filename, lives, points_per_pacgum,
+points_per_super_pacgum, points_per_ghost, seed (first level), level_max_time,
+and the "levels" list of { "width", "height" } maze sizes (in cells).
+Missing or out-of-range values fall back to safe defaults — the game never
+crashes on a bad config. See README.md for the full reference.
+
+HIGHSCORES
+----------
+The top 10 scores (name + score) are saved to highscores.json and shown on
+the main menu. When a game ends and your score qualifies, you'll be asked to
+enter a name (up to 10 characters, letters/numbers/spaces).
+================================================================================

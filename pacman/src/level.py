@@ -29,22 +29,26 @@ class Level:
         self._populate(maze)
 
     def _populate(self, maze: MazeData) -> None:
-        """Place pacgums on most corridor tiles and super-pacgums in corners.
+        """Place pacgums on reachable corridor tiles, super-pacgums in corners.
 
-        The player spawn tile is intentionally left empty.
+        Dots are only scattered over tiles the player can actually reach
+        (``maze.reachable``), which guarantees the level can always be cleared
+        by eating every dot.  The player spawn tile is intentionally left
+        empty so the player does not auto-eat on respawn.
         """
+        reachable: Set[Tile] = maze.reachable or {self.player_start}
         reserved: Set[Tile] = {self.player_start}
         reserved.update(maze.ghost_starts)
         for tile in maze.corners:
-            self.super_pacgums.add(tile)
+            if tile in reachable:
+                self.super_pacgums.add(tile)
             reserved.add(tile)
-        for y in range(self.height):
-            for x in range(self.width):
-                if self.grid[y][x] != PATH:
-                    continue
-                if (x, y) in reserved:
-                    continue
-                self.pacgums.add((x, y))
+        for (x, y) in reachable:
+            if self.grid[y][x] != PATH:
+                continue
+            if (x, y) in reserved:
+                continue
+            self.pacgums.add((x, y))
 
     @property
     def total_gums(self) -> int:

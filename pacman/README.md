@@ -24,7 +24,10 @@ make install        # installs pygame + the mazegenerator wheel
 make run            # launches: python3 pac-man.py config.json
 make debug          # runs under pdb
 make lint           # flake8 . + mypy (project flags)
-make clean          # removes caches
+make lint-strict    # flake8 . + mypy --strict
+make test           # runs the pytest suite
+make package        # builds a distributable release (see Packaging)
+make clean          # removes caches and build artefacts
 ```
 
 Run manually with any JSON config:
@@ -53,6 +56,7 @@ python3 pac-man.py config.json
 | F3 | Toggle ghost freeze |
 | F4 | Add one life |
 | F5 | Toggle player speed boost |
+| F6 | Refill the level timer |
 
 ## Configuration
 
@@ -122,6 +126,14 @@ raised and handled cleanly.
 
 ```
 pac-man.py            entry point, argument parsing, top-level guard
+config.json           default game configuration (JSON + comments)
+Makefile              install / run / debug / lint / lint-strict / test / package
+setup.cfg             flake8 + mypy configuration
+build.sh              PyInstaller packaging script (-> dist/)
+pacman.spec           PyInstaller build spec
+itch_push.sh          publish the build to Itch.io via butler
+itch.toml             Itch.io app manifest (bundled in the build)
+INSTRUCTIONS.txt      in-package player instructions (bundled in the build)
 src/
   constants.py        tile codes, colors, Direction / GameState enums
   config_loader.py    JSON-with-comments parsing, defaults, clamping
@@ -131,6 +143,8 @@ src/
   highscore.py        persistent top-ten highscore manager
   ui.py               all pygame rendering (screens, HUD, entities)
   game.py             Game: state machine + main loop + cheats
+tests/                pytest suite (config, highscore, maze, level)
+project_management/   timeline, progress, risks, team, tests, retro
 ```
 
 Dependencies flow one way: `game` orchestrates `level`, `entities`,
@@ -147,6 +161,46 @@ shares `constants`.
 implementation and the maze-package adapter, and to set up the lint/type
 configuration. Every module was reviewed, tested and adapted by the team;
 we are able to explain and defend each part during the peer review.
+
+## Packaging
+
+The game ships as a self-contained build so it can be uploaded to a public
+platform (Itch.io / Steam) and launched with no Python install. The packaging
+script and PyInstaller spec live at the repository root:
+
+```bash
+./build.sh          # -> dist/pac-man/ (run ./pac-man) + dist/pac-man-<os>.zip
+```
+
+`build.sh` installs the build dependencies (including the assigned
+`mazegenerator` wheel, used as-is), runs PyInstaller against `pacman.spec`, and
+zips the one-folder application. The build bundles `config.json`,
+`INSTRUCTIONS.txt` and `itch.toml`; when started with no argument (a
+double-click) the frozen build automatically loads its bundled config, so it
+is fully playable on its own. Running from source still requires exactly one
+`.json` argument, as the subject mandates.
+
+To publish to Itch.io as a free, unlisted build we use
+[butler](https://itch.io/docs/butler/):
+
+```bash
+ITCH_TARGET="your-user/pac-man" ./itch_push.sh
+```
+
+You may be asked to regenerate the package during the peer review — re-running
+`./build.sh` reproduces it from scratch.
+
+## Tests
+
+A `pytest` suite under `tests/` covers the config loader (comments, clamping,
+unknown keys, broken files), the highscore system (sanitising, top-10 cap,
+corruption tolerance, persistence), and the maze adapter / level
+(grid expansion, missing-package handling, reachability and seed
+reproducibility):
+
+```bash
+make test           # or: python3 -m pytest -q
+```
 
 ## Project Management
 
