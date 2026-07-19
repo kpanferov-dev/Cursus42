@@ -1,0 +1,21 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Generated data, indices and model weights (regenerated during evaluation)
+data/raw/
+data/processed/
+data/output/
+*.zip
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
