@@ -52,12 +52,14 @@ def recall_for_one_question(
         return 1.0
     if not pred_sources:
         return 0.0
-    found: Dict[int, float] = {i: 0.0 for i in range(len(true_sources))}
-    for i, true_source in enumerate(true_sources):
+    
+    found = 0
+    for true_source in true_sources:
         for pred_source in pred_sources:
             if compare_sources(true_source, pred_source) > minimal_iou_threshold:
-                found[i] += 1.0
-    return sum(found.values()) / len(true_sources)
+                found += 1
+                break
+    return found / len(true_sources)
 
 
 def evaluate_dataset(

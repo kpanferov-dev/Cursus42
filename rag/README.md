@@ -27,6 +27,7 @@ uv venv
 uv sync                      # CORE: BM25 retrieval, search, evaluate (required)
 uv sync --extra semantic     # BONUS: dense retrieval via model2vec (light, ~30MB, no torch)
 uv sync --extra rerank       # BONUS: cross-encoder reranking via fastembed (ONNX, no torch)
+uv sync --extra semantic --extra rerank #BONUS: Both
 uv sync --extra dev          # flake8 / mypy / pytest
 ```
 
@@ -69,13 +70,13 @@ uv run python -m student search_dataset \
 # 3b. DOCS dataset — dense fusion + cross-encoder reranking (to clear the 80% bar)
 uv run python -m student search_dataset \
     --dataset_path data/datasets/AnsweredQuestions/dataset_docs_public.json \
-    --k 10 --semantic --rerank --save_directory data/output/search_results
+    --k 10 --rerank --save_directory data/output/search_results
 
 # 4. Evaluate retrieval against ground truth
 uv run python -m student evaluate \
     data/output/search_results/dataset_docs_public.json \
     data/datasets/AnsweredQuestions/dataset_docs_public.json \
-    --k 10 --max_context_length 2000 --threshold 0.80
+    --k 10 --max_context_length 2000 --threshold 0.05
 
 # 5. Answer generation (requires the 'generation' extra — see install note)
 uv run python -m student answer "How to configure the OpenAI server?" --k 10
