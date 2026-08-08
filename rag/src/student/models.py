@@ -108,13 +108,3 @@ class RankedChunk(BaseModel):
 
     chunk: Chunk
     score: float
-
-
-class SearchHit(BaseModel):
-    """A retrieved source with its score, used by the ``search`` command."""
-
-    file_path: str
-    first_character_index: int
-    last_character_index: int
-    score: float
-    preview: Optional[str] = None
