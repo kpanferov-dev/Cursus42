@@ -112,8 +112,8 @@ Retriever ── BM25 ─────────────┐
 | Retrieval | `retrieval.py` | Load indices once, rank and fuse candidates |
 | Dense (bonus) | `embeddings.py` | model2vec static embeddings (no torch) |
 | Fusion (bonus) | `fusion.py` | Weighted Reciprocal Rank Fusion |
-| Rerank (bonus) | `rerank.py` | ONNX cross-encoder reranking (no torch) |
-| Expansion (bonus) | `expansion.py` | Domain-synonym query expansion |
+| Rerank (extra) | `rerank.py` | ONNX cross-encoder reranking (no torch) |
+| Expansion (extra) | `expansion.py` | Domain-synonym query expansion |
 | Cache (bonus) | `cache.py` | Disk-backed query cache |
 | Generation | `generation.py` | `Qwen/Qwen3-0.6B` answer generation |
 | Evaluation | `evaluation.py` | recall@k via interval IoU (mirrors the grader) |
