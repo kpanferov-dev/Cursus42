@@ -52,7 +52,7 @@ def recall_for_one_question(
         return 1.0
     if not pred_sources:
         return 0.0
-    
+
     found = 0
     for true_source in true_sources:
         for pred_source in pred_sources:

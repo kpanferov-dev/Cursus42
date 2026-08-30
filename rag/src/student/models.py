@@ -10,7 +10,7 @@ characters.
 from __future__ import annotations
 
 import uuid
-from typing import List, Optional, Union
+from typing import List, Union
 
 from pydantic import BaseModel, Field
 

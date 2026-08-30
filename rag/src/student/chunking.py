@@ -96,7 +96,7 @@ def chunk_text(
             spans.extend(
                 _sliding_window_spans(para_start, para_end, max_chunk_size, overlap)
             )
-    return _merge_tiny_spans(text, spans, max_chunk_size)
+    return _merge_tiny_spans(spans, max_chunk_size)
 
 
 def _split_on_blank_lines(text: str) -> List[Tuple[int, int]]:
@@ -119,7 +119,6 @@ def _split_on_blank_lines(text: str) -> List[Tuple[int, int]]:
 
 
 def _merge_tiny_spans(
-    text: str,
     spans: List[Tuple[int, int]],
     max_chunk_size: int,
 ) -> List[Tuple[int, int]]:
