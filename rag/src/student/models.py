@@ -51,12 +51,12 @@ class RagDataset(BaseModel):
 class MinimalSearchResults(BaseModel):
     """Sources retrieved for a single question.
 
-    The field is named ``question_str`` to match the grading moulinette's
-    schema exactly (its ``MinimalSearchResults`` uses ``question_str``).
+    The field is named ``question`` to match the grading moulinette's
+    schema exactly (its ``MinimalSearchResults`` uses ``question``).
     """
 
     question_id: str
-    question_str: str
+    question: str
     retrieved_sources: List[MinimalSource]
 
 

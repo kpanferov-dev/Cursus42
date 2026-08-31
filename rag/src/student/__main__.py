@@ -203,7 +203,7 @@ class Student:
             results.append(
                 MinimalSearchResults(
                     question_id=question.question_id,
-                    question_str=question.question,
+                    question=question.question,
                     retrieved_sources=[item.chunk.to_source() for item in ranked],
                 )
             )
@@ -271,12 +271,12 @@ class Student:
         for done, result in enumerate(
             tqdm(student.search_results, desc="Answering", unit="q"), start=1
         ):
-            ranked = retriever.search(result.question_str, k=student.k)
-            response = generator.answer(result.question_str, ranked)
+            ranked = retriever.search(result.question, k=student.k)
+            response = generator.answer(result.question, ranked)
             answered.append(
                 MinimalAnswer(
                     question_id=result.question_id,
-                    question_str=result.question_str,
+                    question=result.question,
                     retrieved_sources=result.retrieved_sources,
                     answer=response,
                 )
