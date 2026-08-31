@@ -1921,6 +1921,7 @@ version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "bm25s" },
+    { name = "fastembed" },
     { name = "fire" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
@@ -1953,6 +1954,7 @@ semantic = [
 requires-dist = [
     { name = "accelerate", marker = "extra == 'generation'", specifier = ">=0.30" },
     { name = "bm25s", specifier = ">=0.2" },
+    { name = "fastembed" },
     { name = "fastembed", marker = "extra == 'rerank'", specifier = ">=0.3" },
     { name = "fire", specifier = ">=0.5" },
     { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.0" },

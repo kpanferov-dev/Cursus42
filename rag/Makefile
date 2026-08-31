@@ -1,14 +1,14 @@
 PY ?= uv run python
-PKG := student
+PKG := src
 
 .PHONY: install run debug clean lint lint-strict test
 
 install:
 	uv venv
-	uv sync --extra dev
+	uv sync
 
 run:
-	$(PY) -m $(PKG) -- --help
+	$(PY) -m $(PKG)
 
 debug:
 	$(PY) -m pdb -m $(PKG) search "How to configure the OpenAI server?" --k 5

@@ -184,7 +184,7 @@ opt-in flag, so the no-rerank path still meets the warm-throughput budget.)
 - **Cross-encoder rerank via ONNX (fastembed).** Recall@10 exceeded Recall@5,
   i.e. an ordering problem; a cross-encoder fixes ordering. ONNX keeps it
   torch-free.
-- **Schemas mirror the grader** (note the `question_str` field) so output always
+- **Schemas mirror the grader** (note the `question` field) so output always
   validates.
 - **Lazy heavy imports.** torch/transformers (generation) and ONNX/model are
   imported only on the paths that use them.

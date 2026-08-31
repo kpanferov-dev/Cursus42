@@ -42,11 +42,11 @@ class CrossEncoderReranker:
         self._encoder = TextCrossEncoder(model_name=self.model_name)
 
     def order(self, query: str, documents: List[str]) -> List[int]:
-        """Return indices into ``documents`` ordered by relevance, best first."""
         if not documents:
             return []
         self._ensure_loaded()
         encoder = self._encoder
         assert encoder is not None
-        scores = list(encoder.rerank(query, documents))  # type: ignore[attr-defined]
+        truncated = [doc[:1000] for doc in documents]
+        scores = list(encoder.rerank(query, truncated))  # type: ignore[attr-defined]
         return sorted(range(len(documents)), key=lambda i: scores[i], reverse=True)

@@ -23,7 +23,7 @@ DEFAULT_REPO_ROOT = RAW_DIR / "vllm-0.10.1"
 # The subject caps a chunk at 2000 characters and requires the cap to be a CLI
 # argument. We default below the cap because smaller spans raise the IoU
 # against small ground-truth sources, which improves recall@k.
-DEFAULT_MAX_CHUNK_SIZE = 1000
+DEFAULT_MAX_CHUNK_SIZE = 2000
 DEFAULT_CHUNK_OVERLAP = 200
 HARD_MAX_CHUNK_SIZE = 2000
 
@@ -40,7 +40,7 @@ IGNORED_DIR_NAMES = {
 # --- Retrieval ---------------------------------------------------------------
 DEFAULT_K = 10
 # Candidate pool re-ordered by the cross-encoder when reranking is enabled.
-RERANK_POOL = 100
+RERANK_POOL = 10
 
 # --- Generation --------------------------------------------------------------
 DEFAULT_MODEL_NAME = "Qwen/Qwen3-0.6B"
