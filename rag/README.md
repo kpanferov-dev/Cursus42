@@ -38,10 +38,23 @@ uv sync --extra dev          # flake8 / mypy / pytest
 > generation), **not** for retrieval/recall. If you do need it, point the caches
 > at a large volume first:
 > ```bash
+> export XDG_CACHE_HOME=/sgoinfre/students/kpanfero/.cache
 > export UV_CACHE_DIR=/sgoinfre/<login>/uv-cache
 > export HF_HOME=/sgoinfre/<login>/hf-cache
 > uv cache clean
 > uv sync --extra generation
+
+>export UV_CACHE_DIR="../.cache/uv"
+>mkdir -p ../.cache/uv
+
+export UV_CACHE_DIR="../.cache/uv"
+mkdir -p ../.cache/uv
+uv sync --extra dev
+
+export HF_HOME="$HOME/sgoinfre/.cache/huggingface"
+export HF_HUB_CACHE="$HF_HOME/hub"
+mkdir -p "$HF_HUB_CACHE"
+
 > ```
 
 ### Prepare the data
@@ -56,6 +69,29 @@ Place the extracted repository so that `data/raw/vllm-0.10.1/` contains `vllm/`,
 ### Run
 
 ```bash
+# 1. Ingesting (No bonus)
+uv run python -m student index --max_chunk_size 2000
+
+# 2. Search
+uv run python -m student search_dataset \
+  --dataset_path data/datasets/UnansweredQuestions/dataset_docs_public.json \
+  --k 10 \
+  --save_directory data/output/search_results/UnansweredQuestions --rerank
+
+# 3. Eval Moulinette 
+./moulinette evaluate_student_search_results \
+  data/output/search_results/UnansweredQuestions/dataset_docs_public.json \
+  data/datasets/AnsweredQuestions/dataset_docs_public.json \
+  --k 10 \
+  --max_context_length 2000
+
+# 4. Generate answers 
+uv run python -m student answer_dataset \
+  --student_search_results_path data/output/search_results/UnansweredQuestions/dataset_docs_public.json \
+  --save_directory data/output/search_results_and_answer/UnansweredQuestions
+
+
+
 # 1. Build the knowledge base (BM25; add --semantic to also build dense vectors)
 uv run python -m student index --max_chunk_size 800 --semantic
 
