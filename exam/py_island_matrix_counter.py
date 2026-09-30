@@ -18,21 +18,14 @@ def island_matrix_counter(matrix: list[list[str]]) -> int:
     islands = 0
 
     def dfs(row, col):
-        if row < 0 or row >= rows:
-            return
+        if 0 <= row < rows and 0 <= col < cols and matrix[row][col] != "0":
 
-        if col < 0 or col >= cols:
-            return
+            matrix[row][col] = "0"
 
-        if matrix[row][col] == "0":
-            return
-
-        matrix[row][col] = "0"
-
-        dfs(row - 1, col)  # arriba
-        dfs(row + 1, col)  # abajo
-        dfs(row, col - 1)  # izquierda
-        dfs(row, col + 1)  # derecha
+            dfs(row - 1, col)  # arriba
+            dfs(row + 1, col)  # abajo
+            dfs(row, col - 1)  # izquierda
+            dfs(row, col + 1)  # derecha
 
     for row in range(rows):
         for col in range(cols):

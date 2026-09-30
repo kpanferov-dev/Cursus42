@@ -9,43 +9,36 @@
 #  - `"schedule"`: a list of lists containing the scheduled intervals for each room.
 #- If the input list is empty, return `{"total_rooms": 0, "schedule": []}`.
 
-from typing import Any
+def py_room_scheduler(meetings: list[list[int]]) -> dict:
+    rooms = []
 
-def py_room_scheduler(meetings: list[list[int]]) -> dict[str, Any]:
-    if not meetings:
-        return {"total_rooms": 0, "schedule": []}
-
-    # Sort by start time.
-    meetings = sorted(meetings, key=lambda meeting: meeting[0])
-
-    # Each room stores its scheduled meetings.
-    schedule: list[list[list[int]]] = []
-
-    # Track the end time of the last meeting in each room.
-    room_end_times: list[int] = []
-
-    for meeting in meetings:
-        start, end = meeting
-
-        # Find the first room whose previous meeting has ended.
-        room_index = None
-        for i, room_end in enumerate(room_end_times):
-            if room_end <= start:
-                room_index = i
+    for meeting in sorted(meetings):
+        for room in rooms:
+            if room[-1][1] <= meeting[0]:
+                room.append(meeting)
                 break
-
-        if room_index is None:
-            # No room is available, so create a new one.
-            schedule.append([meeting])
-            room_end_times.append(end)
         else:
-            schedule[room_index].append(meeting)
-            room_end_times[room_index] = end
+            rooms.append([meeting])
 
-    return {
-        "total_rooms": len(schedule),
-        "schedule": schedule,
-    }
+    return {"total_rooms": len(rooms), "schedule": rooms}
+
 
 print(py_room_scheduler([[0, 30], [5, 10], [15, 20]]))
 print(py_room_scheduler([]))
+
+
+def schedule_meetings(intervals: list[tuple[int, int]]) -> tuple[int, list]:
+    rooms = []
+
+    for meeting in sorted(intervals):
+        for room in rooms:
+            if room[-1][1] <= meeting[0]:
+                room.append(meeting)
+                break
+        else:
+            rooms.append([meeting])
+
+    return len(rooms), rooms
+
+print(schedule_meetings([(0, 30), (5, 10), (15, 20)]))
+print(schedule_meetings([]))

@@ -12,53 +12,44 @@
 
 
 def compress(s: str) -> str:
-    if not s:
-        return ""
+    result = ""
+    previous = ""
+    count = 0
 
-    result = []
-    count = 1
-
-    for i in range(1, len(s)):
-        if s[i] == s[i - 1]:
+    for char in s:
+        if char == previous:
             count += 1
         else:
-            result.append(s[i - 1])
+            result += previous
             if count > 1:
-                result.append(str(count))
+                result += str(count)
+
+            previous = char
             count = 1
 
-    # Add the final character group
-    result.append(s[-1])
+    result += previous
     if count > 1:
-        result.append(str(count))
+        result += str(count)
 
-    return "".join(result)
+    return result
 
 
 def decompress(s: str) -> str:
-    if not s:
-        return ""
+    result = ""
+    previous = ""
+    number = ""
 
-    result = []
-    i = 0
-
-    while i < len(s):
-        char = s[i]
-        i += 1
-
-        # Read all digits following the character
-        count_start = i
-        while i < len(s) and s[i].isdigit():
-            i += 1
-
-        if count_start == i:
-            count = 1
+    for char in s:
+        if "0" <= char <= "9":
+            number += char
         else:
-            count = int(s[count_start:i])
+            result += previous * int(number or "1")
+            previous = char
+            number = ""
 
-        result.append(char * count)
+    result += previous * int(number or "1")
 
-    return "".join(result)
+    return result
 
 print(compress("aabcccccaaa"))  # a2bc5a3
 print(decompress("a2bc5a3"))    # aabcccccaaa

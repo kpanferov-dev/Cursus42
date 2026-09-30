@@ -24,22 +24,23 @@ def generate_spiral(n: int) -> list[list[int]]:
         right -= 1
 
         # De derecha a izquierda
-        if top <= bottom:
-            for col in range(right, left - 1, -1):
-                matrix[bottom][col] = value
-                value += 1
-            bottom -= 1
+       
+        for col in range(right, left - 1, -1):
+            matrix[bottom][col] = value
+            value += 1
+        bottom -= 1
 
         # De abajo a arriba
-        if left <= right:
-            for row in range(bottom, top - 1, -1):
-                matrix[row][left] = value
-                value += 1
-            left += 1
+      
+        for row in range(bottom, top - 1, -1):
+            matrix[row][left] = value
+            value += 1
+        left += 1
 
     return matrix
 
-matrix = generate_spiral(3)
+matrix = generate_spiral(10
+                         )
 
 for row in matrix:
     print(row)
