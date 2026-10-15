@@ -1,0 +1,8 @@
+{
+  "provider": "groq",
+  "model": "openai/gpt-oss-120b",
+  "task": "sympy__sympy-13480",
+  "tag": "baseline",
+  "passed": true,
+  "wall_s": 96.5
+}

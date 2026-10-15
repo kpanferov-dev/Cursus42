@@ -1,0 +1,8 @@
+{
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "task": "pydata__xarray-4629",
+  "tag": "baseline",
+  "passed": false,
+  "wall_s": 199.9
+}

@@ -1,0 +1,79 @@
+{
+  "default_provider": "groq",
+  "default_model": "qwen/qwen3.8-27b",
+  "fallbacks": [
+    "groq:qwen/qwen3.8-27b",
+    "gemini:gemini-3.1-flash-lite"
+  ],
+  "providers": [
+    {
+      "name": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "extra_headers": {
+        "X-Title": "agent-smith"
+      },
+      "models": [
+        "poolside/laguna-s-2.1:free",
+        "nvidia/nemotron-3-super-120b-a12b:free"
+      ]
+    },
+    {
+      "name": "groq",
+      "base_url": "https://api.groq.com/openai/v1",
+      "api_key_env": "GROQ_API_KEY",
+      "models": [
+        "qwen/qwen3.8-27b",
+        "openai/gpt-oss-120b",
+        "openai/gpt-oss-20b"
+      ],
+      "max_request_tokens": 6000
+    },
+    {
+      "name": "gemini",
+      "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "api_key_env": "GEMINI_API_KEY",
+      "max_stop_sequences": 5,
+      "models": [
+        "gemini-3.1-flash-lite",
+        "gemini-3-flash-preview"
+      ]
+    },
+    {
+      "name": "mistral",
+      "base_url": "https://api.mistral.ai/v1",
+      "api_key_env": "MISTRAL_API_KEY",
+      "models": [
+        "codestral-latest",
+        "mistral-small-latest",
+        "devstral-small-latest"
+      ]
+    },
+    {
+      "name": "cerebras",
+      "base_url": "https://api.cerebras.ai/v1",
+      "api_key_env": "CEREBRAS_API_KEY",
+      "models": [
+        "qwen-3-coder-480b",
+        "llama-3.3-70b"
+      ]
+    },
+    {
+      "name": "together",
+      "base_url": "https://api.together.xyz/v1",
+      "api_key_env": "TOGETHER_API_KEY",
+      "models": [
+        "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"
+      ]
+    },
+    {
+      "name": "cohere",
+      "base_url": "https://api.cohere.ai/compatibility/v1",
+      "api_key_env": "COHERE_API_KEY",
+      "supports_stop": true,
+      "models": [
+        "command-a-03-2025"
+      ]
+    }
+  ]
+}

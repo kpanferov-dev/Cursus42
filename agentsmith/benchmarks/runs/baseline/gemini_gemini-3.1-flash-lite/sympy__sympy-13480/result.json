@@ -1,0 +1,8 @@
+{
+  "provider": "gemini",
+  "model": "gemini-3.1-flash-lite",
+  "task": "sympy__sympy-13480",
+  "tag": "baseline",
+  "passed": true,
+  "wall_s": 119.5
+}

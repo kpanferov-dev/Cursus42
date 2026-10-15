@@ -1,0 +1,8 @@
+{
+  "provider": "groq",
+  "model": "openai/gpt-oss-120b",
+  "task": "pydata__xarray-4629",
+  "tag": "baseline",
+  "passed": true,
+  "wall_s": 287.7
+}

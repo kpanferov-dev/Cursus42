@@ -1,0 +1,8 @@
+{
+  "provider": "openrouter",
+  "model": "poolside/laguna-s-2.1:free",
+  "task": "pydata__xarray-4629",
+  "tag": "baseline",
+  "passed": false,
+  "wall_s": 200.0
+}

@@ -1,0 +1,8 @@
+{
+  "provider": "groq",
+  "model": "qwen/qwen3.8-27b",
+  "task": "sympy__sympy-13480",
+  "tag": "baseline",
+  "passed": true,
+  "wall_s": 209.7
+}

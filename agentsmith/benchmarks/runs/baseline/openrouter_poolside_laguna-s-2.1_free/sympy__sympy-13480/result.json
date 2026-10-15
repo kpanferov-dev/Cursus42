@@ -1,0 +1,8 @@
+{
+  "provider": "openrouter",
+  "model": "poolside/laguna-s-2.1:free",
+  "task": "sympy__sympy-13480",
+  "tag": "baseline",
+  "passed": false,
+  "wall_s": 460.6
+}

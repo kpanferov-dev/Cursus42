@@ -1,0 +1,8 @@
+{
+  "provider": "groq",
+  "model": "qwen/qwen3.8-27b",
+  "task": "pydata__xarray-4629",
+  "tag": "baseline",
+  "passed": true,
+  "wall_s": 465.7
+}

@@ -1,0 +1,224 @@
+diff --git a/smith/agent/loop.py b/smith/agent/loop.py
+index e329a91..6310208 100644
+--- a/smith/agent/loop.py
++++ b/smith/agent/loop.py
+@@ -21,12 +21,16 @@ from typing import Awaitable, Callable, List, Optional, Tuple
+ 
+ from smith.agent.extraction import END_CODE, extract_code
+ from smith.agent.memory import Memory, TokenEstimator, clip
+-from smith.llm.base import LLMClient, LLMError
++from smith.llm.base import LLMClient, LLMError, RequestTooLargeError
+ from smith.models import RunLimits, SolutionOutput, StepMetrics
+ from smith.sandbox.sandbox import ExecutionResult, Sandbox
+ 
+ log = logging.getLogger("smith.agent")
+ 
++# Smallest per-request prompt we accept after "request too large" errors; below this the
++# agent cannot show the system prompt plus a useful amount of history.
++MIN_CONTEXT_CAP = 2_500
++
+ # validator(answer) -> None if acceptable, else a message for the LLM
+ Validator = Callable[[str], Optional[str]]
+ # fallback() -> (solution, success) used when the loop ends without final_answer
+@@ -113,6 +117,7 @@ class CodeAgent:
+         st = AgentState()
+         memory = Memory(self.system_prompt, task_prompt, keep_full=self.s.keep_full_steps)
+         stop_reason = "max_iterations"
++        context_cap = self.s.context_cap_tokens   # may shrink after RequestTooLargeError
+         try:
+             for it in range(1, self.s.limits.max_iterations + 1):
+                 if time.monotonic() >= deadline:
+@@ -123,15 +128,31 @@ class CodeAgent:
+                 if out_left < self.s.min_tokens_per_step:
+                     stop_reason = "output token budget exhausted"
+                     break
+-                messages = memory.render(min(self.s.context_cap_tokens, in_left), self.estimator,
+-                                         self._footer(it, st))
+-                if messages is None:
+-                    stop_reason = "input token budget exhausted"
+-                    break
+                 max_tokens = min(self.s.max_tokens_per_step, out_left)
+                 try:
+-                    resp = await self.llm.complete(messages, max_tokens=max_tokens,
+-                                                   stop=self.s.stop_sequences, temperature=self.s.temperature)
++                    resp = None
++                    while resp is None:
++                        messages = memory.render(min(context_cap, in_left), self.estimator, self._footer(it, st))
++                        if messages is None:
++                            break
++                        try:
++                            resp = await self.llm.complete(messages, max_tokens=max_tokens,
++                                                           stop=self.s.stop_sequences, temperature=self.s.temperature)
++                        except RequestTooLargeError as e:
++                            # The provider caps the size of a single request (e.g. Groq free tier:
++                            # prompt + max_tokens <= tokens-per-minute). Nothing was generated, so
++                            # shrink the prompt for this and all later steps and resend.
++                            st.requests += 1
++                            new_cap = (e.limit - max_tokens - 300) if e.limit else int(context_cap * 0.6)
++                            new_cap = min(new_cap, int(context_cap * 0.85))
++                            if new_cap < MIN_CONTEXT_CAP:
++                                raise
++                            log.warning("step %d: request too large for the provider; prompt cap %d -> %d tokens",
++                                        it, context_cap, new_cap)
++                            context_cap = new_cap
++                    if messages is None:
++                        stop_reason = "input token budget exhausted"
++                        break
+                 except LLMError as e:
+                     st.error = f"LLM error: {e}"
+                     st.requests += 1
+diff --git a/smith/llm/__init__.py b/smith/llm/__init__.py
+index 5480062..0684346 100644
+--- a/smith/llm/__init__.py
++++ b/smith/llm/__init__.py
+@@ -9,12 +9,13 @@ from smith.llm.base import (
+     LLMClient,
+     LLMError,
+     LLMResponse,
++    RequestTooLargeError,
+     RetryableLLMError,
+ )
+ from smith.llm.openai_compat import OpenAICompatibleClient, estimate_tokens
+ 
+ __all__ = [
+-    "LLMClient", "LLMResponse", "LLMError", "FatalLLMError", "RetryableLLMError",
++    "LLMClient", "LLMResponse", "LLMError", "FatalLLMError", "RetryableLLMError", "RequestTooLargeError",
+     "OpenAICompatibleClient", "create_client", "estimate_tokens",
+ ]
+ 
+diff --git a/smith/llm/base.py b/smith/llm/base.py
+index 0a57898..ec80f65 100644
+--- a/smith/llm/base.py
++++ b/smith/llm/base.py
+@@ -30,6 +30,16 @@ class FatalLLMError(LLMError):
+     """Non-recoverable failure (bad request, unknown model, all keys invalid)."""
+ 
+ 
++class RequestTooLargeError(LLMError):
++    """The request exceeds a per-request size limit of the provider (HTTP 413, e.g. Groq's
++    free-tier tokens-per-minute cap). Not fatal: the caller should resend a smaller prompt.
++    ``limit`` is the provider's token limit when the error message states it."""
++
++    def __init__(self, message: str, limit: Optional[int] = None):
++        super().__init__(message)
++        self.limit = limit
++
++
+ @dataclass
+ class LLMResponse:
+     text: str
+diff --git a/smith/llm/openai_compat.py b/smith/llm/openai_compat.py
+index d4faecd..5f2f029 100644
+--- a/smith/llm/openai_compat.py
++++ b/smith/llm/openai_compat.py
+@@ -8,6 +8,7 @@ Retry policy
+ * 429 / 402 / quota messages -> cool the key down (Retry-After aware), rotate
+ * 401 / 403                  -> disable the key, rotate
+ * 5xx / timeouts / network   -> exponential backoff, same key
++* 413 / "request too large"  -> RequestTooLargeError (the agent resends a smaller prompt)
+ * 400 / 404                  -> fatal (bad model name, bad params)
+ Retries stop when ``max_retries`` is reached or the task deadline is near.
+ """
+@@ -16,6 +17,7 @@ from __future__ import annotations
+ import asyncio
+ import logging
+ import random
++import re
+ import time
+ from typing import List, Optional
+ 
+@@ -27,6 +29,7 @@ from smith.llm.base import (
+     LLMClient,
+     LLMResponse,
+     Message,
++    RequestTooLargeError,
+     RetryableLLMError,
+ )
+ from smith.llm.keys import KeyRing
+@@ -134,6 +137,10 @@ class OpenAICompatibleClient(LLMClient):
+             last_error = f"HTTP {r.status_code}: {body}"
+             log.warning("LLM %s with %s: %s", r.status_code, self.keys.label(), body)
+             low = body.lower()
++            if r.status_code == 413 or "request too large" in low:
++                # Same request will fail on every key: let the agent shrink the prompt.
++                m = re.search(r"limit\D{0,3}(\d+)", low)
++                raise RequestTooLargeError(last_error, int(m.group(1)) if m else None)
+             if r.status_code in (401, 403):
+                 self.keys.disable_current()
+             elif r.status_code in (429, 402) or any(h in low for h in _QUOTA_HINTS):
+diff --git a/tests/test_agent.py b/tests/test_agent.py
+index da1a98c..67752ff 100644
+--- a/tests/test_agent.py
++++ b/tests/test_agent.py
+@@ -3,7 +3,7 @@ from typing import List
+ 
+ from smith.agent.loop import AgentSettings, CodeAgent
+ from smith.agent.memory import Memory, TokenEstimator
+-from smith.llm.base import LLMClient, LLMResponse
++from smith.llm.base import LLMClient, LLMResponse, RequestTooLargeError
+ from smith.llm.keys import KeyRing
+ from smith.models import RunLimits, SandboxConfig
+ from smith.sandbox import Sandbox
+@@ -95,3 +95,62 @@ async def test_final_step_keeps_printed_output():
+     assert sol.success
+     out = sol.steps[-1].sandbox_output
+     assert "ALL TESTS PASSED (2/2)" in out and "final_answer accepted." in out
++
++
++class TooLargeOnceLLM(ScriptedLLM):
++    """Rejects the first request as too large (like Groq's HTTP 413), then answers."""
++
++    def __init__(self, replies, limit):
++        super().__init__(replies)
++        self.limit = limit
++        self.calls = 0
++
++    async def complete(self, messages, *, max_tokens, stop=None, temperature=0.0):
++        self.calls += 1
++        if self.calls == 1:
++            raise RequestTooLargeError("HTTP 413: Request too large ... Limit 6000, Requested 9431", self.limit)
++        return await super().complete(messages, max_tokens=max_tokens, stop=stop, temperature=temperature)
++
++
++async def test_request_too_large_shrinks_prompt_and_continues():
++    sb = Sandbox(SandboxConfig(max_execution_time_seconds=3))
++    await sb.start()
++    try:
++        llm = TooLargeOnceLLM(["```python\nfinal_answer('ok')\n```"], limit=6000)
++        agent = CodeAgent(llm, sb, "SYSTEM", settings(context_cap_tokens=9500, max_tokens_per_step=900))
++        sol = await agent.run("1", "TASK")
++    finally:
++        await sb.close()
++    assert sol.success and sol.solution == "ok" and sol.iterations == 1
++    assert llm.calls == 2 and sol.total_requests == 2   # the rejected request is counted
++
++
++async def test_request_too_large_below_minimum_stops_cleanly():
++    sb = Sandbox(SandboxConfig(max_execution_time_seconds=3))
++    await sb.start()
++    try:
++        llm = TooLargeOnceLLM(["```python\nfinal_answer('ok')\n```"], limit=1000)
++        agent = CodeAgent(llm, sb, "SYSTEM", settings())
++        sol = await agent.run("1", "TASK")
++    finally:
++        await sb.close()
++    assert not sol.success and "too large" in (sol.error or "")
++
++
++async def test_client_maps_413_to_request_too_large():
++    import httpx
++    from smith.config import ProviderConfig
++    from smith.llm.openai_compat import OpenAICompatibleClient
++
++    def handler(request):
++        return httpx.Response(413, json={"error": {"message": "Request too large for model `m` on tokens per "
++                                                          "minute (TPM): Limit 6000, Requested 9431"}})
++    client = OpenAICompatibleClient(ProviderConfig(name="g", base_url="https://x/v1", api_key_env="K"), "m", ["k1", "k2"])
++    client._http = httpx.AsyncClient(transport=httpx.MockTransport(handler))
++    try:
++        await client.complete([{"role": "user", "content": "hi"}], max_tokens=10)
++        raise AssertionError("expected RequestTooLargeError")
++    except RequestTooLargeError as e:
++        assert e.limit == 6000
++    finally:
++        await client.aclose()
