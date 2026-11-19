@@ -1,231 +1,911 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TAP — Shared World</title>
-<link rel="stylesheet" href="/scene.css">
-<style>
-:root{color-scheme:dark;--bg:#0d1421;--panel:#182335;--line:#34445a;--ink:#e5edf7;--muted:#9db0c4;--accent:#65e2cb;--gold:#f3be78;--danger:#ff8f8f}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
-header{background:#111c2c;border-bottom:1px solid var(--line);padding:18px clamp(16px,3vw,40px);display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
-header strong{font-size:22px;letter-spacing:.05em}header small{display:block;color:var(--muted)}.status-pill{border:1px solid var(--line);border-radius:99px;padding:5px 11px;color:var(--gold)}
-main{max-width:1460px;margin:22px auto;padding:0 18px;display:grid;grid-template-columns:minmax(300px,1fr) minmax(330px,1fr);gap:17px}.panel{padding:20px;border:1px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:0 3px 20px #0002}h2{font-size:17px;margin:0 0 12px}h3{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);margin:17px 0 9px}.subtitle{font-size:13px;color:var(--muted)}.headerline{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}.stack{display:grid;gap:12px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{min-width:0}
-input,select,button{font:inherit;border:1px solid var(--line);border-radius:9px;padding:9px 11px;color:var(--ink);background:#0d182a}input{flex:1;min-width:90px}input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent)}button{cursor:pointer;transition:background .12s}button:hover:not(:disabled){background:#304358}button:disabled{opacity:.48;cursor:not-allowed}button.primary{background:#246d65;color:#eafff6;border-color:#419b88;font-weight:700}button.warn{border-color:#8b4851;color:#ffcccc}button.small{font-size:12px;padding:5px 9px}.chips{display:flex;flex-wrap:wrap;gap:7px}.chip{background:#112134;border:1px solid #435774;border-radius:8px;padding:8px 11px;color:#cde6f0}.choice{background:#14273b;border:1px solid #405772;border-radius:9px;padding:8px 9px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:5px 0}.choice span{overflow-wrap:anywhere}.choice .muted{font-size:12px;color:var(--muted)}.choice button{padding:5px 8px;font-size:12px}.empty{color:var(--muted);font-style:italic}.hero{background:linear-gradient(125deg,#12313b,#1b2940);padding:15px;border:1px solid #3c616d;border-radius:12px}.hero p{margin:7px 0 0;color:#cfdfec}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:14px 0}.stat{border-radius:10px;background:#111c2c;padding:9px;text-align:center}.stat b{display:block;font-size:20px;color:var(--accent)}.stat small{display:block;color:var(--muted);font-size:11px}.separator{border:0;border-top:1px solid var(--line);margin:16px 0}.action-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.action-grid button{font-size:12px;padding:9px 4px}.scroller{height:210px;overflow:auto;border:1px solid #3d5068;border-radius:10px;background:#0d1828;padding:12px;font:12px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}.scroller div{border-bottom:1px solid #27364b;padding:4px 0}.scroller .evt{color:#b7dfd5}.scroller .err{color:var(--danger)}.tabs{margin-top:8px;display:flex;gap:7px}.tabs button[aria-selected=true]{border-color:var(--accent);color:var(--accent);background:#143537}.inline-actions{display:grid;grid-template-columns:1fr auto;gap:8px}.two{display:grid;grid-template-columns:1fr 1fr;gap:15px}.hide{display:none!important}.scroller .time{color:var(--muted);margin-right:7px}.scroller .self{color:#f3e2bf}.tabs .badge{margin-left:5px;font-size:11px;color:var(--gold)}#chatLog{height:300px}
-header{position:sticky;top:0;z-index:20;box-shadow:0 2px 14px #0006}.where-pill{border:1px solid var(--accent);color:var(--accent);border-radius:99px;padding:5px 12px;font-weight:700;max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mapview{overflow:auto;border:1px solid #3d5068;border-radius:12px;background:#0b1422;padding:6px}.mapview svg{display:block;width:100%;height:auto;min-width:540px}.maphint{font-size:12px;color:var(--muted);margin-top:7px}
-.victory{background:linear-gradient(125deg,#4a3410,#1d3a33);border-color:var(--gold);text-align:center}.victory h2{font-size:24px;color:var(--gold);margin-bottom:6px}.victory p{margin:0;color:#fff3dc}
-.quest{border:1px solid #405772;border-radius:10px;padding:9px 11px;margin:7px 0;background:#14273b}.quest b{display:block}.quest .state{float:right;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid}.quest.active .state{color:var(--gold);border-color:var(--gold)}.quest.completed{opacity:.72}.quest.completed .state{color:var(--accent);border-color:var(--accent)}.quest p{margin:5px 0 0;font-size:13px;color:#cfdfec}.quest.final{border-color:var(--gold)}
-#combatStats{text-align:center;margin-top:-6px}
-.room rect{fill:#14273b;stroke:#405772;stroke-width:1.5}.room.visited rect{stroke:#7290b3}.room.unexplored rect{fill:#0f1a29;stroke-dasharray:5 4}.room.current rect{fill:#1b5a53;stroke:var(--accent);stroke-width:3}.room.reachable{cursor:pointer}.room.reachable:hover rect,.room.reachable:focus rect{fill:#24405a;stroke:var(--gold)}.room text{fill:var(--ink);font-size:13px;text-anchor:middle;pointer-events:none}.room.unexplored text{fill:var(--muted)}.room .tag{fill:var(--gold);font-size:10px;font-weight:700;letter-spacing:.06em}.room.current .tag{fill:#eafff6}
-.link{stroke:#5b7391;stroke-width:3;fill:none}.link.long{stroke-dasharray:7 6}.linklabel{fill:var(--muted);font-size:11px;text-anchor:middle}.you-ring{fill:none;stroke:var(--accent);stroke-width:2;animation:pulse 1.6s ease-out infinite}@keyframes pulse{0%{opacity:.95;stroke-width:2}100%{opacity:0;stroke-width:12}}
-@media(max-width:900px){main{grid-template-columns:1fr}.stats{grid-template-columns:repeat(4,1fr)}}@media(max-width:520px){.two{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.action-grid{grid-template-columns:repeat(3,1fr)}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>TAP — Shared World</title>
+    <link rel="stylesheet" href="/scene.css">
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #0d1421;
+            --panel: #182335;
+            --line: #34445a;
+            --ink: #e5edf7;
+            --muted: #9db0c4;
+            --accent: #65e2cb;
+            --gold: #f3be78;
+            --danger: #ff8f8f
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+            font: 15px/1.5 system-ui, -apple-system, Segoe UI, sans-serif;
+            background: var(--bg);
+            color: var(--ink)
+        }
+
+        header {
+            background: #111c2c;
+            border-bottom: 1px solid var(--line);
+            padding: 18px clamp(16px, 3vw, 40px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap
+        }
+
+        header strong {
+            font-size: 22px;
+            letter-spacing: .05em
+        }
+
+        header small {
+            display: block;
+            color: var(--muted)
+        }
+
+        .status-pill {
+            border: 1px solid var(--line);
+            border-radius: 99px;
+            padding: 5px 11px;
+            color: var(--gold)
+        }
+
+        main {
+            max-width: 1460px;
+            margin: 22px auto;
+            padding: 0 18px;
+            display: grid;
+            grid-template-columns: minmax(300px, 1fr) minmax(330px, 1fr);
+            gap: 17px
+        }
+
+        .panel {
+            padding: 20px;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: var(--panel);
+            box-shadow: 0 3px 20px #0002
+        }
+
+        h2 {
+            font-size: 17px;
+            margin: 0 0 12px
+        }
+
+        h3 {
+            font-size: 13px;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin: 17px 0 9px
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        .headerline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap
+        }
+
+        .stack {
+            display: grid;
+            gap: 12px
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .row>* {
+            min-width: 0
+        }
+
+        input,
+        select,
+        button {
+            font: inherit;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            padding: 9px 11px;
+            color: var(--ink);
+            background: #0d182a
+        }
+
+        input {
+            flex: 1;
+            min-width: 90px
+        }
+
+        input:focus,
+        select:focus,
+        button:focus-visible {
+            outline: 2px solid var(--accent)
+        }
+
+        button {
+            cursor: pointer;
+            transition: background .12s
+        }
+
+        button:hover:not(:disabled) {
+            background: #304358
+        }
+
+        button:disabled {
+            opacity: .48;
+            cursor: not-allowed
+        }
+
+        button.primary {
+            background: #246d65;
+            color: #eafff6;
+            border-color: #419b88;
+            font-weight: 700
+        }
+
+        button.warn {
+            border-color: #8b4851;
+            color: #ffcccc
+        }
+
+        button.small {
+            font-size: 12px;
+            padding: 5px 9px
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px
+        }
+
+        .chip {
+            background: #112134;
+            border: 1px solid #435774;
+            border-radius: 8px;
+            padding: 8px 11px;
+            color: #cde6f0
+        }
+
+        .choice {
+            background: #14273b;
+            border: 1px solid #405772;
+            border-radius: 9px;
+            padding: 8px 9px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin: 5px 0
+        }
+
+        .choice span {
+            overflow-wrap: anywhere
+        }
+
+        .choice .muted {
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        .choice button {
+            padding: 5px 8px;
+            font-size: 12px
+        }
+
+        .empty {
+            color: var(--muted);
+            font-style: italic
+        }
+
+        .hero {
+            background: linear-gradient(125deg, #12313b, #1b2940);
+            padding: 15px;
+            border: 1px solid #3c616d;
+            border-radius: 12px
+        }
+
+        .hero p {
+            margin: 7px 0 0;
+            color: #cfdfec
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 7px;
+            margin: 14px 0
+        }
+
+        .stat {
+            border-radius: 10px;
+            background: #111c2c;
+            padding: 9px;
+            text-align: center
+        }
+
+        .stat b {
+            display: block;
+            font-size: 20px;
+            color: var(--accent)
+        }
+
+        .stat small {
+            display: block;
+            color: var(--muted);
+            font-size: 11px
+        }
+
+        .separator {
+            border: 0;
+            border-top: 1px solid var(--line);
+            margin: 16px 0
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 7px
+        }
+
+        .action-grid button {
+            font-size: 12px;
+            padding: 9px 4px
+        }
+
+        .scroller {
+            height: 210px;
+            overflow: auto;
+            border: 1px solid #3d5068;
+            border-radius: 10px;
+            background: #0d1828;
+            padding: 12px;
+            font: 12px/1.65 ui-monospace, SFMono-Regular, Consolas, monospace;
+            overflow-wrap: anywhere
+        }
+
+        .scroller div {
+            border-bottom: 1px solid #27364b;
+            padding: 4px 0
+        }
+
+        .scroller .evt {
+            color: #b7dfd5
+        }
+
+        .scroller .err {
+            color: var(--danger)
+        }
+
+        .tabs {
+            margin-top: 8px;
+            display: flex;
+            gap: 7px
+        }
+
+        .tabs button[aria-selected=true] {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: #143537
+        }
+
+        .inline-actions {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px
+        }
+
+        .two {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px
+        }
+
+        .hide {
+            display: none !important
+        }
+
+        .scroller .time {
+            color: var(--muted);
+            margin-right: 7px
+        }
+
+        .scroller .self {
+            color: #f3e2bf
+        }
+
+        .tabs .badge {
+            margin-left: 5px;
+            font-size: 11px;
+            color: var(--gold)
+        }
+
+        #chatLog {
+            height: 300px
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            box-shadow: 0 2px 14px #0006
+        }
+
+        .where-pill {
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            border-radius: 99px;
+            padding: 5px 12px;
+            font-weight: 700;
+            max-width: 60vw;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        .mapview {
+            overflow: auto;
+            border: 1px solid #3d5068;
+            border-radius: 12px;
+            background: #0b1422;
+            padding: 6px
+        }
+
+        .mapview svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            min-width: 540px
+        }
+
+        .maphint {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 7px
+        }
+
+        .victory {
+            background: linear-gradient(125deg, #4a3410, #1d3a33);
+            border-color: var(--gold);
+            text-align: center
+        }
+
+        .victory h2 {
+            font-size: 24px;
+            color: var(--gold);
+            margin-bottom: 6px
+        }
+
+        .victory p {
+            margin: 0;
+            color: #fff3dc
+        }
+
+        .quest {
+            border: 1px solid #405772;
+            border-radius: 10px;
+            padding: 9px 11px;
+            margin: 7px 0;
+            background: #14273b
+        }
+
+        .quest b {
+            display: block
+        }
+
+        .quest .state {
+            float: right;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            border-radius: 99px;
+            border: 1px solid
+        }
+
+        .quest.active .state {
+            color: var(--gold);
+            border-color: var(--gold)
+        }
+
+        .quest.completed {
+            opacity: .72
+        }
+
+        .quest.completed .state {
+            color: var(--accent);
+            border-color: var(--accent)
+        }
+
+        .quest p {
+            margin: 5px 0 0;
+            font-size: 13px;
+            color: #cfdfec
+        }
+
+        .quest.final {
+            border-color: var(--gold)
+        }
+
+        #combatStats {
+            text-align: center;
+            margin-top: -6px
+        }
+
+        .room rect {
+            fill: #14273b;
+            stroke: #405772;
+            stroke-width: 1.5
+        }
+
+        .room.visited rect {
+            stroke: #7290b3
+        }
+
+        .room.unexplored rect {
+            fill: #0f1a29;
+            stroke-dasharray: 5 4
+        }
+
+        .room.current rect {
+            fill: #1b5a53;
+            stroke: var(--accent);
+            stroke-width: 3
+        }
+
+        .room.reachable {
+            cursor: pointer
+        }
+
+        .room.reachable:hover rect,
+        .room.reachable:focus rect {
+            fill: #24405a;
+            stroke: var(--gold)
+        }
+
+        .room text {
+            fill: var(--ink);
+            font-size: 13px;
+            text-anchor: middle;
+            pointer-events: none
+        }
+
+        .room.unexplored text {
+            fill: var(--muted)
+        }
+
+        .room .tag {
+            fill: var(--gold);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .06em
+        }
+
+        .room.current .tag {
+            fill: #eafff6
+        }
+
+        .link {
+            stroke: #5b7391;
+            stroke-width: 3;
+            fill: none
+        }
+
+        .link.long {
+            stroke-dasharray: 7 6
+        }
+
+        .linklabel {
+            fill: var(--muted);
+            font-size: 11px;
+            text-anchor: middle
+        }
+
+        .you-ring {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 2;
+            animation: pulse 1.6s ease-out infinite
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: .95;
+                stroke-width: 2
+            }
+
+            100% {
+                opacity: 0;
+                stroke-width: 12
+            }
+        }
+
+        @media(max-width:900px) {
+            main {
+                grid-template-columns: 1fr
+            }
+
+            .stats {
+                grid-template-columns: repeat(4, 1fr)
+            }
+        }
+
+        @media(max-width:520px) {
+            .two {
+                grid-template-columns: 1fr
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr)
+            }
+
+            .action-grid {
+                grid-template-columns: repeat(3, 1fr)
+            }
+        }
+    </style>
 </head>
+
 <body>
-<header><div><strong>◈ THE ANSWER PROTOCOL</strong><small id="storyTitle">A shared-world retro text adventure • RFC 42TAP</small></div><div class="row"><span class="where-pill" id="wherePill" title="Your current location">📍 Not in the world</span><span class="status-pill" id="connectionStatus">Disconnected</span><span class="subtitle">TCP via Go bridge</span></div></header>
-<main>
-<section class="panel scene-panel" id="scenePanel">
-    <div class="headerline"><h2 id="sceneTitle">Scene</h2><span class="subtitle">Arrows: move · characters: talk, quests, fight · items: pick up · your hero: bag</span></div>
-    <div class="subtitle" id="sceneDesc" style="margin:-4px 0 9px"></div>
-    <div class="scene" id="scene">
-        <div class="scene-bg" id="sceneBg"></div>
-        <div class="scene-layer" id="sceneActors"></div>
-        <div class="scene-layer" id="sceneExits"></div>
-        <div class="scene-layer" id="sceneLayer"></div>
-        <div class="combat hide" id="combat"></div>
-        <div class="scene-empty" id="sceneEmpty">Connect to enter the world.</div>
-    </div>
-    <div class="scene-captions" id="sceneCaptions" aria-live="polite"></div>
-    <div class="scene-bar">
-        <button data-scene="LOOK">👁 Look</button><button data-scene="BAG">🎒 Bag</button><button data-scene="STATUS">❤ Status</button><button data-scene="QUESTS">📜 Quests</button><button data-scene="WHO">👥 Who</button><button data-scene="GROUP CREATE">⚑ Create group</button><button data-scene="GROUP LEAVE">Leave group</button>
-        <form id="sceneSay"><input id="sceneSayText" placeholder="Say something to the room..." maxlength="700"><button class="primary" type="submit">Say</button></form>
-    </div>
-</section>
-<section class="stack">
-<div class="panel victory hide" id="victoryPanel" role="status"><h2>🏆 Victory!</h2><p id="victoryText">You completed the final quest and won the game!</p></div>
-<div class="panel" id="connectPanel">
-    <h2>Enter the shared world</h2><p class="subtitle">Each browser tab opens a separate real TCP session on the configured TAP server.</p>
-    <div class="row" style="align-items:flex-end;flex-wrap:nowrap"><div id="skinPreview" style="width:64px;flex:none" title="Your character"></div><div style="flex:1"><form class="row" id="connectForm"><input id="username" aria-label="Player name" placeholder="Username (e.g. alice)" maxlength="32" required><button class="primary" type="submit">Connect</button></form><div class="subtitle" id="skinNote" style="margin-top:6px">Your character (cat or rabbit) comes from your name, so everyone sees you the same way.</div></div></div>
-    <div class="subtitle" id="connectError" role="alert"></div>
-</div>
-<div class="panel" id="mapPanel">
-    <div class="headerline"><h2>Map</h2><span class="subtitle" id="mapWhere">Not connected</span></div>
-    <div class="mapview" id="mapView"><div class="empty">Connect to see the map and your position.</div></div>
-    <div class="maphint">Your room is highlighted. Click a neighbouring room (labelled with its direction) to move there. A dashed line is a long path between distant rooms.</div>
-</div>
-<div class="panel">
-    <div class="headerline"><h2>World</h2><button class="small" data-action="LOOK">Refresh room</button></div>
-    <div class="hero"><strong id="roomName">Not connected</strong><div class="subtitle" id="roomID">—</div><p id="roomDescription">Connect to explore the world.</p></div>
-    <div class="stats"><div class="stat"><b id="roomPlayers">0</b><small>In room</small></div><div class="stat"><b id="serverPlayers">0</b><small>On server</small></div><div class="stat"><b id="health">100</b><small>HP / 100</small></div><div class="stat"><b id="gold">0</b><small>Gold</small></div></div><div class="subtitle" id="combatStats">Attack — · Defense —</div>
-    <h3>Exits</h3><div class="chips" id="exits"><span class="empty">No location</span></div>
-    <div class="two"><div><h3>Items in room</h3><div id="items"><span class="empty">Nothing visible</span></div></div><div><h3>NPCs</h3><div id="npcs"><span class="empty">Nobody here</span></div></div></div>
-    <h3>Inventory</h3><div id="inventory"><span class="empty">Your pockets are empty</span></div>
-</div>
-<div class="panel"><h2>Quick commands</h2><div class="action-grid">
-    <button data-action="LOOK">LOOK</button><button data-action="INVENTORY">INVENTORY</button><button data-action="STATUS">STATUS</button><button data-action="WHO">WHO</button>
-    <button data-action="QUESTS">QUESTS</button><button data-action="DEFEND">DEFEND</button><button data-action="FLEE">FLEE</button><button class="warn" id="quitBtn">QUIT</button>
-</div><div class="subtitle" style="margin-top:11px">Moves, item management, NPC actions, quests, group commands and chat are available below.</div></div>
-</section>
-<section class="stack">
-<div class="panel">
-    <h2>Player actions</h2>
-    <div class="two"><div><h3>Items</h3><div class="row"><input id="itemName" placeholder="Item ID or display name"><button id="takeBtn">TAKE</button><button id="dropBtn">DROP</button><button id="useBtn">USE</button></div></div>
-    <div><h3>NPCs</h3><div class="row"><input id="npcName" placeholder="NPC ID or display name"><button id="talkBtn">TALK</button><button id="attackBtn">ATTACK</button><button id="questBtn">QUEST</button></div></div></div>
-    <h3>Group management</h3><div class="row"><button id="createGroup">GROUP CREATE</button><button id="leaveGroup">GROUP LEAVE</button></div>
-    <div class="row" style="margin-top:8px"><input id="groupPlayer" placeholder="Username: invite or leader to join"><button id="inviteGroup">INVITE</button><button id="joinGroup">JOIN</button></div>
-    <h3>Raw TAP command</h3><form id="rawForm" class="inline-actions"><input id="rawCommand" placeholder="MOVE north, GROUP INVITE bob, ..."><button class="primary" type="submit">Send</button></form>
-</div>
-<div class="panel">
-    <div class="headerline"><h2>Quest journal</h2><button class="small" data-action="QUESTS">Refresh</button></div>
-    <div id="journal"><span class="empty">No quests yet. TALK to the Master Cartographer in Clockwork Square to begin.</span></div>
-</div>
-<div class="panel">
-    <div class="headerline"><h2>Chat</h2><span class="subtitle">Activity · Global · Room · Group</span></div>
-    <div class="tabs" id="chatTabs"><button data-scope="ACTIVITY" aria-selected="true">Activity</button><button data-scope="GLOBAL" aria-selected="false">Global</button><button data-scope="ROOM" aria-selected="false">Room</button><button data-scope="GROUP" aria-selected="false">Group</button></div>
-    <div class="scroller" id="chatLog" aria-live="polite"><div class="empty">Everything that happens around you is described here in plain English.</div></div>
-    <form class="inline-actions" id="chatForm" style="margin-top:9px"><input id="chatMessage" placeholder="Write a global chat message..." maxlength="700" required><button class="primary" type="submit">Send</button></form>
-</div>
-<div class="panel"><div class="headerline"><h2>Protocol / gameplay log</h2><button class="small" id="clearLog">Clear</button></div><div class="scroller" id="protocolLog" aria-live="polite"><div class="empty">Replies, NPC dialogue, combat and quest updates appear here.</div></div><div class="subtitle" style="margin-top:7px">TAP messages are shown verbatim (automatic refreshes are hidden); the English description of each action appears in the Activity chat. Additional ROOM ITEM, ROOM COMBAT and QUEST events are extensions.</div></div>
-</section>
-</main>
-<script src="/scene.js"></script>
-<script>
-'use strict';
-let playerName='', sessionID='', stream=null, scope='ACTIVITY', catalog={items:{},npcs:{},rooms:{}}, currentRoom=null, active=true;
-let sendChain=Promise.resolve(), commandQueue=[], lastChat={ACTIVITY:[],GLOBAL:[],ROOM:[],GROUP:[]}, unread={ACTIVITY:0,GLOBAL:0,ROOM:0,GROUP:0};
-const $=id=>document.getElementById(id);
-function labelFor(type,id){return catalog[type]?.[id]?.name || id.replace(/^(item|npc|loc)\./,'').replaceAll('_',' ')}
-function logLine(text,kind=''){const d=document.createElement('div');d.className=kind;d.textContent=text;$('protocolLog').appendChild(d);$('protocolLog').scrollTop=$('protocolLog').scrollHeight;while($('protocolLog').children.length>200)$('protocolLog').firstChild.remove()}
-function clock(){return new Date().toLocaleTimeString('en-GB',{hour12:false})}
-function appendChat(kind,txt){lastChat[kind].push({time:clock(),text:txt});if(lastChat[kind].length>200)lastChat[kind].shift();if(kind!==scope)unread[kind]++;renderChat()}
-function chatTarget(){return scope==='ACTIVITY'?'GLOBAL':scope}
-function renderTabs(){for(const tab of $('chatTabs').children){const s=tab.dataset.scope;tab.setAttribute('aria-selected',String(s===scope));tab.textContent=s[0]+s.slice(1).toLowerCase();if(unread[s]){const b=document.createElement('span');b.className='badge';b.textContent='('+unread[s]+')';tab.appendChild(b)}}$('chatMessage').placeholder='Write a '+chatTarget().toLowerCase()+' chat message...'}
-function renderChat(){unread[scope]=0;renderTabs();const el=$('chatLog');el.replaceChildren();const lines=lastChat[scope];if(!lines.length){el.textContent=scope==='ACTIVITY'?'Everything that happens around you is described here in plain English.':'No '+scope.toLowerCase()+' messages yet.';return}for(const line of lines){const d=document.createElement('div');if(/^(You|Your|Welcome)\b/.test(line.text))d.className='self';const t=document.createElement('span');t.className='time';t.textContent=line.time;d.append(t,line.text);el.appendChild(d)}el.scrollTop=el.scrollHeight}
-function setOnline(ok){if(!ok){window.Scene?.reset();$('wherePill').textContent='📍 Not in the world';$('mapWhere').textContent='Not connected'}active=ok;const e=$('connectionStatus');e.textContent=ok?'Connected':'Disconnected';e.style.color=ok?'#65e2cb':'#f3be78';$('connectPanel').classList.toggle('hide',ok)}
-async function api(path,body){const res=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await res.json();if(!res.ok)throw new Error(data.message||data.error||('HTTP '+res.status));return data}
-async function connect(name){$('connectError').textContent='';try{
-    const d=await api('/api/connect',{name});window.Scene?.reset();sessionID=d.id;playerName=name;$('victoryPanel').classList.add('hide');setOnline(true);logLine('OK connected as '+name);
-    if(stream)stream.close();stream=new EventSource('/api/events?id='+encodeURIComponent(sessionID));
-    stream.onmessage=e=>onServerLine(e.data);
-    stream.addEventListener('narration',e=>{appendChat('ACTIVITY',e.data);window.Scene?.caption(e.data)});
-    stream.addEventListener('map',e=>{try{renderMap(JSON.parse(e.data))}catch(err){logLine('Bad map update: '+err.message,'err')}});
-    stream.onerror=()=>logLine('SSE connection interrupted; retrying automatically.','err');
-    await refresh();
-}catch(err){$('connectError').textContent=err.message;logLine(err.message,'err');appendChat('ACTIVITY',err.message);setOnline(false)}}
-// quiet=true: automatic refreshes; the reply updates the UI but is not narrated in the Activity chat.
-async function send(line,quiet=false){if(!line)return;if(!sessionID||!active){logLine('Not connected.','err');if(!quiet)appendChat('ACTIVITY','You are not connected. Enter a username and press Connect.');return}
-    const entry={line,quiet},id=sessionID;commandQueue.push(entry);if(!quiet)logLine('> '+line);
-    // Commands are posted strictly one after another: parallel requests could reach the
-    // server out of order and replies would then be matched to the wrong command.
-    const job=sendChain.then(()=>api('/api/send',{id,line,quiet})).catch(err=>{const pos=commandQueue.indexOf(entry);if(pos>=0)commandQueue.splice(pos,1);logLine(err.message,'err');if(!quiet)appendChat('ACTIVITY','Your command could not be sent: '+err.message)});
-    sendChain=job;return job
-}
-function parseJSON(line){try{return JSON.parse(line.slice(3))}catch{return null}}
-function onServerLine(line){
-    if(line.startsWith('EVT ')){handleEvent(line);return}
-    if(line==='ERR 900 CONNECTION_FAILED'){logLine(line,'err');disconnect(false);return}
-    const entry=commandQueue.shift()||{line:'?',quiet:false},command=entry.line;if(!entry.quiet||line.startsWith('ERR'))logLine(line,line.startsWith('ERR')?'err':'');
-    try{window.Scene?.reply(command,line)}catch(err){console.error(err)}
-    if(line==='OK bye'){disconnect(false);return}
-    if(!line.startsWith('OK '))return;
-    if(command==='LOOK'){const data=parseJSON(line);if(data&&data.room)renderRoom(data)}
-    else if(command==='INVENTORY'){const data=parseJSON(line);if(Array.isArray(data))renderInventory(data)}
-    else if(command==='STATUS'){const data=parseJSON(line);if(data){$('health').textContent=data.hp??'?';$('gold').textContent=data.gold??'0';if(data.attack!==undefined)$('combatStats').textContent='Attack '+data.attack+' · Defense '+(data.defense??0)+(data.victory?' · 🏆 Champion':'');if(data.victory)showVictory();window.Scene?.status(data)}}
-    else if(command==='WHO'){const value=/^OK players=(\d+)/.exec(line);if(value)$('serverPlayers').textContent=value[1];else {const data=parseJSON(line);if(data?.server!==undefined)$('serverPlayers').textContent=data.server}}
-    else if(command.startsWith('MOVE ')||command.startsWith('FLEE')||command.startsWith('TAKE ')||command.startsWith('DROP ')||command.startsWith('ATTACK ')||command.startsWith('TALK ')||command.startsWith('QUEST ')||command.startsWith('USE ')||command==='DEFEND')refresh();
-    else if(command.startsWith('QUESTS')){const data=parseJSON(line);if(Array.isArray(data))renderJournal(data)}
-}
-function handleEvent(line){
-    try{window.Scene?.event(line)}catch(err){console.error(err)}
-    if(line.startsWith('EVT GLOBAL CHAT ')||line.startsWith('EVT ROOM CHAT ')||line.startsWith('EVT GROUP CHAT ')){
-        const match=/^EVT (GLOBAL|ROOM|GROUP) CHAT (.*)$/.exec(line);if(match){appendChat(match[1],match[2]);return}
-    }
-    logLine(line,'evt');
-    const count=/^EVT STATS players=(\d+)/.exec(line);if(count){$('serverPlayers').textContent=count[1];return}
-    if(line.startsWith('EVT ROOM PRESENCE')||line.startsWith('EVT ROOM ITEM')||line.startsWith('EVT ROOM NPC')||line.startsWith('EVT PLAYER RESPAWN'))send('LOOK',true);
-    if(line.startsWith('EVT QUEST')||line.startsWith('EVT PLAYER RESPAWN')){send('QUESTS',true);send('STATUS',true)}
-    if(line.startsWith('EVT ROOM COMBAT'))send('STATUS',true);
-    const win=/^EVT GLOBAL VICTORY (\S+)/.exec(line);if(win&&win[1].toLowerCase()===playerName.toLowerCase()){showVictory();send('STATUS',true);send('QUESTS',true)}
-}
-function makeChoice(parent,text,subtitle,buttons){const d=document.createElement('div');d.className='choice';const block=document.createElement('span');block.textContent=text;if(subtitle){const small=document.createElement('div');small.className='muted';small.textContent=subtitle;block.appendChild(small)}d.appendChild(block);const actions=document.createElement('span');for(const [label,handler] of buttons){const b=document.createElement('button');b.textContent=label;b.addEventListener('click',handler);actions.appendChild(b)}d.appendChild(actions);parent.appendChild(d)}
-function renderRoom(data){
-    try{window.Scene?.room(data)}catch(err){console.error(err)}
-    currentRoom=data.room;$('roomName').textContent=data.room.name||data.room.id;$('roomID').textContent=data.room.id||'';$('roomDescription').textContent=data.room.description||'';
-    $('roomPlayers').textContent=(data.players||[]).length;
-    const exits=$('exits');exits.replaceChildren();for(const [direction,to] of Object.entries(data.room.exits||{})){const b=document.createElement('button');b.className='chip';b.textContent=direction+' · '+labelFor('rooms',to);b.addEventListener('click',()=>send('MOVE '+direction));exits.appendChild(b)}
-    if(!exits.children.length)exits.textContent='No exits';
-    const items=$('items');items.replaceChildren();for(const id of data.items||[])makeChoice(items,labelFor('items',id),id,[['TAKE',()=>send('TAKE '+id)]]);if(!items.children.length)items.textContent='Nothing visible';
-    const npcs=$('npcs');npcs.replaceChildren();for(const id of data.npcs||[])makeChoice(npcs,labelFor('npcs',id),id,[['TALK',()=>send('TALK '+id)],['QUEST',()=>send('QUEST '+id)],['ATTACK',()=>send('ATTACK '+id)]]);if(!npcs.children.length)npcs.textContent='Nobody here';
-}
-// ---- Map (layout computed by the Go bridge, package worldmap) ----
-const SVG='http://www.w3.org/2000/svg',CW=150,CH=56,GX=46,GY=40,PAD=18,DIRS=['north','east','south','west'];
-function svgEl(tag,attrs,parent){const e=document.createElementNS(SVG,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,v);if(parent)parent.appendChild(e);return e}
-function wrapName(name,max=18){if(name.length<=max)return [name];const words=name.split(' ');let a='';while(words.length&&(a+' '+words[0]).trim().length<=max)a=(a+' '+words.shift()).trim();if(!a)return [name.slice(0,max-1)+'…'];let b=words.join(' ');if(b.length>max)b=b.slice(0,max-1)+'…';return b?[a,b]:[a]}
-function renderMap(map){
-    const view=$('mapView');view.replaceChildren();
-    if(!map||!map.rooms||!map.rooms.length){view.innerHTML='<div class="empty">Map unknown. Use LOOK to discover your surroundings.</div>';return}
-    const exits=Object.keys(map.exits||{}).sort((a,b)=>DIRS.indexOf(a)-DIRS.indexOf(b));
-    const where=map.current_name||'unknown';
-    $('wherePill').textContent='📍 '+where;$('wherePill').title='You are in '+where;
-    $('mapWhere').textContent='You are in '+where+(exits.length?' · exits: '+exits.join(', '):'');
-    const long=map.links.some(l=>l.kind==='long');
-    const width=PAD*2+map.width*CW+(map.width-1)*GX,height=PAD*2+map.height*CH+(map.height-1)*GY+(long?44:0);
-    const svg=svgEl('svg',{viewBox:'0 0 '+width+' '+height,role:'img','aria-label':'World map. You are in '+where});
-    const pos={};for(const r of map.rooms)pos[r.id]={x:PAD+r.x*(CW+GX),y:PAD+r.y*(CH+GY)};
-    const center=id=>({x:pos[id].x+CW/2,y:pos[id].y+CH/2});
-    for(const l of map.links){const a=center(l.a),b=center(l.b);
-        if(l.kind==='long'){const low=height-14,d='M'+a.x+' '+a.y+' C'+a.x+' '+low+' '+b.x+' '+low+' '+b.x+' '+b.y;const p=svgEl('path',{d,class:'link long'},svg);svgEl('title',{},p).textContent='Long path: '+(l.dir_a||'one-way')+' / '+(l.dir_b||'one-way');const t=svgEl('text',{x:(a.x+b.x)/2,y:low-4,class:'linklabel'},svg);t.textContent='long path'}
-        else svgEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:'link'},svg)}
-    const reach={};for(const d of exits){const dest=map.exits[d];if(!(dest in reach))reach[dest]=d}
-    for(const r of map.rooms){const p=pos[r.id],dir=reach[r.id];
-        const cls=['room',r.visited?'visited':'',r.explored?'':'unexplored',r.current?'current':'',dir&&!r.current?'reachable':''].filter(Boolean).join(' ');
-        const g=svgEl('g',{class:cls},svg);
-        if(r.current)svgEl('rect',{x:p.x-4,y:p.y-4,width:CW+8,height:CH+8,rx:14,class:'you-ring'},g);
-        svgEl('rect',{x:p.x,y:p.y,width:CW,height:CH,rx:11},g);
-        const tag=r.current?'● YOU ARE HERE':(dir?dir.toUpperCase()+' →':'');
-        const lines=wrapName((r.explored?'':'? ')+r.name);
-        let y=tag?p.y+(lines.length>1?30:36):p.y+(lines.length>1?24:CH/2+5);
-        if(tag){const t=svgEl('text',{x:p.x+CW/2,y:p.y+15,class:'tag'},g);t.textContent=tag}
-        for(const line of lines){const t=svgEl('text',{x:p.x+CW/2,y},g);t.textContent=line;y+=15}
-        svgEl('title',{},g).textContent=r.name+(r.current?' (you are here)':dir?' — click to MOVE '+dir:'')+(r.visited?' · visited':'');
-        if(dir&&!r.current){g.setAttribute('tabindex','0');g.setAttribute('role','button');
-            const go=()=>send('MOVE '+dir);g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}})}
-    }
-    view.appendChild(svg);
-    // Keep the current room visible when the map is wider than the panel (mobile).
-    const cur=map.rooms.find(r=>r.current);if(cur&&view.scrollWidth>view.clientWidth)view.scrollLeft=Math.max(0,(pos[cur.id].x+CW/2)/width*view.scrollWidth-view.clientWidth/2);
-}
-function itemNote(id){const it=catalog.items?.[id];if(!it)return id;const bits=[];if(it.heal)bits.push('+'+it.heal+' HP');if(it.attack)bits.push('+'+it.attack+' attack');if(it.defense)bits.push('+'+it.defense+' defense');return bits.length?id+' · '+bits.join(', '):id}
-function renderInventory(ids){window.Scene?.inventory(ids);const el=$('inventory');el.replaceChildren();for(const id of ids){const buttons=[['DROP',()=>send('DROP '+id)]];if(!catalog.items?.[id]||catalog.items[id].heal)buttons.unshift(['USE',()=>send('USE '+id)]);makeChoice(el,labelFor('items',id),itemNote(id),buttons)}if(!ids.length)el.textContent='Your pockets are empty'}
-function renderJournal(list){const el=$('journal');el.replaceChildren();if(!list.length){el.innerHTML='<span class="empty">No quests yet. TALK to the Master Cartographer in Clockwork Square to begin.</span>';return}
-    const sorted=[...list].sort((a,b)=>(a.status==='completed')-(b.status==='completed'));
-    for(const q of sorted){const d=document.createElement('div');d.className='quest '+(q.status||'')+(q.final?' final':'');const st=document.createElement('span');st.className='state';st.textContent=q.status+(q.progress?' '+q.progress:'');const name=document.createElement('b');name.textContent=(q.final?'🏆 ':'')+(q.name||q.quest_id);d.append(st,name);if(q.description&&q.status!=='completed'){const p=document.createElement('p');p.textContent=q.description;d.appendChild(p)}el.appendChild(d)}}
-function showVictory(){const v=$('victoryPanel');if(catalog.story?.victory)$('victoryText').textContent=catalog.story.victory;v.classList.remove('hide')}
-function refresh(){if(!sessionID||!active)return Promise.resolve();for(const cmd of ['LOOK','INVENTORY','STATUS','WHO','QUESTS'])send(cmd,true);return Promise.resolve()}
-async function disconnect(sendQuit=true){const id=sessionID;if(!id)return;
-    if(sendQuit){await send('QUIT');setTimeout(()=>{if(sessionID===id)disconnect(false)},1500);return} // wait for "OK bye" and its narration
-    if(stream){stream.close();stream=null};sessionID='';commandQueue=[];setOnline(false);try{await api('/api/close',{id})}catch{}}
-function updateSkin(){const n=$('username').value.trim();if(window.Scene)$('skinPreview').innerHTML=n?Scene.heroSprite(n):'';const sk=n&&window.Scene?Scene.skinFor(n):null;$('skinNote').textContent=sk?'You will be a '+sk.species+'. Your character comes from your name, so everyone sees you the same way.':'Your character (cat or rabbit) comes from your name, so everyone sees you the same way.'}
-$('username').addEventListener('input',updateSkin);
-$('connectForm').addEventListener('submit',e=>{e.preventDefault();connect($('username').value.trim())});
-for(const b of document.querySelectorAll('[data-action]'))b.addEventListener('click',()=>send(b.dataset.action));
-$('takeBtn').addEventListener('click',()=>send('TAKE '+$('itemName').value.trim()));
-$('dropBtn').addEventListener('click',()=>send('DROP '+$('itemName').value.trim()));
-$('useBtn').addEventListener('click',()=>send('USE '+$('itemName').value.trim()));
-$('talkBtn').addEventListener('click',()=>send('TALK '+$('npcName').value.trim()));
-$('attackBtn').addEventListener('click',()=>send('ATTACK '+$('npcName').value.trim()));
-$('questBtn').addEventListener('click',()=>send('QUEST '+$('npcName').value.trim()));
-$('createGroup').addEventListener('click',()=>send('GROUP CREATE'));
-$('leaveGroup').addEventListener('click',()=>send('GROUP LEAVE'));
-$('inviteGroup').addEventListener('click',()=>send('GROUP INVITE '+$('groupPlayer').value.trim()));
-$('joinGroup').addEventListener('click',()=>send('GROUP JOIN '+$('groupPlayer').value.trim()));
-$('quitBtn').addEventListener('click',()=>disconnect());
-$('clearLog').addEventListener('click',()=>$('protocolLog').replaceChildren());
-$('rawForm').addEventListener('submit',e=>{e.preventDefault();const line=$('rawCommand').value.trim();if(line)send(line);$('rawCommand').value='' });
-$('chatForm').addEventListener('submit',e=>{e.preventDefault();const txt=$('chatMessage').value.trim();if(txt)send('CHAT '+chatTarget()+' '+txt);$('chatMessage').value='' });
-for(const b of $('chatTabs').querySelectorAll('button'))b.addEventListener('click',()=>{scope=b.dataset.scope;renderChat()});
-window.addEventListener('beforeunload',()=>{if(sessionID)navigator.sendBeacon('/api/close',new Blob([JSON.stringify({id:sessionID})],{type:'application/json'}))});
-fetch('/api/catalog').then(r=>r.ok?r.json():{}).then(data=>{catalog=data;if(data.story?.title)$('storyTitle').textContent='Chapter: '+data.story.title+' • RFC 42TAP shared-world adventure'}).catch(()=>{});
-setInterval(()=>{if(active&&sessionID&&commandQueue.length<10){send('LOOK',true);send('WHO',true)}},10000);
-</script>
-</body></html>
+    <header>
+        <div><strong>◈ THE ANSWER PROTOCOL</strong><small id="storyTitle">A shared-world retro text adventure • RFC
+                42TAP</small></div>
+        <div class="row"><span class="where-pill" id="wherePill" title="Your current location">📍 Not in the
+                world</span><span class="status-pill" id="connectionStatus">Disconnected</span><span
+                class="subtitle">TCP via Go bridge</span></div>
+    </header>
+    <main>
+        <section class="panel scene-panel" id="scenePanel">
+            <div class="headerline">
+                <h2 id="sceneTitle">Scene</h2><span class="subtitle">Arrows: move · characters: talk, quests, fight ·
+                    items: pick up · your hero: bag</span>
+            </div>
+            <div class="subtitle" id="sceneDesc" style="margin:-4px 0 9px"></div>
+            <div class="scene" id="scene">
+                <div class="scene-bg" id="sceneBg"></div>
+                <div class="scene-layer" id="sceneActors"></div>
+                <div class="scene-layer" id="sceneExits"></div>
+                <div class="scene-layer" id="sceneLayer"></div>
+                <div class="combat hide" id="combat"></div>
+                <div class="scene-empty" id="sceneEmpty">Connect to enter the world.</div>
+            </div>
+            <div class="scene-captions" id="sceneCaptions" aria-live="polite"></div>
+            <div class="scene-bar">
+                <button data-scene="LOOK">👁 Look</button><button data-scene="BAG">🎒 Bag</button><button
+                    data-scene="STATUS">❤ Status</button><button data-scene="QUESTS">📜 Quests</button><button
+                    data-scene="WHO">👥 Who</button><button data-scene="GROUP CREATE">⚑ Create group</button><button
+                    data-scene="GROUP LEAVE">Leave group</button>
+                <form id="sceneSay"><input id="sceneSayText" placeholder="Say something to the room..."
+                        maxlength="700"><button class="primary" type="submit">Say</button></form>
+            </div>
+        </section>
+        <section class="stack">
+            <div class="panel victory hide" id="victoryPanel" role="status">
+                <h2>🏆 Victory!</h2>
+                <p id="victoryText">You completed the final quest and won the game!</p>
+            </div>
+            <div class="panel" id="connectPanel">
+                <h2>Enter the shared world</h2>
+                <p class="subtitle">Each browser tab opens a separate real TCP session on the configured TAP server.</p>
+                <div class="row" style="align-items:flex-end;flex-wrap:nowrap">
+                    <div id="skinPreview" style="width:64px;flex:none" title="Your character"></div>
+                    <div style="flex:1">
+                        <form class="row" id="connectForm"><input id="username" aria-label="Player name"
+                                placeholder="Username (e.g. alice)" maxlength="32" required><button class="primary"
+                                type="submit">Connect</button></form>
+                        <div class="subtitle" id="skinNote" style="margin-top:6px">Your character (cat or rabbit) comes
+                            from your name, so everyone sees you the same way.</div>
+                    </div>
+                </div>
+                <div class="subtitle" id="connectError" role="alert"></div>
+            </div>
+            <div class="panel" id="mapPanel">
+                <div class="headerline">
+                    <h2>Map</h2><span class="subtitle" id="mapWhere">Not connected</span>
+                </div>
+                <div class="mapview" id="mapView">
+                    <div class="empty">Connect to see the map and your position.</div>
+                </div>
+                <div class="maphint">Your room is highlighted. Click a neighbouring room (labelled with its direction)
+                    to move there. A dashed line is a long path between distant rooms.</div>
+            </div>
+            <div class="panel">
+                <div class="headerline">
+                    <h2>World</h2><button class="small" data-action="LOOK">Refresh room</button>
+                </div>
+                <div class="hero"><strong id="roomName">Not connected</strong>
+                    <p id="roomDescription">Connect to explore the world.</p>
+                </div>
+                <div class="stats">
+                    <div class="stat"><b id="roomPlayers">0</b><small>In room</small></div>
+                    <div class="stat"><b id="serverPlayers">0</b><small>On server</small></div>
+                    <div class="stat"><b id="health">100</b><small>HP / 100</small></div>
+                    <div class="stat"><b id="gold">0</b><small>Gold</small></div>
+                </div>
+                <div class="subtitle" id="combatStats">Attack — · Defense —</div>
+                <h3>Exits</h3>
+                <div class="chips" id="exits"><span class="empty">No location</span></div>
+                <div class="two">
+                    <div>
+                        <h3>Items in room</h3>
+                        <div id="items"><span class="empty">Nothing visible</span></div>
+                    </div>
+                    <div>
+                        <h3>NPCs</h3>
+                        <div id="npcs"><span class="empty">Nobody here</span></div>
+                    </div>
+                </div>
+                <h3>Inventory</h3>
+                <div id="inventory"><span class="empty">Your pockets are empty</span></div>
+            </div>
+            <div class="panel">
+                <h2>Quick commands</h2>
+                <div class="action-grid">
+                    <button data-action="LOOK">LOOK</button><button data-action="INVENTORY">INVENTORY</button><button
+                        data-action="STATUS">STATUS</button><button data-action="WHO">WHO</button>
+                    <button data-action="QUESTS">QUESTS</button><button data-action="DEFEND">DEFEND</button><button
+                        data-action="FLEE">FLEE</button><button class="warn" id="quitBtn">QUIT</button>
+                </div>
+                <div class="subtitle" style="margin-top:11px">Moves, item management, NPC actions, quests, group
+                    commands and chat are available below.</div>
+            </div>
+        </section>
+        <section class="stack">
+            <div class="panel">
+                <h2>Player actions</h2>
+                <div class="two">
+                    <div>
+                        <h3>Items</h3>
+                        <div class="row"><input id="itemName" placeholder="Item ID or display name"><button
+                                id="takeBtn">TAKE</button><button id="dropBtn">DROP</button><button
+                                id="useBtn">USE</button></div>
+                    </div>
+                    <div>
+                        <h3>NPCs</h3>
+                        <div class="row"><input id="npcName" placeholder="NPC ID or display name"><button
+                                id="talkBtn">TALK</button><button id="attackBtn">ATTACK</button><button
+                                id="questBtn">QUEST</button></div>
+                    </div>
+                </div>
+                <h3>Group management</h3>
+                <div class="row"><button id="createGroup">GROUP CREATE</button><button id="leaveGroup">GROUP
+                        LEAVE</button></div>
+                <div class="row" style="margin-top:8px"><input id="groupPlayer"
+                        placeholder="Username: invite or leader to join"><button id="inviteGroup">INVITE</button><button
+                        id="joinGroup">JOIN</button></div>
+                <h3>Raw TAP command</h3>
+                <form id="rawForm" class="inline-actions"><input id="rawCommand"
+                        placeholder="MOVE north, GROUP INVITE bob, ..."><button class="primary"
+                        type="submit">Send</button></form>
+            </div>
+            <div class="panel">
+                <div class="headerline">
+                    <h2>Quest journal</h2><button class="small" data-action="QUESTS">Refresh</button>
+                </div>
+                <div id="journal"><span class="empty">No quests yet. TALK to the Master Cartographer in Clockwork Square
+                        to begin.</span></div>
+            </div>
+            <div class="panel">
+                <div class="headerline">
+                    <h2>Chat</h2><span class="subtitle">Activity · Global · Room · Group</span>
+                </div>
+                <div class="tabs" id="chatTabs"><button data-scope="ACTIVITY"
+                        aria-selected="true">Activity</button><button data-scope="GLOBAL"
+                        aria-selected="false">Global</button><button data-scope="ROOM"
+                        aria-selected="false">Room</button><button data-scope="GROUP"
+                        aria-selected="false">Group</button></div>
+                <div class="scroller" id="chatLog" aria-live="polite">
+                    <div class="empty">Everything that happens around you is described here in plain English.</div>
+                </div>
+                <form class="inline-actions" id="chatForm" style="margin-top:9px"><input id="chatMessage"
+                        placeholder="Write a global chat message..." maxlength="700" required><button class="primary"
+                        type="submit">Send</button></form>
+            </div>
+            <div class="panel" hidden>
+                <div class="headerline">
+                    <h2>Protocol / gameplay log</h2><button class="small" id="clearLog">Clear</button>
+                </div>
+                <div class="scroller" id="protocolLog" aria-live="polite">
+                    <div class="empty">Replies, NPC dialogue, combat and quest updates appear here.</div>
+                </div>
+                <div class="subtitle" style="margin-top:7px">TAP messages are shown verbatim (automatic refreshes are
+                    hidden); the English description of each action appears in the Activity chat. Additional ROOM ITEM,
+                    ROOM COMBAT and QUEST events are extensions.</div>
+            </div>
+        </section>
+    </main>
+    <script src="/scene.js"></script>
+    <script>
+        'use strict';
+        let playerName = '', sessionID = '', stream = null, scope = 'ACTIVITY', catalog = { items: {}, npcs: {}, rooms: {} }, currentRoom = null, active = true;
+        let sendChain = Promise.resolve(), commandQueue = [], lastChat = { ACTIVITY: [], GLOBAL: [], ROOM: [], GROUP: [] }, unread = { ACTIVITY: 0, GLOBAL: 0, ROOM: 0, GROUP: 0 };
+        const $ = id => document.getElementById(id);
+        function labelFor(type, id) { return catalog[type]?.[id]?.name || id.replace(/^(item|npc|loc)\./, '').replaceAll('_', ' ') }
+        function logLine(text, kind = '') { const d = document.createElement('div'); d.className = kind; d.textContent = text; $('protocolLog').appendChild(d); $('protocolLog').scrollTop = $('protocolLog').scrollHeight; while ($('protocolLog').children.length > 200) $('protocolLog').firstChild.remove() }
+        function clock() { return new Date().toLocaleTimeString('en-GB', { hour12: false }) }
+        function appendChat(kind, txt) { lastChat[kind].push({ time: clock(), text: txt }); if (lastChat[kind].length > 200) lastChat[kind].shift(); if (kind !== scope) unread[kind]++; renderChat() }
+        function chatTarget() { return scope === 'ACTIVITY' ? 'GLOBAL' : scope }
+        function renderTabs() { for (const tab of $('chatTabs').children) { const s = tab.dataset.scope; tab.setAttribute('aria-selected', String(s === scope)); tab.textContent = s[0] + s.slice(1).toLowerCase(); if (unread[s]) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = '(' + unread[s] + ')'; tab.appendChild(b) } } $('chatMessage').placeholder = 'Write a ' + chatTarget().toLowerCase() + ' chat message...' }
+        function renderChat() { unread[scope] = 0; renderTabs(); const el = $('chatLog'); el.replaceChildren(); const lines = lastChat[scope]; if (!lines.length) { el.textContent = scope === 'ACTIVITY' ? 'Everything that happens around you is described here in plain English.' : 'No ' + scope.toLowerCase() + ' messages yet.'; return } for (const line of lines) { const d = document.createElement('div'); if (/^(You|Your|Welcome)\b/.test(line.text)) d.className = 'self'; const t = document.createElement('span'); t.className = 'time'; t.textContent = line.time; d.append(t, line.text); el.appendChild(d) } el.scrollTop = el.scrollHeight }
+        function setOnline(ok) { if (!ok) { window.Scene?.reset(); $('wherePill').textContent = '📍 Not in the world'; $('mapWhere').textContent = 'Not connected' } active = ok; const e = $('connectionStatus'); e.textContent = ok ? 'Connected' : 'Disconnected'; e.style.color = ok ? '#65e2cb' : '#f3be78'; $('connectPanel').classList.toggle('hide', ok) }
+        async function api(path, body) { const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const data = await res.json(); if (!res.ok) throw new Error(data.message || data.error || ('HTTP ' + res.status)); return data }
+        async function connect(name) {
+            $('connectError').textContent = ''; try {
+                const d = await api('/api/connect', { name }); window.Scene?.reset(); sessionID = d.id; playerName = name; $('victoryPanel').classList.add('hide'); setOnline(true); logLine('OK connected as ' + name);
+                if (stream) stream.close(); stream = new EventSource('/api/events?id=' + encodeURIComponent(sessionID));
+                stream.onmessage = e => onServerLine(e.data);
+                stream.addEventListener('narration', e => { appendChat('ACTIVITY', e.data); window.Scene?.caption(e.data) });
+                stream.addEventListener('map', e => { try { renderMap(JSON.parse(e.data)) } catch (err) { logLine('Bad map update: ' + err.message, 'err') } });
+                stream.onerror = () => logLine('SSE connection interrupted; retrying automatically.', 'err');
+                await refresh();
+            } catch (err) { $('connectError').textContent = err.message; logLine(err.message, 'err'); appendChat('ACTIVITY', err.message); setOnline(false) }
+        }
+        // quiet=true: automatic refreshes; the reply updates the UI but is not narrated in the Activity chat.
+        async function send(line, quiet = false) {
+            if (!line) return; if (!sessionID || !active) { logLine('Not connected.', 'err'); if (!quiet) appendChat('ACTIVITY', 'You are not connected. Enter a username and press Connect.'); return }
+            const entry = { line, quiet }, id = sessionID; commandQueue.push(entry); if (!quiet) logLine('> ' + line);
+            // Commands are posted strictly one after another: parallel requests could reach the
+            // server out of order and replies would then be matched to the wrong command.
+            const job = sendChain.then(() => api('/api/send', { id, line, quiet })).catch(err => { const pos = commandQueue.indexOf(entry); if (pos >= 0) commandQueue.splice(pos, 1); logLine(err.message, 'err'); if (!quiet) appendChat('ACTIVITY', 'Your command could not be sent: ' + err.message) });
+            sendChain = job; return job
+        }
+        function parseJSON(line) { try { return JSON.parse(line.slice(3)) } catch { return null } }
+        function onServerLine(line) {
+            if (line.startsWith('EVT ')) { handleEvent(line); return }
+            if (line === 'ERR 900 CONNECTION_FAILED') { logLine(line, 'err'); disconnect(false); return }
+            const entry = commandQueue.shift() || { line: '?', quiet: false }, command = entry.line; if (!entry.quiet || line.startsWith('ERR')) logLine(line, line.startsWith('ERR') ? 'err' : '');
+            try { window.Scene?.reply(command, line) } catch (err) { console.error(err) }
+            if (line === 'OK bye') { disconnect(false); return }
+            if (!line.startsWith('OK ')) return;
+            if (command === 'LOOK') { const data = parseJSON(line); if (data && data.room) renderRoom(data) }
+            else if (command === 'INVENTORY') { const data = parseJSON(line); if (Array.isArray(data)) renderInventory(data) }
+            else if (command === 'STATUS') { const data = parseJSON(line); if (data) { $('health').textContent = data.hp ?? '?'; $('gold').textContent = data.gold ?? '0'; if (data.attack !== undefined) $('combatStats').textContent = 'Attack ' + data.attack + ' · Defense ' + (data.defense ?? 0) + (data.victory ? ' · 🏆 Champion' : ''); if (data.victory) showVictory(); window.Scene?.status(data) } }
+            else if (command === 'WHO') { const value = /^OK players=(\d+)/.exec(line); if (value) $('serverPlayers').textContent = value[1]; else { const data = parseJSON(line); if (data?.server !== undefined) $('serverPlayers').textContent = data.server } }
+            else if (command.startsWith('MOVE ') || command.startsWith('FLEE') || command.startsWith('TAKE ') || command.startsWith('DROP ') || command.startsWith('ATTACK ') || command.startsWith('TALK ') || command.startsWith('QUEST ') || command.startsWith('USE ') || command === 'DEFEND') refresh();
+            else if (command.startsWith('QUESTS')) { const data = parseJSON(line); if (Array.isArray(data)) renderJournal(data) }
+        }
+        function handleEvent(line) {
+            try { window.Scene?.event(line) } catch (err) { console.error(err) }
+            if (line.startsWith('EVT GLOBAL CHAT ') || line.startsWith('EVT ROOM CHAT ') || line.startsWith('EVT GROUP CHAT ')) {
+                const match = /^EVT (GLOBAL|ROOM|GROUP) CHAT (.*)$/.exec(line); if (match) { appendChat(match[1], match[2]); return }
+            }
+            logLine(line, 'evt');
+            const count = /^EVT STATS players=(\d+)/.exec(line); if (count) { $('serverPlayers').textContent = count[1]; return }
+            if (line.startsWith('EVT ROOM PRESENCE') || line.startsWith('EVT ROOM ITEM') || line.startsWith('EVT ROOM NPC') || line.startsWith('EVT PLAYER RESPAWN')) send('LOOK', true);
+            if (line.startsWith('EVT QUEST') || line.startsWith('EVT PLAYER RESPAWN')) { send('QUESTS', true); send('STATUS', true) }
+            if (line.startsWith('EVT ROOM COMBAT')) send('STATUS', true);
+            const win = /^EVT GLOBAL VICTORY (\S+)/.exec(line); if (win && win[1].toLowerCase() === playerName.toLowerCase()) { showVictory(); send('STATUS', true); send('QUESTS', true) }
+        }
+        function makeChoice(parent, text, subtitle, buttons) { const d = document.createElement('div');
+        d.className = 'choice';
+        const block = document.createElement('span');
+        block.textContent = text; 
+        console.log(subtitle)
+
+        if (subtitle.includes('·')) {
+            const small = document.createElement('div');
+            small.className = 'muted';
+            small.textContent = subtitle.split('·')[1].trim();
+            block.appendChild(small);
+        } 
+            d.appendChild(block); 
+            const actions = document.createElement('span'); 
+            for (const [label, handler] of buttons) { 
+                const b = document.createElement('button'); 
+                b.textContent = label; 
+                b.addEventListener('click', handler); 
+                actions.appendChild(b) 
+            } 
+            d.appendChild(actions); parent.appendChild(d) }
+        function renderRoom(data) {
+            try { window.Scene?.room(data) } catch (err) { console.error(err) }
+            currentRoom = data.room; $('roomName').textContent = data.room.name || data.room.id; $('roomID').textContent = data.room.id || ''; $('roomDescription').textContent = data.room.description || '';
+            $('roomPlayers').textContent = (data.players || []).length;
+            const exits = $('exits'); exits.replaceChildren(); for (const [direction, to] of Object.entries(data.room.exits || {})) { const b = document.createElement('button'); b.className = 'chip'; b.textContent = direction + ' · ' + labelFor('rooms', to); b.addEventListener('click', () => send('MOVE ' + direction)); exits.appendChild(b) }
+            if (!exits.children.length) exits.textContent = 'No exits';
+            const items = $('items'); items.replaceChildren(); for (const id of data.items || []) makeChoice(items, labelFor('items', id), id, [['TAKE', () => send('TAKE ' + id)]]); if (!items.children.length) items.textContent = 'Nothing visible';
+            const npcs = $('npcs'); npcs.replaceChildren(); for (const id of data.npcs || []) makeChoice(npcs, labelFor('npcs', id), id, [['TALK', () => send('TALK ' + id)], ['QUEST', () => send('QUEST ' + id)], ['ATTACK', () => send('ATTACK ' + id)]]); if (!npcs.children.length) npcs.textContent = 'Nobody here';
+        }
+        // ---- Map (layout computed by the Go bridge, package worldmap) ----
+        const SVG = 'http://www.w3.org/2000/svg', CW = 150, CH = 56, GX = 46, GY = 40, PAD = 18, DIRS = ['north', 'east', 'south', 'west'];
+        function svgEl(tag, attrs, parent) { const e = document.createElementNS(SVG, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (parent) parent.appendChild(e); return e }
+        function wrapName(name, max = 18) { if (name.length <= max) return [name]; const words = name.split(' '); let a = ''; while (words.length && (a + ' ' + words[0]).trim().length <= max) a = (a + ' ' + words.shift()).trim(); if (!a) return [name.slice(0, max - 1) + '…']; let b = words.join(' '); if (b.length > max) b = b.slice(0, max - 1) + '…'; return b ? [a, b] : [a] }
+        function renderMap(map) {
+            const view = $('mapView'); view.replaceChildren();
+            if (!map || !map.rooms || !map.rooms.length) { view.innerHTML = '<div class="empty">Map unknown. Use LOOK to discover your surroundings.</div>'; return }
+            const exits = Object.keys(map.exits || {}).sort((a, b) => DIRS.indexOf(a) - DIRS.indexOf(b));
+            const where = map.current_name || 'unknown';
+            $('wherePill').textContent = '📍 ' + where; $('wherePill').title = 'You are in ' + where;
+            $('mapWhere').textContent = 'You are in ' + where + (exits.length ? ' · exits: ' + exits.join(', ') : '');
+            const long = map.links.some(l => l.kind === 'long');
+            const width = PAD * 2 + map.width * CW + (map.width - 1) * GX, height = PAD * 2 + map.height * CH + (map.height - 1) * GY + (long ? 44 : 0);
+            const svg = svgEl('svg', { viewBox: '0 0 ' + width + ' ' + height, role: 'img', 'aria-label': 'World map. You are in ' + where });
+            const pos = {}; for (const r of map.rooms) pos[r.id] = { x: PAD + r.x * (CW + GX), y: PAD + r.y * (CH + GY) };
+            const center = id => ({ x: pos[id].x + CW / 2, y: pos[id].y + CH / 2 });
+            for (const l of map.links) {
+                const a = center(l.a), b = center(l.b);
+                if (l.kind === 'long') { const low = height - 14, d = 'M' + a.x + ' ' + a.y + ' C' + a.x + ' ' + low + ' ' + b.x + ' ' + low + ' ' + b.x + ' ' + b.y; const p = svgEl('path', { d, class: 'link long' }, svg); svgEl('title', {}, p).textContent = 'Long path: ' + (l.dir_a || 'one-way') + ' / ' + (l.dir_b || 'one-way'); const t = svgEl('text', { x: (a.x + b.x) / 2, y: low - 4, class: 'linklabel' }, svg); t.textContent = 'long path' }
+                else svgEl('line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: 'link' }, svg)
+            }
+            const reach = {}; for (const d of exits) { const dest = map.exits[d]; if (!(dest in reach)) reach[dest] = d }
+            for (const r of map.rooms) {
+                const p = pos[r.id], dir = reach[r.id];
+                const cls = ['room', r.visited ? 'visited' : '', r.explored ? '' : 'unexplored', r.current ? 'current' : '', dir && !r.current ? 'reachable' : ''].filter(Boolean).join(' ');
+                const g = svgEl('g', { class: cls }, svg);
+                if (r.current) svgEl('rect', { x: p.x - 4, y: p.y - 4, width: CW + 8, height: CH + 8, rx: 14, class: 'you-ring' }, g);
+                svgEl('rect', { x: p.x, y: p.y, width: CW, height: CH, rx: 11 }, g);
+                const tag = r.current ? '● YOU ARE HERE' : (dir ? dir.toUpperCase() + ' →' : '');
+                const lines = wrapName((r.explored ? '' : '? ') + r.name);
+                let y = tag ? p.y + (lines.length > 1 ? 30 : 36) : p.y + (lines.length > 1 ? 24 : CH / 2 + 5);
+                if (tag) { const t = svgEl('text', { x: p.x + CW / 2, y: p.y + 15, class: 'tag' }, g); t.textContent = tag }
+                for (const line of lines) { const t = svgEl('text', { x: p.x + CW / 2, y }, g); t.textContent = line; y += 15 }
+                svgEl('title', {}, g).textContent = r.name + (r.current ? ' (you are here)' : dir ? ' — click to MOVE ' + dir : '') + (r.visited ? ' · visited' : '');
+                if (dir && !r.current) {
+                    g.setAttribute('tabindex', '0'); g.setAttribute('role', 'button');
+                    const go = () => send('MOVE ' + dir); g.addEventListener('click', go); g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go() } })
+                }
+            }
+            view.appendChild(svg);
+            // Keep the current room visible when the map is wider than the panel (mobile).
+            const cur = map.rooms.find(r => r.current); if (cur && view.scrollWidth > view.clientWidth) view.scrollLeft = Math.max(0, (pos[cur.id].x + CW / 2) / width * view.scrollWidth - view.clientWidth / 2);
+        }
+        function itemNote(id) { const it = catalog.items?.[id]; if (!it) return id; const bits = []; if (it.heal) bits.push('+' + it.heal + ' HP'); if (it.attack) bits.push('+' + it.attack + ' attack'); if (it.defense) bits.push('+' + it.defense + ' defense'); return bits.length ? id + ' · ' + bits.join(', ') : id }
+        function renderInventory(ids) { window.Scene?.inventory(ids); const el = $('inventory'); el.replaceChildren(); for (const id of ids) { const buttons = [['DROP', () => send('DROP ' + id)]]; if (!catalog.items?.[id] || catalog.items[id].heal) buttons.unshift(['USE', () => send('USE ' + id)]); makeChoice(el, labelFor('items', id), itemNote(id), buttons) } if (!ids.length) el.textContent = 'Your pockets are empty' }
+        function renderJournal(list) {
+            const el = $('journal'); el.replaceChildren(); if (!list.length) { el.innerHTML = '<span class="empty">No quests yet. TALK to the Master Cartographer in Clockwork Square to begin.</span>'; return }
+            const sorted = [...list].sort((a, b) => (a.status === 'completed') - (b.status === 'completed'));
+            for (const q of sorted) { const d = document.createElement('div'); d.className = 'quest ' + (q.status || '') + (q.final ? ' final' : ''); const st = document.createElement('span'); st.className = 'state'; st.textContent = q.status + (q.progress ? ' ' + q.progress : ''); const name = document.createElement('b'); name.textContent = (q.final ? '🏆 ' : '') + (q.name || q.quest_id); d.append(st, name); if (q.description && q.status !== 'completed') { const p = document.createElement('p'); p.textContent = q.description; d.appendChild(p) } el.appendChild(d) }
+        }
+        function showVictory() { const v = $('victoryPanel'); if (catalog.story?.victory) $('victoryText').textContent = catalog.story.victory; v.classList.remove('hide') }
+        function refresh() { if (!sessionID || !active) return Promise.resolve(); for (const cmd of ['LOOK', 'INVENTORY', 'STATUS', 'WHO', 'QUESTS']) send(cmd, true); return Promise.resolve() }
+        async function disconnect(sendQuit = true) {
+            const id = sessionID; if (!id) return;
+            if (sendQuit) { await send('QUIT'); setTimeout(() => { if (sessionID === id) disconnect(false) }, 1500); return } // wait for "OK bye" and its narration
+            if (stream) { stream.close(); stream = null }; sessionID = ''; commandQueue = []; setOnline(false); try { await api('/api/close', { id }) } catch { }
+        }
+        function updateSkin() { const n = $('username').value.trim(); if (window.Scene) $('skinPreview').innerHTML = n ? Scene.heroSprite(n) : ''; const sk = n && window.Scene ? Scene.skinFor(n) : null; $('skinNote').textContent = sk ? 'You will be a ' + sk.species + '. Your character comes from your name, so everyone sees you the same way.' : 'Your character (cat or rabbit) comes from your name, so everyone sees you the same way.' }
+        $('username').addEventListener('input', updateSkin);
+        $('connectForm').addEventListener('submit', e => { e.preventDefault(); connect($('username').value.trim()) });
+        for (const b of document.querySelectorAll('[data-action]')) b.addEventListener('click', () => send(b.dataset.action));
+        $('takeBtn').addEventListener('click', () => send('TAKE ' + $('itemName').value.trim()));
+        $('dropBtn').addEventListener('click', () => send('DROP ' + $('itemName').value.trim()));
+        $('useBtn').addEventListener('click', () => send('USE ' + $('itemName').value.trim()));
+        $('talkBtn').addEventListener('click', () => send('TALK ' + $('npcName').value.trim()));
+        $('attackBtn').addEventListener('click', () => send('ATTACK ' + $('npcName').value.trim()));
+        $('questBtn').addEventListener('click', () => send('QUEST ' + $('npcName').value.trim()));
+        $('createGroup').addEventListener('click', () => send('GROUP CREATE'));
+        $('leaveGroup').addEventListener('click', () => send('GROUP LEAVE'));
+        $('inviteGroup').addEventListener('click', () => send('GROUP INVITE ' + $('groupPlayer').value.trim()));
+        $('joinGroup').addEventListener('click', () => send('GROUP JOIN ' + $('groupPlayer').value.trim()));
+        $('quitBtn').addEventListener('click', () => disconnect());
+        $('clearLog').addEventListener('click', () => $('protocolLog').replaceChildren());
+        $('rawForm').addEventListener('submit', e => { e.preventDefault(); const line = $('rawCommand').value.trim(); if (line) send(line); $('rawCommand').value = '' });
+        $('chatForm').addEventListener('submit', e => { e.preventDefault(); const txt = $('chatMessage').value.trim(); if (txt) send('CHAT ' + chatTarget() + ' ' + txt); $('chatMessage').value = '' });
+        for (const b of $('chatTabs').querySelectorAll('button')) b.addEventListener('click', () => { scope = b.dataset.scope; renderChat() });
+        window.addEventListener('beforeunload', () => { if (sessionID) navigator.sendBeacon('/api/close', new Blob([JSON.stringify({ id: sessionID })], { type: 'application/json' })) });
+        fetch('/api/catalog').then(r => r.ok ? r.json() : {}).then(data => { catalog = data; if (data.story?.title) $('storyTitle').textContent = 'Chapter: ' + data.story.title + ' • RFC 42TAP shared-world adventure' }).catch(() => { });
+        setInterval(() => { if (active && sessionID && commandQueue.length < 10) { send('LOOK', true); send('WHO', true) } }, 10000);
+    </script>
+</body>
+
+</html>
