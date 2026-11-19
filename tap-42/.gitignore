@@ -1,0 +1,4 @@
+bin/
+*.log
+*.jsonl
+.DS_Store

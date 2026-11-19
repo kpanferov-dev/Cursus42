@@ -1,0 +1,164 @@
+{
+  "start": "loc.square",
+  "story": {
+    "title": "The Stopped Clock",
+    "intro": "At midnight the Great Clock of Clockwork Square stopped: the Eclipse Warden tore out its Heart of Time and fled to a sealed sanctum above the Fallen Observatory. Until the Heart returns, the night will never end. Talk to the Master Cartographer in the square to begin your quest.",
+    "victory": "The Heart of Time beats again! The Great Clock chimes, dawn breaks over the city and your name is carved on its golden dial. You have won the game!"
+  },
+  "rooms": {
+    "loc.square": {
+      "name": "Clockwork Square",
+      "description": "Brass clocks hang silent above a dark square; the Great Clock's hands are frozen at midnight. A cartographer waits near a fountain.",
+      "map": [0, 0],
+      "exits": {"north":"loc.market","east":"loc.garden","south":"loc.tavern","west":"loc.harbor"},
+      "items": ["item.map_fragment"],
+      "npcs": ["npc.cartographer", "npc.guard"]
+    },
+    "loc.market": {
+      "name": "Moonlight Market",
+      "description": "Shops crowd the lantern-lit arcade. North, an iron gate with a copper lock blocks the way to the old forge.",
+      "map": [0, -1],
+      "exits": {"south":"loc.square","east":"loc.library","north":"loc.forge"},
+      "locks": {"north": "item.copper_key"},
+      "items": [],
+      "npcs": ["npc.merchant"]
+    },
+    "loc.library": {
+      "name": "The Silent Library",
+      "description": "Dusty books hum with trapped memories.",
+      "map": [1, -1],
+      "exits": {"west":"loc.market","south":"loc.garden","east":"loc.tower"},
+      "items": ["item.silver_compass"],
+      "npcs": ["npc.librarian"]
+    },
+    "loc.garden": {
+      "name": "Glass Garden",
+      "description": "Bioluminescent vines glow beneath an immense dome. Healing herbs grow between the panes.",
+      "map": [1, 0],
+      "exits": {"west":"loc.square","north":"loc.library","east":"loc.forest"},
+      "items": ["item.herbs"],
+      "npcs": []
+    },
+    "loc.tower": {
+      "name": "East Watchtower",
+      "description": "The ranger watches the marsh through a cracked telescope. Stairs lead north to the old observatory.",
+      "map": [2, -1],
+      "exits": {"west":"loc.library","south":"loc.forest","north":"loc.ruins"},
+      "items": ["item.rusty_sword"],
+      "npcs": ["npc.ranger"]
+    },
+    "loc.forest": {
+      "name": "Whispering Forest",
+      "description": "Ancient trees bend to listen to travelers. Yellow eyes glint between the trunks.",
+      "map": [2, 0],
+      "exits": {"west":"loc.garden","north":"loc.tower","south":"loc.marsh"},
+      "items": ["item.bread"],
+      "npcs": ["npc.wolf"]
+    },
+    "loc.marsh": {
+      "name": "Murkfen Marsh",
+      "description": "Green mist rises above black water. Something moves in the reeds.",
+      "map": [2, 1],
+      "exits": {"north":"loc.forest","west":"loc.harbor"},
+      "items": [],
+      "npcs": ["npc.wraith"]
+    },
+    "loc.harbor": {
+      "name": "Old Harbor",
+      "description": "Silent boats creak beside the black-tide docks. A soaked figure walks the pier.",
+      "map": [-1, 0],
+      "exits": {"east":"loc.square","south":"loc.marsh","north":"loc.tavern"},
+      "items": ["item.lantern"],
+      "npcs": ["npc.drowned"]
+    },
+    "loc.tavern": {
+      "name": "Copper Kettle Tavern",
+      "description": "A warm hearth and the smell of freshly baked bread welcome you. A copper key hangs behind the counter.",
+      "map": [0, 1],
+      "exits": {"north":"loc.square","south":"loc.harbor"},
+      "items": ["item.copper_key"],
+      "npcs": ["npc.innkeeper"]
+    },
+    "loc.forge": {
+      "name": "Forgotten Forge",
+      "description": "An abandoned forge still burns with blue flame. A ghostly smith hammers at the anvil.",
+      "map": [0, -2],
+      "exits": {"south":"loc.market"},
+      "items": ["item.iron_shield"],
+      "npcs": ["npc.smith"]
+    },
+    "loc.ruins": {
+      "name": "Fallen Observatory",
+      "description": "Broken constellations are painted on crumbling stone. A sealed door with an empty lens socket leads north.",
+      "map": [2, -2],
+      "exits": {"south":"loc.tower","north":"loc.sanctum"},
+      "locks": {"north": "item.star_lens"},
+      "items": [],
+      "npcs": ["npc.bandit"]
+    },
+    "loc.sanctum": {
+      "name": "Eclipse Sanctum",
+      "description": "A dome of black glass where the stolen Heart of Time pulses with pale light.",
+      "map": [2, -3],
+      "exits": {"south":"loc.ruins"},
+      "items": [],
+      "npcs": ["npc.warden"]
+    }
+  },
+  "items": {
+    "item.map_fragment": {"name":"Old Map Fragment","description":"Part of a chart of the coast. Tiny handwriting covers its back.","obtainable":true},
+    "item.copper_key": {"name":"Copper Key","description":"A small ornate key. It opens the gate of the old forge.","obtainable":true},
+    "item.silver_compass": {"name":"Silver Compass","description":"A compass that points toward lost stories.","obtainable":true},
+    "item.herbs": {"name":"Healing Herbs","description":"Pungent leaves from the garden. USE them to recover 35 HP.","obtainable":true,"heal":35},
+    "item.rusty_sword": {"name":"Rusty Sword","description":"An old sword, still sharp enough (+4 attack while carried).","obtainable":true,"attack":4},
+    "item.bread": {"name":"Loaf of Bread","description":"A freshly baked loaf. USE it to recover 20 HP.","obtainable":true,"heal":20},
+    "item.lantern": {"name":"Oil Lantern","description":"A lantern to light the road.","obtainable":true},
+    "item.iron_shield": {"name":"Iron Shield","description":"A sturdy shield from a forgotten smithy (blocks 4 damage per hit while carried).","obtainable":true,"defense":4},
+    "item.star_lens": {"name":"Star Lens","description":"A crystal lens that focuses starlight. It fits the sealed door of the observatory.","obtainable":true},
+    "item.heart_of_time": {"name":"Heart of Time","description":"The glowing heart of the Great Clock. It must return to the Master Cartographer.","obtainable":true}
+  },
+  "npcs": {
+    "npc.cartographer": {"name":"Master Cartographer","description":"An explorer with ink-stained hands.","role":"quest_giver","dialogue":["The Great Clock has stopped and the night will not end. Help the Marsh Ranger, the City Guard and the Ghost Smith; come back when the Eclipse Warden has fallen.","Tick, tock... the city owes you its morning, hero."],"hp":30,"attack":0,"quests":["quest.compass","quest.heart"]},
+    "npc.guard": {"name":"City Guard","description":"A disciplined sentinel.","role":"quest_giver","dialogue":["Keep the peace, traveler. The Marsh Ranger in the East Watchtower needs help before I can trust you.","The roads are safe again thanks to you."],"hp":40,"attack":0,"quests":["quest.bandit"]},
+    "npc.merchant": {"name":"Market Merchant","description":"A vendor of curious wares.","role":"dialogue","dialogue":["The old forge north of my stall is locked. The Tavern Keeper keeps its Copper Key.","They say a ghost smith still works the blue flame of the forge.","Healing Herbs from the Glass Garden have saved many a fool who fought the Warden."],"hp":25,"attack":0},
+    "npc.librarian": {"name":"Old Librarian","description":"An attentive keeper of rare books.","role":"quest_giver","dialogue":["Knowledge is the real treasure. Bring the Cartographer what he needs first.","Read well, fight well."],"hp":25,"attack":0,"quests":["quest.notes"]},
+    "npc.ranger": {"name":"Marsh Ranger","description":"A weathered hunter with a green cloak.","role":"quest_giver","dialogue":["Talk to the Master Cartographer first; I only trust those who know the way.","The night is over. Rest, hero."],"hp":35,"attack":0,"quests":["quest.wraith","quest.warden"]},
+    "npc.innkeeper": {"name":"Tavern Keeper","description":"An easygoing host.","role":"quest_giver","dialogue":["Rest by the fire; everyone is welcome. Take the Copper Key if you need the old forge.","The harbor sleeps peacefully now. Drinks are on the house!"],"hp":25,"attack":0,"quests":["quest.tide"]},
+    "npc.smith": {"name":"Ghost Smith","description":"A translucent blacksmith who never stopped working.","role":"quest_giver","dialogue":["Clang... clang... Starsteel is not for everyone. Free the Star Lens from the bandit first, then come back.","Your starsteel will never dull."],"hp":40,"attack":0,"quests":["quest.starsteel"]},
+    "npc.wolf": {"name":"Shadow Wolf","description":"A wolf made of living shadow.","role":"enemy","dialogue":["Grrrr..."],"hp":30,"attack":7},
+    "npc.wraith": {"name":"Marsh Wraith","description":"An angry ghost wrapped in mist.","role":"enemy","dialogue":["Leave this place!"],"hp":35,"attack":9},
+    "npc.drowned": {"name":"Drowned Sailor","description":"A sailor who never came home, dripping with black water.","role":"enemy","dialogue":["The tide... took... everything..."],"hp":45,"attack":10},
+    "npc.bandit": {"name":"Ruin Bandit","description":"A cutpurse lurking behind a pillar, a crystal lens hanging from his belt.","role":"enemy","dialogue":["Your coins or your life!"],"hp":55,"attack":12,"loot":"item.star_lens"},
+    "npc.warden": {"name":"Eclipse Warden","description":"A towering knight of black glass holding the stolen Heart of Time.","role":"enemy","dialogue":["The night is mine. Your blades cannot touch me."],"hp":120,"attack":16,"loot":"item.heart_of_time","requires_quest":"quest.starsteel"}
+  },
+  "quests": {
+    "quest.compass": {"name":"A True North","description":"Bring the Silver Compass from the library to the Master Cartographer. Use TALK to deliver it.","kind":"deliver","target":"item.silver_compass","giver":"npc.cartographer","reward_gold":25,"reward_hp":10,
+      "offer":"Before we chase the Eclipse Warden I must chart the way. Bring me the Silver Compass from the Silent Library, north then east of here.",
+      "reminder":"The Silver Compass waits in the Silent Library, north then east of here. Bring it and TALK to me.",
+      "complete":"Thank you! With this compass I can see the Warden's trail: it leads east, past the Watchtower. Go and help the Marsh Ranger."},
+    "quest.wraith": {"name":"The Marsh Wraith","description":"Defeat the Marsh Wraith south of the Whispering Forest.","kind":"defeat","target":"npc.wraith","giver":"npc.ranger","reward_gold":50,"reward_hp":20,"requires":["quest.compass"],
+      "offer":"The Marsh Wraith threatens our village. Will you stop it?",
+      "reminder":"The Marsh Wraith haunts Murkfen Marsh, south of the Whispering Forest. The Rusty Sword here may help."},
+    "quest.bandit": {"name":"Thief of Stars","description":"Defeat the Ruin Bandit in the Fallen Observatory (north of the East Watchtower) and take the Star Lens he drops.","kind":"defeat","target":"npc.bandit","giver":"npc.guard","reward_gold":60,"reward_hp":20,"requires":["quest.wraith"],
+      "offer":"A bandit stole the Star Lens from the observatory. Without it nobody can open the sealed door that leads to the Warden. Defeat him!",
+      "reminder":"The Ruin Bandit hides in the Fallen Observatory, north of the East Watchtower. He hits hard: the Iron Shield in the old forge would help."},
+    "quest.starsteel": {"name":"Starsteel","description":"Bring the Rusty Sword from the East Watchtower to the Ghost Smith in the Forgotten Forge to have your weapon reforged in starsteel.","kind":"deliver","target":"item.rusty_sword","giver":"npc.smith","reward_gold":40,"reward_hp":25,"reward_attack":8,"requires":["quest.bandit"],
+      "offer":"Only starsteel can wound the Eclipse Warden. Bring me the Rusty Sword from the East Watchtower and I will reforge your weapon.",
+      "reminder":"The Rusty Sword lies in the East Watchtower. Bring it and TALK to me.",
+      "complete":"Thank you! The blue flame roars and your weapon turns to starsteel (+8 attack). Now the Warden can bleed. Tell the Marsh Ranger."},
+    "quest.warden": {"name":"The Eclipse Warden","description":"Open the sealed door north of the Fallen Observatory with the Star Lens and defeat the Eclipse Warden.","kind":"defeat","target":"npc.warden","giver":"npc.ranger","reward_gold":100,"reward_hp":30,"requires":["quest.starsteel"],
+      "offer":"Your blade shines with starsteel. The Warden waits behind the sealed door north of the Fallen Observatory; the Star Lens will open it. End this night!",
+      "reminder":"Carry the Star Lens north of the Fallen Observatory. Take Healing Herbs and the Iron Shield with you."},
+    "quest.heart": {"name":"Midnight's End","description":"Take the Heart of Time dropped by the Eclipse Warden back to the Master Cartographer and TALK to him to restart the Great Clock.","kind":"deliver","target":"item.heart_of_time","giver":"npc.cartographer","reward_gold":150,"reward_hp":100,"requires":["quest.warden"],"final":true,
+      "offer":"The Warden has fallen! Bring me the Heart of Time and we will set it back into the Great Clock.",
+      "reminder":"The Heart of Time lies where the Warden fell, in the Eclipse Sanctum. Bring it and TALK to me.",
+      "complete":"Thank you! The Heart of Time slides into place... tick... tock... the Great Clock chimes again!"},
+    "quest.notes": {"name":"The Astronomer's Notes","description":"Side quest: bring the Old Map Fragment from Clockwork Square to the Old Librarian.","kind":"deliver","target":"item.map_fragment","giver":"npc.librarian","reward_gold":30,"reward_hp":0,"reward_attack":3,"requires":["quest.compass"],
+      "offer":"That Old Map Fragment lying in the square belonged to the last astronomer. Its back hides notes about the Warden. Bring it to me!",
+      "reminder":"The Old Map Fragment lies in Clockwork Square. Bring it and TALK to me.",
+      "complete":"Thank you! These notes show where the Warden's armour is thin. Your blows strike harder (+3 attack)."},
+    "quest.tide": {"name":"Restless Tide","description":"Side quest: defeat the Drowned Sailor who haunts the Old Harbor.","kind":"defeat","target":"npc.drowned","giver":"npc.innkeeper","reward_gold":40,"reward_hp":25,
+      "offer":"A drowned sailor rises from the harbor every night and scares my customers. Put him to rest and I will pay you well.",
+      "reminder":"The Drowned Sailor walks the pier of the Old Harbor, west of the square."}
+  }
+}
