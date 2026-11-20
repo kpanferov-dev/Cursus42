@@ -1,0 +1,533 @@
+/* Page layout and theme of the TAP browser client (the scene has its own scene.css). */
+:root {
+  color-scheme: dark;
+  --bg: #1c2a2b;
+  --panel: #24383a;
+  --line: #4d6663;
+  --ink: #ece3cc;
+  --muted: #a9b5a6;
+  --accent: #8fcfb5;
+  --gold: #c9a24a;
+  --danger: #d9695f;
+  --well: #182425;
+  --raised: #2c4547;
+  --serif: 'Palatino Linotype', 'Book Antiqua', Palatino, 'URW Palladio L', P052, Georgia, serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font:
+    15px/1.5 system-ui,
+    -apple-system,
+    Segoe UI,
+    sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+header {
+  background: #172324;
+  border-bottom: 2px solid var(--gold);
+  padding: 14px clamp(14px, 2vw, 32px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+header strong {
+  font-family: var(--serif);
+  font-size: 25px;
+  font-weight: 600;
+  font-variant: small-caps;
+  letter-spacing: 0.03em;
+  color: var(--gold);
+}
+
+header small {
+  display: block;
+  font-size: 13px;
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--muted);
+}
+
+.status-pill {
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 4px 10px;
+  color: var(--gold);
+}
+
+main {
+  max-width: 1460px;
+  margin: 22px auto;
+  padding: 0 18px;
+  display: grid;
+  grid-template-columns: minmax(300px, 1fr) minmax(330px, 1fr);
+  gap: 17px;
+}
+
+.panel {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+}
+
+h2 {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+
+h3 {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--gold);
+  margin: 17px 0 9px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.headerline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.stack {
+  display: grid;
+  gap: 12px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.row > * {
+  min-width: 0;
+}
+
+input,
+select,
+button {
+  font: inherit;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 8px 11px;
+  color: var(--ink);
+  background: var(--well);
+}
+
+input {
+  flex: 1;
+  min-width: 90px;
+}
+
+input:focus,
+select:focus,
+button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+}
+
+button {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+button:hover:not(:disabled) {
+  background: var(--raised);
+  border-color: var(--gold);
+}
+
+button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--gold);
+  color: #1c2a2b;
+  border-color: var(--gold);
+  font-weight: 700;
+}
+
+button.warn {
+  border-color: var(--danger);
+  color: #f2b8b1;
+}
+
+button.small {
+  font-size: 12px;
+  padding: 5px 9px;
+}
+
+.empty {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.scroller {
+  height: 210px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--well);
+  padding: 10px 12px;
+  font:
+    13px/1.6 system-ui,
+    -apple-system,
+    Segoe UI,
+    sans-serif;
+  overflow-wrap: anywhere;
+}
+
+.scroller div {
+  border-bottom: 1px solid #2b3d3e;
+  padding: 4px 0;
+}
+
+.scroller .evt {
+  color: var(--accent);
+}
+
+.scroller .err {
+  color: var(--danger);
+}
+
+.tabs {
+  margin-top: 8px;
+  display: flex;
+  gap: 7px;
+}
+
+.tabs button[aria-selected='true'] {
+  border-color: var(--gold);
+  color: var(--ink);
+  background: var(--raised);
+  box-shadow: inset 0 -2px 0 var(--gold);
+}
+
+.inline-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.hide {
+  display: none !important;
+}
+
+.scroller .time {
+  color: var(--muted);
+  margin-right: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.scroller .self {
+  color: var(--gold);
+}
+
+.tabs .badge {
+  margin-left: 5px;
+  font-size: 11px;
+  color: var(--gold);
+}
+
+#chatLog {
+  height: 300px;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.where-pill {
+  border: 1px solid var(--line);
+  color: var(--accent);
+  border-radius: 3px;
+  padding: 4px 11px;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  max-width: 210px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mapview {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--well);
+  padding: 6px;
+}
+
+.mapview svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-width: 540px;
+}
+
+.maphint {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 7px;
+}
+
+.victory {
+  background: #2a3326;
+  border-color: var(--gold);
+  text-align: center;
+}
+
+.victory h2 {
+  font-size: 26px;
+  font-style: italic;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.victory p {
+  margin: 0;
+  color: var(--ink);
+}
+
+.quest {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line);
+  border-radius: 3px;
+  padding: 9px 11px;
+  margin: 7px 0;
+  background: var(--well);
+}
+
+.quest b {
+  display: block;
+  font-family: var(--serif);
+  font-size: 16px;
+}
+
+.quest .state {
+  float: right;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.quest.active {
+  border-left-color: var(--gold);
+}
+
+.quest.active .state {
+  color: var(--gold);
+}
+
+.quest.completed {
+  opacity: 0.72;
+}
+
+.quest.completed .state {
+  color: var(--accent);
+}
+
+.quest p {
+  margin: 5px 0 0;
+  font-size: 14px;
+  color: #d6dcc9;
+}
+
+.quest.final {
+  border-left-color: var(--gold);
+  border-left-width: 5px;
+}
+
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  align-items: stretch;
+  flex: 1;
+  min-width: 0;
+}
+
+.hud-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--well);
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.hud-item small {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.hud-item b {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.hud-item b i {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.hud-item.low b {
+  color: var(--danger);
+}
+
+.hud-refresh {
+  font-size: 12px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+.hud-item.champ {
+  justify-content: center;
+  color: var(--gold);
+  border-color: var(--gold);
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 600;
+}
+
+.room rect {
+  fill: #24383a;
+  stroke: #4d6663;
+  stroke-width: 1.5;
+}
+
+.room.visited rect {
+  stroke: #7d958f;
+}
+
+.room.unexplored rect {
+  fill: #1d2b2c;
+  stroke-dasharray: 5 4;
+}
+
+.room.current rect {
+  fill: #2f5148;
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+
+.room.reachable {
+  cursor: pointer;
+}
+
+.room.reachable:hover rect,
+.room.reachable:focus rect {
+  fill: #2c4547;
+  stroke: var(--gold);
+}
+
+.room text {
+  fill: var(--ink);
+  font-size: 13px;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.room.unexplored text {
+  fill: var(--muted);
+}
+
+.room .tag {
+  fill: var(--gold);
+  font-size: 12.5px;
+  font-style: italic;
+  font-family: var(--serif);
+}
+
+.room.current .tag {
+  fill: #eaf6ef;
+}
+
+.link {
+  stroke: #5e7a75;
+  stroke-width: 3;
+  fill: none;
+}
+
+.link.long {
+  stroke-dasharray: 7 6;
+}
+
+.linklabel {
+  fill: var(--muted);
+  font-size: 11px;
+  text-anchor: middle;
+}
+
+.you-ring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  animation: pulse 1.6s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.95;
+    stroke-width: 2;
+  }
+
+  100% {
+    opacity: 0;
+    stroke-width: 12;
+  }
+}
+
+/* Narrower screens: the stats get their own centered line inside the header. */
+@media (max-width: 1420px) {
+  .hud {
+    order: 3;
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  main {
+    grid-template-columns: 1fr;
+  }
+}

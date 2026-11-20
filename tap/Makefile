@@ -1,4 +1,4 @@
-.PHONY: install build run-server run-client run-client-gui lint test test-race clean
+.PHONY: install build run-server run-client run-client-gui lint format test test-race clean
 
 GO ?= go
 SERVER_ADDR ?= 127.0.0.1:4242
@@ -26,6 +26,11 @@ run-client-gui:
 lint:
 	$(GO) vet ./...
 	@test -z "$$(find cmd internal -name '*.go' -print0 | xargs -0 gofmt -l)" || { echo 'Run gofmt before committing'; exit 1; }
+
+# Formats Go code with gofmt and the browser files with Prettier (needs Node.js; style in .prettierrc.json).
+format:
+	gofmt -w cmd internal
+	npx --yes prettier@3 --write cmd/gui/*.html cmd/gui/*.css cmd/gui/*.js
 
 test:
 	$(GO) test ./...	

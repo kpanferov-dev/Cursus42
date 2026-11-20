@@ -43,22 +43,22 @@ type Session struct {
 	once     sync.Once
 }
 
-func (s *Session) Close() { s.once.Do(func() { _ = s.Conn.Close() }) }
+func (session *Session) Close() { session.once.Do(func() { _ = session.Conn.Close() }) }
 
 // Send writes one command line. quiet commands (automatic GUI refreshes) are
 // still matched with their reply but produce no narration message.
-func (s *Session) Send(line string, quiet bool) error {
+func (session *Session) Send(line string, quiet bool) error {
 	if len(line) == 0 || len(line) > 1024 || strings.ContainsAny(line, "\r\n") || !utf8.ValidString(line) {
 		return errors.New("invalid TAP line")
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if err := s.Conn.SetWriteDeadline(time.Now().Add(5 * time.Second)); err != nil {
+	session.mu.Lock()
+	defer session.mu.Unlock()
+	if err := session.Conn.SetWriteDeadline(time.Now().Add(5 * time.Second)); err != nil {
 		return err
 	}
-	s.Narrator.Expect(line, quiet)
-	if _, err := io.WriteString(s.Conn, line+"\n"); err != nil {
-		s.Narrator.Cancel()
+	session.Narrator.Expect(line, quiet)
+	if _, err := io.WriteString(session.Conn, line+"\n"); err != nil {
+		session.Narrator.Cancel()
 		return err
 	}
 	return nil
@@ -76,55 +76,59 @@ func New(addr string, catalog *world.Data) *Hub {
 }
 
 // push queues an event without ever blocking the TCP reader.
-func (s *Session) push(kind, data string) bool {
+func (session *Session) push(kind, data string) bool {
 	select {
-	case s.Messages <- Event{kind, data}:
+	case session.Messages <- Event{kind, data}:
 		return true
 	default:
 		return false
 	}
 }
-func (h *Hub) register(s *Session) error {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	if len(h.sessions) >= 64 {
+func (hub *Hub) register(session *Session) error {
+	hub.mu.Lock()
+	defer hub.mu.Unlock()
+	if len(hub.sessions) >= 64 {
 		return errors.New("GUI session limit reached")
 	}
-	h.sessions[s.ID] = s
+	hub.sessions[session.ID] = session
 	return nil
 }
-func (h *Hub) get(id string) *Session { h.mu.Lock(); defer h.mu.Unlock(); return h.sessions[id] }
-func (h *Hub) discard(id string) {
-	h.mu.Lock()
-	s := h.sessions[id]
-	delete(h.sessions, id)
-	h.mu.Unlock()
-	if s != nil {
-		s.Close()
+func (hub *Hub) get(id string) *Session {
+	hub.mu.Lock()
+	defer hub.mu.Unlock()
+	return hub.sessions[id]
+}
+func (hub *Hub) discard(id string) {
+	hub.mu.Lock()
+	session := hub.sessions[id]
+	delete(hub.sessions, id)
+	hub.mu.Unlock()
+	if session != nil {
+		session.Close()
 	}
 }
-func (h *Hub) readLoop(s *Session) {
-	defer close(s.Messages)
-	defer h.discard(s.ID)
+func (hub *Hub) readLoop(session *Session) {
+	defer close(session.Messages)
+	defer hub.discard(session.ID)
 	for {
-		line, err := s.Reader.ReadString('\n')
+		line, err := session.Reader.ReadString('\n')
 		if err != nil {
 			// The connection has ended; SSE ends after this final notification.
-			s.push("narration", "The connection to the server was lost.")
-			s.push("", "ERR 900 CONNECTION_FAILED")
+			session.push("narration", "The connection to the server was lost.")
+			session.push("", "ERR 900 CONNECTION_FAILED")
 			return
 		}
 		line = strings.TrimSuffix(strings.TrimSuffix(line, "\n"), "\r")
 		// Narration is queued first so it is delivered before a raw "OK bye"
 		// makes the browser close its event stream.
-		if text, ok := s.Narrator.Narrate(line); ok && !s.push("narration", text) {
+		if text, ok := session.Narrator.Narrate(line); ok && !session.push("narration", text) {
 			return
 		}
-		if !s.push("", line) {
+		if !session.push("", line) {
 			// Do not allow a slow browser to make a TCP reader block indefinitely.
 			return
 		}
-		if changed, _ := s.Map.Observe(line); changed && !s.push("map", s.Map.JSON()) {
+		if changed, _ := session.Map.Observe(line); changed && !session.push("map", session.Map.JSON()) {
 			return
 		}
 		if line == "OK bye" {
@@ -132,34 +136,34 @@ func (h *Hub) readLoop(s *Session) {
 		}
 	}
 }
-func writeJSON(w http.ResponseWriter, status int, value any) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(value)
+func writeJSON(writer http.ResponseWriter, status int, value any) {
+	writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+	writer.WriteHeader(status)
+	_ = json.NewEncoder(writer).Encode(value)
 }
-func decodeJSON(r *http.Request, v any) error {
-	defer r.Body.Close()
-	return json.NewDecoder(io.LimitReader(r.Body, 4096)).Decode(v)
+func decodeJSON(request *http.Request, value any) error {
+	defer request.Body.Close()
+	return json.NewDecoder(io.LimitReader(request.Body, 4096)).Decode(value)
 }
-func (h *Hub) HandleConnect(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "POST only", 405)
+func (hub *Hub) HandleConnect(writer http.ResponseWriter, httpRequest *http.Request) {
+	if httpRequest.Method != http.MethodPost {
+		http.Error(writer, "POST only", 405)
 		return
 	}
 	var request struct {
 		Name string `json:"name"`
 	}
-	if err := decodeJSON(r, &request); err != nil {
-		writeJSON(w, 400, map[string]string{"error": err.Error()})
+	if err := decodeJSON(httpRequest, &request); err != nil {
+		writeJSON(writer, 400, map[string]string{"error": err.Error()})
 		return
 	}
 	if request.Name == "" || len(request.Name) > 128 || strings.ContainsAny(request.Name, "\n\r \t") {
-		writeJSON(w, 400, map[string]string{"error": "invalid username"})
+		writeJSON(writer, 400, map[string]string{"error": "invalid username"})
 		return
 	}
-	conn, err := net.DialTimeout("tcp", h.ServerAddr, 4*time.Second)
+	conn, err := net.DialTimeout("tcp", hub.ServerAddr, 4*time.Second)
 	if err != nil {
-		writeJSON(w, 502, map[string]string{"error": "ERR 900 CONNECTION_FAILED: " + err.Error()})
+		writeJSON(writer, 502, map[string]string{"error": "ERR 900 CONNECTION_FAILED: " + err.Error()})
 		return
 	}
 	reader := bufio.NewReader(conn)
@@ -167,55 +171,55 @@ func (h *Hub) HandleConnect(w http.ResponseWriter, r *http.Request) {
 	hello, err := reader.ReadString('\n')
 	if err != nil || strings.TrimSpace(hello) != "OK hello proto=1" {
 		conn.Close()
-		writeJSON(w, 502, map[string]string{"error": "invalid TAP greeting"})
+		writeJSON(writer, 502, map[string]string{"error": "invalid TAP greeting"})
 		return
 	}
 	_, err = io.WriteString(conn, "CONNECT "+request.Name+"\n")
 	if err != nil {
 		conn.Close()
-		writeJSON(w, 502, map[string]string{"error": err.Error()})
+		writeJSON(writer, 502, map[string]string{"error": err.Error()})
 		return
 	}
 	line, err := reader.ReadString('\n')
 	if err != nil {
 		conn.Close()
-		writeJSON(w, 502, map[string]string{"error": "CONNECT: " + err.Error()})
+		writeJSON(writer, 502, map[string]string{"error": "CONNECT: " + err.Error()})
 		return
 	}
 	if strings.TrimSpace(line) != "OK connected" {
 		conn.Close()
-		explain := narrator.New(h.Catalog, "")
+		explain := narrator.New(hub.Catalog, "")
 		explain.SetGreeted()
 		explain.Expect("CONNECT "+request.Name, false)
 		message, _ := explain.Narrate(line)
-		writeJSON(w, 409, map[string]string{"error": strings.TrimSpace(line), "message": message})
+		writeJSON(writer, 409, map[string]string{"error": strings.TrimSpace(line), "message": message})
 		return
 	}
 	_ = conn.SetReadDeadline(time.Time{})
 	key := make([]byte, 20)
 	if _, err := rand.Read(key); err != nil {
 		conn.Close()
-		writeJSON(w, 500, map[string]string{"error": err.Error()})
+		writeJSON(writer, 500, map[string]string{"error": err.Error()})
 		return
 	}
-	story := narrator.New(h.Catalog, request.Name)
+	story := narrator.New(hub.Catalog, request.Name)
 	story.SetGreeted()
-	position := worldmap.New(h.Catalog)
+	position := worldmap.New(hub.Catalog)
 	position.Observe("OK connected") // the greeting reply was consumed above
-	s := &Session{ID: hex.EncodeToString(key), Conn: conn, Reader: reader, Messages: make(chan Event, 768), Narrator: story, Map: position}
-	s.push("narration", fmt.Sprintf("Welcome, %s! You have entered the shared world.", request.Name))
-	s.push("map", position.JSON())
-	if err := h.register(s); err != nil {
+	session := &Session{ID: hex.EncodeToString(key), Conn: conn, Reader: reader, Messages: make(chan Event, 768), Narrator: story, Map: position}
+	session.push("narration", fmt.Sprintf("Welcome, %s! You have entered the shared world.", request.Name))
+	session.push("map", position.JSON())
+	if err := hub.register(session); err != nil {
 		conn.Close()
-		writeJSON(w, 503, map[string]string{"error": err.Error()})
+		writeJSON(writer, 503, map[string]string{"error": err.Error()})
 		return
 	}
-	go h.readLoop(s)
-	writeJSON(w, 200, map[string]string{"id": s.ID, "hello": "OK connected"})
+	go hub.readLoop(session)
+	writeJSON(writer, 200, map[string]string{"id": session.ID, "hello": "OK connected"})
 }
-func (h *Hub) HandleSend(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "POST only", 405)
+func (hub *Hub) HandleSend(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodPost {
+		http.Error(writer, "POST only", 405)
 		return
 	}
 	var req struct {
@@ -223,46 +227,46 @@ func (h *Hub) HandleSend(w http.ResponseWriter, r *http.Request) {
 		Line  string `json:"line"`
 		Quiet bool   `json:"quiet"`
 	}
-	if err := decodeJSON(r, &req); err != nil {
-		writeJSON(w, 400, map[string]string{"error": err.Error()})
+	if err := decodeJSON(request, &req); err != nil {
+		writeJSON(writer, 400, map[string]string{"error": err.Error()})
 		return
 	}
-	s := h.get(req.ID)
-	if s == nil {
-		writeJSON(w, 404, map[string]string{"error": "session not found"})
+	session := hub.get(req.ID)
+	if session == nil {
+		writeJSON(writer, 404, map[string]string{"error": "session not found"})
 		return
 	}
-	if err := s.Send(req.Line, req.Quiet); err != nil {
-		writeJSON(w, 502, map[string]string{"error": "ERR 901 SEND_FAILED: " + err.Error()})
+	if err := session.Send(req.Line, req.Quiet); err != nil {
+		writeJSON(writer, 502, map[string]string{"error": "ERR 901 SEND_FAILED: " + err.Error()})
 		return
 	}
-	writeJSON(w, 200, map[string]bool{"sent": true})
+	writeJSON(writer, 200, map[string]bool{"sent": true})
 }
-func (h *Hub) HandleEvents(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "GET only", 405)
+func (hub *Hub) HandleEvents(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodGet {
+		http.Error(writer, "GET only", 405)
 		return
 	}
-	s := h.get(r.URL.Query().Get("id"))
-	if s == nil {
-		http.Error(w, "session not found", 404)
+	session := hub.get(request.URL.Query().Get("id"))
+	if session == nil {
+		http.Error(writer, "session not found", 404)
 		return
 	}
-	flusher, ok := w.(http.Flusher)
+	flusher, ok := writer.(http.Flusher)
 	if !ok {
-		http.Error(w, "SSE unsupported", 500)
+		http.Error(writer, "SSE unsupported", 500)
 		return
 	}
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache, no-store")
-	w.Header().Set("X-Accel-Buffering", "no")
-	fmt.Fprint(w, ": connected\n\n")
+	writer.Header().Set("Content-Type", "text/event-stream")
+	writer.Header().Set("Cache-Control", "no-cache, no-store")
+	writer.Header().Set("X-Accel-Buffering", "no")
+	fmt.Fprint(writer, ": connected\n\n")
 	flusher.Flush()
 	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 	for {
 		select {
-		case ev, ok := <-s.Messages:
+		case ev, ok := <-session.Messages:
 			if !ok {
 				return
 			}
@@ -270,45 +274,45 @@ func (h *Hub) HandleEvents(w http.ResponseWriter, r *http.Request) {
 			msg := strings.ReplaceAll(ev.Data, "\r", "")
 			msg = strings.ReplaceAll(msg, "\n", "")
 			if ev.Kind != "" {
-				if _, err := fmt.Fprintf(w, "event: %s\n", ev.Kind); err != nil {
+				if _, err := fmt.Fprintf(writer, "event: %s\n", ev.Kind); err != nil {
 					return
 				}
 			}
-			if _, err := fmt.Fprintf(w, "data: %s\n\n", msg); err != nil {
+			if _, err := fmt.Fprintf(writer, "data: %s\n\n", msg); err != nil {
 				return
 			}
 			flusher.Flush()
 		case <-ticker.C:
-			if _, err := fmt.Fprint(w, ": keepalive\n\n"); err != nil {
+			if _, err := fmt.Fprint(writer, ": keepalive\n\n"); err != nil {
 				return
 			}
 			flusher.Flush()
-		case <-r.Context().Done():
+		case <-request.Context().Done():
 			return
 		}
 	}
 }
-func (h *Hub) HandleClose(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "POST only", 405)
+func (hub *Hub) HandleClose(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodPost {
+		http.Error(writer, "POST only", 405)
 		return
 	}
 	var req struct {
 		ID string `json:"id"`
 	}
-	if err := decodeJSON(r, &req); err != nil {
-		writeJSON(w, 400, map[string]string{"error": err.Error()})
+	if err := decodeJSON(request, &req); err != nil {
+		writeJSON(writer, 400, map[string]string{"error": err.Error()})
 		return
 	}
-	h.discard(req.ID)
-	writeJSON(w, 200, map[string]bool{"closed": true})
+	hub.discard(req.ID)
+	writeJSON(writer, 200, map[string]bool{"closed": true})
 }
-func (h *Hub) Close() {
-	h.mu.Lock()
-	sessions := h.sessions
-	h.sessions = map[string]*Session{}
-	h.mu.Unlock()
-	for _, s := range sessions {
-		s.Close()
+func (hub *Hub) Close() {
+	hub.mu.Lock()
+	sessions := hub.sessions
+	hub.sessions = map[string]*Session{}
+	hub.mu.Unlock()
+	for _, session := range sessions {
+		session.Close()
 	}
 }

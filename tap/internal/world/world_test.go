@@ -5,60 +5,60 @@ import (
 	"testing"
 )
 
-func sample(t *testing.T) *Data {
-	t.Helper()
-	d, err := Load(filepath.Join("..", "..", "world", "world.json"))
+func sample(test *testing.T) *Data {
+	test.Helper()
+	data, err := Load(filepath.Join("..", "..", "world", "world.json"))
 	if err != nil {
-		t.Fatal(err)
+		test.Fatal(err)
 	}
-	return d
+	return data
 }
-func TestWorldConstraints(t *testing.T) {
-	d := sample(t)
-	if len(d.Rooms) < 8 || len(d.Items) < 4 || len(d.NPCs) < 3 || len(d.Quests) < 2 {
-		t.Fatalf("inadequate world: %+v", d)
+func TestWorldConstraints(test *testing.T) {
+	data := sample(test)
+	if len(data.Rooms) < 8 || len(data.Items) < 4 || len(data.NPCs) < 3 || len(data.Quests) < 2 {
+		test.Fatalf("inadequate world: %+v", data)
 	}
-	if len(d.Rooms["loc.forge"].Exits) != 1 {
-		t.Fatal("optional branch is missing")
+	if len(data.Rooms["loc.forge"].Exits) != 1 {
+		test.Fatal("optional branch is missing")
 	}
 	// The square / garden / forest / marsh / harbor / square circuit exists.
 	path := []string{"loc.square", "loc.garden", "loc.forest", "loc.marsh", "loc.harbor", "loc.square"}
-	for i := 0; i < len(path)-1; i++ {
+	for step := 0; step < len(path)-1; step++ {
 		found := false
-		for _, dest := range d.Rooms[path[i]].Exits {
-			if dest == path[i+1] {
+		for _, dest := range data.Rooms[path[step]].Exits {
+			if dest == path[step+1] {
 				found = true
 			}
 		}
 		if !found {
-			t.Fatalf("circuit broken: %s -> %s", path[i], path[i+1])
+			test.Fatalf("circuit broken: %s -> %s", path[step], path[step+1])
 		}
 	}
 }
-func TestWorldRejectsBadReferences(t *testing.T) {
-	d := sample(t)
-	r := d.Rooms[d.Start]
-	r.Exits["north"] = "missing"
-	d.Rooms[d.Start] = r
-	if err := d.Validate(); err == nil {
-		t.Fatal("invalid exit accepted")
+func TestWorldRejectsBadReferences(test *testing.T) {
+	data := sample(test)
+	room := data.Rooms[data.Start]
+	room.Exits["north"] = "missing"
+	data.Rooms[data.Start] = room
+	if err := data.Validate(); err == nil {
+		test.Fatal("invalid exit accepted")
 	}
 }
-func TestWorldRejectsDuplicatedItems(t *testing.T) {
-	d := sample(t)
-	room := d.Rooms["loc.market"]
+func TestWorldRejectsDuplicatedItems(test *testing.T) {
+	data := sample(test)
+	room := data.Rooms["loc.market"]
 	room.Items = append(room.Items, "item.herbs")
-	d.Rooms["loc.market"] = room
-	if err := d.Validate(); err == nil {
-		t.Fatal("duplicate item accepted")
+	data.Rooms["loc.market"] = room
+	if err := data.Validate(); err == nil {
+		test.Fatal("duplicate item accepted")
 	}
 }
-func TestWorldRejectsOverlappingMapPositions(t *testing.T) {
-	d := sample(t)
-	a, b := d.Rooms["loc.square"], d.Rooms["loc.market"]
-	a.Map, b.Map = []int{5, 5}, []int{5, 5}
-	d.Rooms["loc.square"], d.Rooms["loc.market"] = a, b
-	if err := d.Validate(); err == nil {
-		t.Fatal("overlapping map positions accepted")
+func TestWorldRejectsOverlappingMapPositions(test *testing.T) {
+	data := sample(test)
+	square, market := data.Rooms["loc.square"], data.Rooms["loc.market"]
+	square.Map, market.Map = []int{5, 5}, []int{5, 5}
+	data.Rooms["loc.square"], data.Rooms["loc.market"] = square, market
+	if err := data.Validate(); err == nil {
+		test.Fatal("overlapping map positions accepted")
 	}
 }

@@ -46,30 +46,30 @@ type Map struct {
 
 // New creates a map, pre-filled from the catalog when one is available.
 func New(catalog *world.Data) *Map {
-	m := &Map{rooms: map[string]*room{}, visited: map[string]bool{}}
+	worldMap := &Map{rooms: map[string]*room{}, visited: map[string]bool{}}
 	if catalog == nil {
-		return m
+		return worldMap
 	}
-	m.start = catalog.Start
-	for id, r := range catalog.Rooms {
-		rr := &room{name: r.Name, exits: copyExits(r.Exits), explored: true}
-		if len(r.Map) == 2 {
-			rr.hint = &[2]int{r.Map[0], r.Map[1]}
+	worldMap.start = catalog.Start
+	for id, catalogRoom := range catalog.Rooms {
+		rr := &room{name: catalogRoom.Name, exits: copyExits(catalogRoom.Exits), explored: true}
+		if len(catalogRoom.Map) == 2 {
+			rr.hint = &[2]int{catalogRoom.Map[0], catalogRoom.Map[1]}
 		}
-		m.rooms[id] = rr
+		worldMap.rooms[id] = rr
 	}
-	for _, r := range catalog.Rooms {
-		for _, dest := range r.Exits {
-			m.ensure(dest)
+	for _, catalogRoom := range catalog.Rooms {
+		for _, dest := range catalogRoom.Exits {
+			worldMap.ensure(dest)
 		}
 	}
-	return m
+	return worldMap
 }
 
 func copyExits(in map[string]string) map[string]string {
 	out := make(map[string]string, len(in))
-	for k, v := range in {
-		out[strings.ToLower(k)] = v
+	for direction, destination := range in {
+		out[strings.ToLower(direction)] = destination
 	}
 	return out
 }
@@ -82,32 +82,32 @@ func humanize(id string) string {
 }
 
 // ensure returns the room, creating an unexplored placeholder if needed.
-func (m *Map) ensure(id string) (*room, bool) {
-	if r, ok := m.rooms[id]; ok {
-		return r, false
+func (worldMap *Map) ensure(id string) (*room, bool) {
+	if info, ok := worldMap.rooms[id]; ok {
+		return info, false
 	}
-	r := &room{name: humanize(id), exits: map[string]string{}}
-	m.rooms[id] = r
-	return r, true
+	info := &room{name: humanize(id), exits: map[string]string{}}
+	worldMap.rooms[id] = info
+	return info, true
 }
 
 // Observe updates the map from one server line. changed reports any visible
 // change; moved reports that the player's current room changed.
-func (m *Map) Observe(line string) (changed, moved bool) {
+func (worldMap *Map) Observe(line string) (changed, moved bool) {
 	line = strings.TrimSpace(line)
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	worldMap.mu.Lock()
+	defer worldMap.mu.Unlock()
 	switch {
 	case line == "OK connected":
-		if m.start != "" {
-			return m.moveTo(m.start)
+		if worldMap.start != "" {
+			return worldMap.moveTo(worldMap.start)
 		}
 	case strings.HasPrefix(line, "OK room="):
-		return m.moveTo(strings.TrimPrefix(line, "OK room="))
+		return worldMap.moveTo(strings.TrimPrefix(line, "OK room="))
 	case strings.HasPrefix(line, "EVT PLAYER RESPAWN "):
-		for _, f := range strings.Fields(line) {
-			if id, ok := strings.CutPrefix(f, "room="); ok {
-				return m.moveTo(id)
+		for _, field := range strings.Fields(line) {
+			if id, ok := strings.CutPrefix(field, "room="); ok {
+				return worldMap.moveTo(id)
 			}
 		}
 	case strings.HasPrefix(line, "OK {"):
@@ -121,49 +121,49 @@ func (m *Map) Observe(line string) (changed, moved bool) {
 		if json.Unmarshal([]byte(strings.TrimPrefix(line, "OK ")), &look) != nil || look.Room == nil || look.Room.ID == "" {
 			return false, false
 		}
-		learned := m.learn(look.Room.ID, look.Room.Name, look.Room.Exits)
-		c, mv := m.moveTo(look.Room.ID)
-		return learned || c, mv
+		learned := worldMap.learn(look.Room.ID, look.Room.Name, look.Room.Exits)
+		positionChanged, mv := worldMap.moveTo(look.Room.ID)
+		return learned || positionChanged, mv
 	}
 	return false, false
 }
 
-func (m *Map) learn(id, name string, exits map[string]string) bool {
-	r, changed := m.ensure(id)
-	if name != "" && r.name != name {
-		r.name, changed = name, true
+func (worldMap *Map) learn(id, name string, exits map[string]string) bool {
+	info, changed := worldMap.ensure(id)
+	if name != "" && info.name != name {
+		info.name, changed = name, true
 	}
-	if !r.explored {
-		r.explored, changed = true, true
+	if !info.explored {
+		info.explored, changed = true, true
 	}
 	exits = copyExits(exits)
-	if len(exits) != len(r.exits) {
+	if len(exits) != len(info.exits) {
 		changed = true
 	}
 	for dir, dest := range exits {
-		if r.exits[dir] != dest {
+		if info.exits[dir] != dest {
 			changed = true
 		}
-		if _, added := m.ensure(dest); added {
+		if _, added := worldMap.ensure(dest); added {
 			changed = true
 		}
 	}
-	r.exits = exits
+	info.exits = exits
 	return changed
 }
 
-func (m *Map) moveTo(id string) (changed, moved bool) {
+func (worldMap *Map) moveTo(id string) (changed, moved bool) {
 	if id == "" {
 		return false, false
 	}
-	_, added := m.ensure(id)
-	moved = m.current != id
-	m.current = id
-	if m.origin == "" {
-		m.origin = id
+	_, added := worldMap.ensure(id)
+	moved = worldMap.current != id
+	worldMap.current = id
+	if worldMap.origin == "" {
+		worldMap.origin = id
 	}
-	if !m.visited[id] {
-		m.visited[id] = true
+	if !worldMap.visited[id] {
+		worldMap.visited[id] = true
 		changed = true
 	}
 	return changed || added || moved, moved
@@ -171,11 +171,11 @@ func (m *Map) moveTo(id string) (changed, moved bool) {
 
 // CurrentExplored reports whether the exits of the current room are known.
 // Clients send an automatic LOOK when they are not.
-func (m *Map) CurrentExplored() bool {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	r := m.rooms[m.current]
-	return m.current == "" || (r != nil && r.explored)
+func (worldMap *Map) CurrentExplored() bool {
+	worldMap.mu.Lock()
+	defer worldMap.mu.Unlock()
+	info := worldMap.rooms[worldMap.current]
+	return worldMap.current == "" || (info != nil && info.explored)
 }
 
 // ---------------------------------------------------------------- layout
@@ -184,22 +184,22 @@ func (m *Map) CurrentExplored() bool {
 type Cell struct {
 	ID       string `json:"id"`
 	Name     string `json:"name"`
-	X        int    `json:"x"`
-	Y        int    `json:"y"`
+	Column   int    `json:"x"`
+	Row      int    `json:"y"`
 	Current  bool   `json:"current"`
 	Visited  bool   `json:"visited"`
 	Explored bool   `json:"explored"`
 }
 
-// Link is a passage between two rooms. DirA is the exit to take from A to
-// reach B (empty for one-way passages), and DirB the reverse. Kind is
+// Link is a passage between two rooms. FirstExit is the exit to take from First
+// to reach Second (empty for one-way passages), and SecondExit the reverse. Kind is
 // "adjacent", "diagonal" or "long" depending on the grid positions.
 type Link struct {
-	A    string `json:"a"`
-	B    string `json:"b"`
-	DirA string `json:"dir_a"`
-	DirB string `json:"dir_b"`
-	Kind string `json:"kind"`
+	First      string `json:"a"`
+	Second     string `json:"b"`
+	FirstExit  string `json:"dir_a"`
+	SecondExit string `json:"dir_b"`
+	Kind       string `json:"kind"`
 }
 
 // Snapshot is the complete map state at one moment.
@@ -213,9 +213,9 @@ type Snapshot struct {
 	Exits       map[string]string `json:"exits"`
 }
 
-func (m *Map) sortedIDs() []string {
-	ids := make([]string, 0, len(m.rooms))
-	for id := range m.rooms {
+func (worldMap *Map) sortedIDs() []string {
+	ids := make([]string, 0, len(worldMap.rooms))
+	for id := range worldMap.rooms {
 		ids = append(ids, id)
 	}
 	sort.Strings(ids)
@@ -227,62 +227,62 @@ func nearestFree(used map[[2]int]string, target [2]int) [2]int {
 	if _, taken := used[target]; !taken {
 		return target
 	}
-	for d := 1; ; d++ {
+	for distance := 1; ; distance++ {
 		ring := [][2]int{}
-		for dy := -d; dy <= d; dy++ {
-			for dx := -d; dx <= d; dx++ {
-				if max(abs(dx), abs(dy)) == d {
+		for dy := -distance; dy <= distance; dy++ {
+			for dx := -distance; dx <= distance; dx++ {
+				if max(abs(dx), abs(dy)) == distance {
 					ring = append(ring, [2]int{dx, dy})
 				}
 			}
 		}
-		sort.Slice(ring, func(i, j int) bool {
-			a, b := ring[i], ring[j]
-			if da, db := abs(a[0])+abs(a[1]), abs(b[0])+abs(b[1]); da != db {
+		sort.Slice(ring, func(left, right int) bool {
+			first, second := ring[left], ring[right]
+			if da, db := abs(first[0])+abs(first[1]), abs(second[0])+abs(second[1]); da != db {
 				return da < db
 			}
-			if a[1] != b[1] {
-				return a[1] < b[1]
+			if first[1] != second[1] {
+				return first[1] < second[1]
 			}
-			return a[0] < b[0]
+			return first[0] < second[0]
 		})
-		for _, o := range ring {
-			p := [2]int{target[0] + o[0], target[1] + o[1]}
-			if _, taken := used[p]; !taken {
-				return p
+		for _, offset := range ring {
+			candidate := [2]int{target[0] + offset[0], target[1] + offset[1]}
+			if _, taken := used[candidate]; !taken {
+				return candidate
 			}
 		}
 	}
 }
 
-func abs(v int) int {
-	if v < 0 {
-		return -v
+func abs(value int) int {
+	if value < 0 {
+		return -value
 	}
-	return v
+	return value
 }
 
 // layout places every known room: catalog hints first, then a breadth-first
 // walk that puts each neighbour in the direction of its exit when possible.
-func (m *Map) layout() map[string][2]int {
-	ids := m.sortedIDs()
+func (worldMap *Map) layout() map[string][2]int {
+	ids := worldMap.sortedIDs()
 	pos := map[string][2]int{}
 	used := map[[2]int]string{}
-	place := func(id string, p [2]int) {
-		p = nearestFree(used, p)
-		pos[id] = p
-		used[p] = id
+	place := func(id string, target [2]int) {
+		target = nearestFree(used, target)
+		pos[id] = target
+		used[target] = id
 	}
 	for _, id := range ids {
-		if h := m.rooms[id].hint; h != nil {
-			if _, taken := used[*h]; !taken {
-				place(id, *h)
+		if hint := worldMap.rooms[id].hint; hint != nil {
+			if _, taken := used[*hint]; !taken {
+				place(id, *hint)
 			}
 		}
 	}
-	root := m.start
-	if m.rooms[root] == nil {
-		root = m.origin
+	root := worldMap.start
+	if worldMap.rooms[root] == nil {
+		root = worldMap.origin
 	}
 	// Passages are also followed backwards: a room whose only known link is
 	// another room's exit is placed opposite that exit.
@@ -290,7 +290,7 @@ func (m *Map) layout() map[string][2]int {
 	into := map[string][]incoming{}
 	for _, id := range ids {
 		for _, dir := range directions {
-			if dest := m.rooms[id].exits[dir]; dest != "" {
+			if dest := worldMap.rooms[id].exits[dir]; dest != "" {
 				into[dest] = append(into[dest], incoming{id, dir})
 			}
 		}
@@ -311,8 +311,8 @@ func (m *Map) layout() map[string][2]int {
 		if len(queue) == 0 {
 			// A disconnected part of the map: start it to the right.
 			maxX := 0
-			for p := range used {
-				maxX = max(maxX, p[0])
+			for taken := range used {
+				maxX = max(maxX, taken[0])
 			}
 			for _, id := range ids {
 				if _, ok := pos[id]; !ok {
@@ -326,23 +326,23 @@ func (m *Map) layout() map[string][2]int {
 		id := queue[0]
 		queue = queue[1:]
 		for _, dir := range directions {
-			dest := m.rooms[id].exits[dir]
-			if dest == "" || m.rooms[dest] == nil {
+			dest := worldMap.rooms[id].exits[dir]
+			if dest == "" || worldMap.rooms[dest] == nil {
 				continue
 			}
 			if _, ok := pos[dest]; ok {
 				continue
 			}
-			p := pos[id]
-			place(dest, [2]int{p[0] + offsets[dir][0], p[1] + offsets[dir][1]})
+			from := pos[id]
+			place(dest, [2]int{from[0] + offsets[dir][0], from[1] + offsets[dir][1]})
 			queue = append(queue, dest)
 		}
 		for _, in := range into[id] {
 			if _, ok := pos[in.from]; ok {
 				continue
 			}
-			p := pos[id]
-			place(in.from, [2]int{p[0] - offsets[in.dir][0], p[1] - offsets[in.dir][1]})
+			from := pos[id]
+			place(in.from, [2]int{from[0] - offsets[in.dir][0], from[1] - offsets[in.dir][1]})
 			queue = append(queue, in.from)
 		}
 	}
@@ -350,35 +350,35 @@ func (m *Map) layout() map[string][2]int {
 }
 
 // Snapshot computes the current layout.
-func (m *Map) Snapshot() Snapshot {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	s := Snapshot{Current: m.current, Rooms: []Cell{}, Links: []Link{}, Exits: map[string]string{}}
-	if len(m.rooms) == 0 {
-		return s
+func (worldMap *Map) Snapshot() Snapshot {
+	worldMap.mu.Lock()
+	defer worldMap.mu.Unlock()
+	snapshot := Snapshot{Current: worldMap.current, Rooms: []Cell{}, Links: []Link{}, Exits: map[string]string{}}
+	if len(worldMap.rooms) == 0 {
+		return snapshot
 	}
-	pos := m.layout()
+	pos := worldMap.layout()
 	minX, minY, maxX, maxY := 1<<30, 1<<30, -(1 << 30), -(1 << 30)
-	for _, p := range pos {
-		minX, minY = min(minX, p[0]), min(minY, p[1])
-		maxX, maxY = max(maxX, p[0]), max(maxY, p[1])
+	for _, spot := range pos {
+		minX, minY = min(minX, spot[0]), min(minY, spot[1])
+		maxX, maxY = max(maxX, spot[0]), max(maxY, spot[1])
 	}
-	s.Width, s.Height = maxX-minX+1, maxY-minY+1
-	ids := m.sortedIDs()
+	snapshot.Width, snapshot.Height = maxX-minX+1, maxY-minY+1
+	ids := worldMap.sortedIDs()
 	for _, id := range ids {
-		r, p := m.rooms[id], pos[id]
-		s.Rooms = append(s.Rooms, Cell{ID: id, Name: r.name, X: p[0] - minX, Y: p[1] - minY, Current: id == m.current, Visited: m.visited[id], Explored: r.explored})
+		info, spot := worldMap.rooms[id], pos[id]
+		snapshot.Rooms = append(snapshot.Rooms, Cell{ID: id, Name: info.name, Column: spot[0] - minX, Row: spot[1] - minY, Current: id == worldMap.current, Visited: worldMap.visited[id], Explored: info.explored})
 	}
-	if r := m.rooms[m.current]; r != nil {
-		s.CurrentName = r.name
-		for dir, dest := range r.exits {
-			s.Exits[dir] = dest
+	if info := worldMap.rooms[worldMap.current]; info != nil {
+		snapshot.CurrentName = info.name
+		for dir, dest := range info.exits {
+			snapshot.Exits[dir] = dest
 		}
 	}
 	links := map[[2]string]*Link{}
 	for _, id := range ids {
 		for _, dir := range directions {
-			dest := m.rooms[id].exits[dir]
+			dest := worldMap.rooms[id].exits[dir]
 			if dest == "" || dest == id {
 				continue
 			}
@@ -386,47 +386,47 @@ func (m *Map) Snapshot() Snapshot {
 			if dest < id {
 				key = [2]string{dest, id}
 			}
-			l := links[key]
-			if l == nil {
-				l = &Link{A: key[0], B: key[1]}
-				links[key] = l
+			link := links[key]
+			if link == nil {
+				link = &Link{First: key[0], Second: key[1]}
+				links[key] = link
 			}
-			if id == l.A && l.DirA == "" {
-				l.DirA = dir
-			} else if id == l.B && l.DirB == "" {
-				l.DirB = dir
+			if id == link.First && link.FirstExit == "" {
+				link.FirstExit = dir
+			} else if id == link.Second && link.SecondExit == "" {
+				link.SecondExit = dir
 			}
 		}
 	}
-	for _, l := range links {
-		a, b := pos[l.A], pos[l.B]
-		dx, dy := abs(a[0]-b[0]), abs(a[1]-b[1])
+	for _, link := range links {
+		cellA, cellB := pos[link.First], pos[link.Second]
+		dx, dy := abs(cellA[0]-cellB[0]), abs(cellA[1]-cellB[1])
 		switch {
 		case dx+dy == 1:
-			l.Kind = "adjacent"
+			link.Kind = "adjacent"
 		case dx == 1 && dy == 1:
-			l.Kind = "diagonal"
+			link.Kind = "diagonal"
 		default:
-			l.Kind = "long"
+			link.Kind = "long"
 		}
-		s.Links = append(s.Links, *l)
+		snapshot.Links = append(snapshot.Links, *link)
 	}
-	sort.Slice(s.Links, func(i, j int) bool {
-		if s.Links[i].A != s.Links[j].A {
-			return s.Links[i].A < s.Links[j].A
+	sort.Slice(snapshot.Links, func(left, right int) bool {
+		if snapshot.Links[left].First != snapshot.Links[right].First {
+			return snapshot.Links[left].First < snapshot.Links[right].First
 		}
-		return s.Links[i].B < s.Links[j].B
+		return snapshot.Links[left].Second < snapshot.Links[right].Second
 	})
-	return s
+	return snapshot
 }
 
 // JSON returns the snapshot as a single-line JSON document.
-func (m *Map) JSON() string {
-	b, err := json.Marshal(m.Snapshot())
+func (worldMap *Map) JSON() string {
+	encoded, err := json.Marshal(worldMap.Snapshot())
 	if err != nil {
 		return "{}"
 	}
-	return string(b)
+	return string(encoded)
 }
 
 // ---------------------------------------------------------------- ASCII
@@ -438,130 +438,130 @@ const (
 )
 
 // Header is the one-line "you are here" summary.
-func (s Snapshot) Header() string {
-	if s.Current == "" {
+func (snapshot Snapshot) Header() string {
+	if snapshot.Current == "" {
 		return "You are here: unknown (type LOOK)"
 	}
 	dirs := []string{}
-	for _, d := range directions {
-		if _, ok := s.Exits[d]; ok {
-			dirs = append(dirs, d)
+	for _, direction := range directions {
+		if _, ok := snapshot.Exits[direction]; ok {
+			dirs = append(dirs, direction)
 		}
 	}
 	exits := "none known"
 	if len(dirs) > 0 {
 		exits = strings.Join(dirs, ", ")
 	}
-	return fmt.Sprintf("You are here: %s   (exits: %s)", s.CurrentName, exits)
+	return fmt.Sprintf("You are here: %s   (exits: %s)", snapshot.CurrentName, exits)
 }
 
 func fit(text string, width int) string {
-	n := utf8.RuneCountInString(text)
-	if n > width {
-		r := []rune(text)
-		return string(r[:width-1]) + "~"
+	length := utf8.RuneCountInString(text)
+	if length > width {
+		runes := []rune(text)
+		return string(runes[:width-1]) + "~"
 	}
-	return text + strings.Repeat(" ", width-n)
+	return text + strings.Repeat(" ", width-length)
 }
 
 // ASCII draws the map. maxWidth (0 = unlimited) shrinks room labels to fit
 // the terminal; color adds ANSI highlighting for the current room.
-func (s Snapshot) ASCII(maxWidth int, color bool) []string {
-	if len(s.Rooms) == 0 {
+func (snapshot Snapshot) ASCII(maxWidth int, color bool) []string {
+	if len(snapshot.Rooms) == 0 {
 		return []string{"(map unknown: type LOOK to discover the room)"}
 	}
 	names := map[string]string{}
 	grid := map[[2]int]Cell{}
 	inner := 0
-	for _, c := range s.Rooms {
-		names[c.ID] = c.Name
-		grid[[2]int{c.X, c.Y}] = c
-		inner = max(inner, utf8.RuneCountInString(c.Name)+1)
+	for _, entry := range snapshot.Rooms {
+		names[entry.ID] = entry.Name
+		grid[[2]int{entry.Column, entry.Row}] = entry
+		inner = max(inner, utf8.RuneCountInString(entry.Name)+1)
 	}
-	if maxWidth > 0 && s.Width > 0 {
-		budget := (maxWidth-3*(s.Width-1))/s.Width - 2
+	if maxWidth > 0 && snapshot.Width > 0 {
+		budget := (maxWidth-3*(snapshot.Width-1))/snapshot.Width - 2
 		inner = min(inner, budget)
 	}
 	inner = max(inner, 6)
 	cellW := inner + 2
 	pos := map[string][2]int{}
-	for _, c := range s.Rooms {
-		pos[c.ID] = [2]int{c.X, c.Y}
+	for _, entry := range snapshot.Rooms {
+		pos[entry.ID] = [2]int{entry.Column, entry.Row}
 	}
 	horiz, vert, back, fwd := map[[2]int]bool{}, map[[2]int]bool{}, map[[2]int]bool{}, map[[2]int]bool{}
 	long := []string{}
-	for _, l := range s.Links {
-		a, b := pos[l.A], pos[l.B]
-		if a[1] > b[1] || (a[1] == b[1] && a[0] > b[0]) {
-			a, b = b, a
+	for _, link := range snapshot.Links {
+		upper, lower := pos[link.First], pos[link.Second]
+		if upper[1] > lower[1] || (upper[1] == lower[1] && upper[0] > lower[0]) {
+			upper, lower = lower, upper
 		}
-		switch l.Kind {
+		switch link.Kind {
 		case "adjacent":
-			if a[1] == b[1] {
-				horiz[a] = true
+			if upper[1] == lower[1] {
+				horiz[upper] = true
 			} else {
-				vert[a] = true
+				vert[upper] = true
 			}
 		case "diagonal":
-			if b[0] > a[0] {
-				back[a] = true // a is upper-left: '\'
+			if lower[0] > upper[0] {
+				back[upper] = true // upper room is up-left of the lower one: '\'
 			} else {
-				fwd[[2]int{b[0], a[1]}] = true // a is upper-right: '/'
+				fwd[[2]int{lower[0], upper[1]}] = true // upper room is up-right: '/'
 			}
 		default:
-			long = append(long, fmt.Sprintf("  %s (%s) <-> %s (%s)", names[l.A], dirOrDash(l.DirA), names[l.B], dirOrDash(l.DirB)))
+			long = append(long, fmt.Sprintf("  %s (%s) <-> %s (%s)", names[link.First], dirOrDash(link.FirstExit), names[link.Second], dirOrDash(link.SecondExit)))
 		}
 	}
 	lines := []string{}
 	unexplored := false
-	for y := 0; y < s.Height; y++ {
+	for gridRow := 0; gridRow < snapshot.Height; gridRow++ {
 		var row strings.Builder
-		for x := 0; x < s.Width; x++ {
-			if x > 0 {
-				if horiz[[2]int{x - 1, y}] {
+		for gridColumn := 0; gridColumn < snapshot.Width; gridColumn++ {
+			if gridColumn > 0 {
+				if horiz[[2]int{gridColumn - 1, gridRow}] {
 					row.WriteString("---")
 				} else {
 					row.WriteString("   ")
 				}
 			}
-			c, ok := grid[[2]int{x, y}]
+			entry, ok := grid[[2]int{gridColumn, gridRow}]
 			if !ok {
 				row.WriteString(strings.Repeat(" ", cellW))
 				continue
 			}
-			label := c.Name
-			if !c.Explored {
+			label := entry.Name
+			if !entry.Explored {
 				label, unexplored = "?"+label, true
 			}
-			if c.Current {
+			if entry.Current {
 				label = "@" + label
 			}
 			text := "[" + fit(label, inner) + "]"
 			switch {
-			case color && c.Current:
+			case color && entry.Current:
 				text = ansiCurrent + text + ansiReset
-			case color && !c.Explored:
+			case color && !entry.Explored:
 				text = ansiDim + text + ansiReset
 			}
 			row.WriteString(text)
 		}
 		lines = append(lines, strings.TrimRight(row.String(), " "))
-		if y == s.Height-1 {
+		if gridRow == snapshot.Height-1 {
 			break
 		}
-		gap := []rune(strings.Repeat(" ", s.Width*cellW+(s.Width-1)*3))
-		for x := 0; x < s.Width; x++ {
-			if vert[[2]int{x, y}] {
-				gap[x*(cellW+3)+cellW/2] = '|'
+		gap := []rune(strings.Repeat(" ", snapshot.Width*cellW+(snapshot.Width-1)*3))
+		for gridColumn := 0; gridColumn < snapshot.Width; gridColumn++ {
+			if vert[[2]int{gridColumn, gridRow}] {
+				gap[gridColumn*(cellW+3)+cellW/2] = '|'
 			}
-			if x < s.Width-1 {
-				col := x*(cellW+3) + cellW + 1
+			if gridColumn < snapshot.Width-1 {
+				col := gridColumn*(cellW+3) + cellW + 1
 				switch {
-				case back[[2]int{x, y}] && fwd[[2]int{x, y}]:
+				case back[[2]int{gridColumn, gridRow}] && fwd[[2]int{gridColumn, gridRow}]:
 					gap[col] = 'X'
-				case back[[2]int{x, y}]:
+				case back[[2]int{gridColumn, gridRow}]:
 					gap[col] = '\\'
-				case fwd[[2]int{x, y}]:
+				case fwd[[2]int{gridColumn, gridRow}]:
 					gap[col] = '/'
 				}
 			}

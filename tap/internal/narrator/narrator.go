@@ -45,60 +45,64 @@ func New(catalog *world.Data, self string) *Narrator {
 // validate the world and returns nil if the file is missing or unreadable,
 // so a client can still talk to servers with a different world.
 func LoadCatalog(path string) *world.Data {
-	b, err := os.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil
 	}
-	var d world.Data
-	if json.Unmarshal(b, &d) != nil {
+	var data world.Data
+	if json.Unmarshal(content, &data) != nil {
 		return nil
 	}
-	return &d
+	return &data
 }
 
 // SetGreeted marks the "OK hello" greeting as already consumed.
-func (n *Narrator) SetGreeted() { n.mu.Lock(); n.greeted = true; n.mu.Unlock() }
+func (narrator *Narrator) SetGreeted() {
+	narrator.mu.Lock()
+	narrator.greeted = true
+	narrator.mu.Unlock()
+}
 
 // Expect registers a command that was (or is about to be) sent to the server.
 // Quiet commands (automatic GUI refreshes) are tracked but not narrated.
-func (n *Narrator) Expect(line string, quiet bool) {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-	n.pending = append(n.pending, pending{strings.TrimSpace(line), quiet})
+func (narrator *Narrator) Expect(line string, quiet bool) {
+	narrator.mu.Lock()
+	defer narrator.mu.Unlock()
+	narrator.pending = append(narrator.pending, pending{strings.TrimSpace(line), quiet})
 }
 
 // Cancel removes the most recently registered command (used when sending fails).
-func (n *Narrator) Cancel() {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-	if len(n.pending) > 0 {
-		n.pending = n.pending[:len(n.pending)-1]
+func (narrator *Narrator) Cancel() {
+	narrator.mu.Lock()
+	defer narrator.mu.Unlock()
+	if len(narrator.pending) > 0 {
+		narrator.pending = narrator.pending[:len(narrator.pending)-1]
 	}
 }
 
 // Narrate returns the English description of one server line. ok is false
 // when the line should not produce an activity message.
-func (n *Narrator) Narrate(line string) (text string, ok bool) {
-	text, ok, _ = n.Describe(line)
+func (narrator *Narrator) Narrate(line string) (text string, ok bool) {
+	text, ok, _ = narrator.Describe(line)
 	return text, ok
 }
 
 // Describe is Narrate plus quiet: true when the line is the reply to a quiet
 // (automatic) command, so a client can also hide the raw line.
-func (n *Narrator) Describe(line string) (text string, ok, quiet bool) {
+func (narrator *Narrator) Describe(line string) (text string, ok, quiet bool) {
 	line = strings.TrimSpace(line)
 	if line == "" {
 		return "", false, false
 	}
-	n.mu.Lock()
-	defer n.mu.Unlock()
-	if !n.greeted && strings.HasPrefix(line, "OK hello") {
-		n.greeted = true
+	narrator.mu.Lock()
+	defer narrator.mu.Unlock()
+	if !narrator.greeted && strings.HasPrefix(line, "OK hello") {
+		narrator.greeted = true
 		return "You reach the gates of the shared world (TAP protocol " + strings.TrimPrefix(line, "OK hello proto=") + ").", true, false
 	}
-	n.trackRoom(line)
+	narrator.trackRoom(line)
 	if strings.HasPrefix(line, "EVT ") {
-		text = n.event(strings.TrimPrefix(line, "EVT "))
+		text = narrator.event(strings.TrimPrefix(line, "EVT "))
 		return text, text != "", false
 	}
 	if line != "OK" && !strings.HasPrefix(line, "OK ") && !strings.HasPrefix(line, "ERR ") {
@@ -109,31 +113,31 @@ func (n *Narrator) Describe(line string) (text string, ok, quiet bool) {
 		return "The connection to the server failed.", true, false
 	}
 	cmd := pending{}
-	if len(n.pending) > 0 {
-		cmd = n.pending[0]
-		n.pending = n.pending[1:]
+	if len(narrator.pending) > 0 {
+		cmd = narrator.pending[0]
+		narrator.pending = narrator.pending[1:]
 	}
 	if cmd.quiet {
 		return "", false, true
 	}
 	if strings.HasPrefix(line, "ERR ") {
-		text = n.failure(cmd.line, strings.TrimPrefix(line, "ERR "))
+		text = narrator.failure(cmd.line, strings.TrimPrefix(line, "ERR "))
 	} else {
-		text = n.success(cmd.line, strings.TrimSpace(strings.TrimPrefix(line, "OK")))
+		text = narrator.success(cmd.line, strings.TrimSpace(strings.TrimPrefix(line, "OK")))
 	}
 	return text, text != "", false
 }
 
 // trackRoom follows the player's room from MOVE/FLEE, LOOK and respawn lines.
-func (n *Narrator) trackRoom(line string) {
+func (narrator *Narrator) trackRoom(line string) {
 	switch {
-	case line == "OK connected" && n.cat != nil:
-		n.where = n.cat.Start
+	case line == "OK connected" && narrator.cat != nil:
+		narrator.where = narrator.cat.Start
 	case strings.HasPrefix(line, "OK room="):
-		n.where = strings.TrimPrefix(line, "OK room=")
+		narrator.where = strings.TrimPrefix(line, "OK room=")
 	case strings.HasPrefix(line, "EVT PLAYER RESPAWN "):
 		if room := keyValues(strings.Fields(line))["room"]; room != "" {
-			n.where = room
+			narrator.where = room
 		}
 	case strings.HasPrefix(line, "OK {\"") && strings.Contains(line, `"room":{`):
 		var look struct {
@@ -142,7 +146,7 @@ func (n *Narrator) trackRoom(line string) {
 			} `json:"room"`
 		}
 		if json.Unmarshal([]byte(line[3:]), &look) == nil && look.Room.ID != "" {
-			n.where = look.Room.ID
+			narrator.where = look.Room.ID
 		}
 	}
 }
@@ -154,31 +158,31 @@ func splitCommand(line string) (cmd, arg string) {
 	return strings.ToUpper(cmd), strings.TrimSpace(arg)
 }
 
-func (n *Narrator) success(command, data string) string {
+func (narrator *Narrator) success(command, data string) string {
 	cmd, arg := splitCommand(command)
 	switch cmd {
 	case "CONNECT":
 		if data == "connected" {
-			n.self = arg
+			narrator.self = arg
 			return fmt.Sprintf("Welcome, %s! You have entered the shared world.", arg)
 		}
 	case "LOOK":
-		return n.look(data)
+		return narrator.look(data)
 	case "MOVE":
 		if room, ok := strings.CutPrefix(data, "room="); ok {
-			return fmt.Sprintf("You head %s and arrive at %s.", strings.ToLower(arg), n.room(room))
+			return fmt.Sprintf("You head %s and arrive at %s.", strings.ToLower(arg), narrator.room(room))
 		}
 	case "FLEE":
 		if room, ok := strings.CutPrefix(data, "room="); ok {
-			return fmt.Sprintf("You flee from combat and run back to %s.", n.room(room))
+			return fmt.Sprintf("You flee from combat and run back to %s.", narrator.room(room))
 		}
 	case "TAKE":
 		if id, ok := strings.CutPrefix(data, "taken="); ok {
-			return fmt.Sprintf("You pick up the %s.", n.item(id))
+			return fmt.Sprintf("You pick up the %s.", narrator.item(id))
 		}
 	case "DROP":
 		if id, ok := strings.CutPrefix(data, "dropped="); ok {
-			return fmt.Sprintf("You drop the %s.", n.item(id))
+			return fmt.Sprintf("You drop the %s.", narrator.item(id))
 		}
 	case "INVENTORY":
 		var ids []string
@@ -186,36 +190,36 @@ func (n *Narrator) success(command, data string) string {
 			if len(ids) == 0 {
 				return "Your inventory is empty."
 			}
-			return "You are carrying: " + listOf(n.items(ids)) + "."
+			return "You are carrying: " + listOf(narrator.items(ids)) + "."
 		}
 	case "TALK":
-		return fmt.Sprintf("%s says: \"%s\"", n.npcFromArg(arg), data)
+		return fmt.Sprintf("%s says: \"%s\"", narrator.npcFromArg(arg), data)
 	case "ATTACK":
-		return n.attack(arg, data)
+		return narrator.attack(arg, data)
 	case "USE":
-		var r struct {
+		var useReply struct {
 			Used    string `json:"used"`
 			Healed  int    `json:"healed"`
 			HP      int    `json:"hp"`
 			Counter int    `json:"counter_damage"`
 		}
-		if json.Unmarshal([]byte(data), &r) == nil {
-			text := fmt.Sprintf("You use the %s and recover %d HP (now %d HP).", n.item(r.Used), r.Healed, r.HP)
-			if r.Counter > 0 {
-				text += fmt.Sprintf(" Your enemy takes the chance to hit you for %d damage.", r.Counter)
+		if json.Unmarshal([]byte(data), &useReply) == nil {
+			text := fmt.Sprintf("You use the %s and recover %d HP (now %d HP).", narrator.item(useReply.Used), useReply.Healed, useReply.HP)
+			if useReply.Counter > 0 {
+				text += fmt.Sprintf(" Your enemy takes the chance to hit you for %d damage.", useReply.Counter)
 			}
 			return text
 		}
 	case "DEFEND":
-		var r struct {
+		var defendReply struct {
 			HP     int `json:"hp"`
 			Damage int `json:"damage_taken"`
 		}
-		if json.Unmarshal([]byte(data), &r) == nil {
-			return fmt.Sprintf("You raise your guard and take only %d damage. You have %d HP left.", r.Damage, r.HP)
+		if json.Unmarshal([]byte(data), &defendReply) == nil {
+			return fmt.Sprintf("You raise your guard and take only %d damage. You have %d HP left.", defendReply.Damage, defendReply.HP)
 		}
 	case "STATUS":
-		var r struct {
+		var statusReply struct {
 			HP      int    `json:"hp"`
 			MaxHP   int    `json:"max_hp"`
 			Status  string `json:"status"`
@@ -224,18 +228,18 @@ func (n *Narrator) success(command, data string) string {
 			Defense *int   `json:"defense"`
 			Victory bool   `json:"victory"`
 		}
-		if json.Unmarshal([]byte(data), &r) == nil {
-			text := fmt.Sprintf("You have %d/%d HP and you are %s.", r.HP, r.MaxHP, r.Status)
-			if r.Status == "combat" {
-				text = fmt.Sprintf("You have %d/%d HP and you are in combat.", r.HP, r.MaxHP)
+		if json.Unmarshal([]byte(data), &statusReply) == nil {
+			text := fmt.Sprintf("You have %d/%d HP and you are %s.", statusReply.HP, statusReply.MaxHP, statusReply.Status)
+			if statusReply.Status == "combat" {
+				text = fmt.Sprintf("You have %d/%d HP and you are in combat.", statusReply.HP, statusReply.MaxHP)
 			}
-			if r.Gold != nil {
-				text += fmt.Sprintf(" Gold: %d.", *r.Gold)
+			if statusReply.Gold != nil {
+				text += fmt.Sprintf(" Gold: %d.", *statusReply.Gold)
 			}
-			if r.Attack != nil && r.Defense != nil {
-				text += fmt.Sprintf(" Attack: %d, defense: %d.", *r.Attack, *r.Defense)
+			if statusReply.Attack != nil && statusReply.Defense != nil {
+				text += fmt.Sprintf(" Attack: %d, defense: %d.", *statusReply.Attack, *statusReply.Defense)
 			}
-			if r.Victory {
+			if statusReply.Victory {
 				text += " You have won the game: the Great Clock ticks again thanks to you!"
 			}
 			return text
@@ -248,24 +252,24 @@ func (n *Narrator) success(command, data string) string {
 			return fmt.Sprintf("There are %s players online.", count)
 		}
 	case "QUEST":
-		var q struct {
+		var questReply struct {
 			ID          string `json:"quest_id"`
 			Name        string `json:"name"`
 			Description string `json:"description"`
 			Reward      string `json:"reward"`
 			Status      string `json:"status"`
 		}
-		if json.Unmarshal([]byte(data), &q) == nil {
-			name := firstNonEmpty(q.Name, q.ID)
-			text := fmt.Sprintf("Quest \"%s\" is %s.", name, q.Status)
-			if q.Status == "active" {
+		if json.Unmarshal([]byte(data), &questReply) == nil {
+			name := firstNonEmpty(questReply.Name, questReply.ID)
+			text := fmt.Sprintf("Quest \"%s\" is %s.", name, questReply.Status)
+			if questReply.Status == "active" {
 				text = fmt.Sprintf("Quest \"%s\" is active.", name)
 			}
-			if q.Description != "" {
-				text += " " + q.Description
+			if questReply.Description != "" {
+				text += " " + questReply.Description
 			}
-			if q.Reward != "" {
-				text += " Reward: " + q.Reward + "."
+			if questReply.Reward != "" {
+				text += " Reward: " + questReply.Reward + "."
 			}
 			return text
 		}
@@ -282,15 +286,15 @@ func (n *Narrator) success(command, data string) string {
 				return "Your quest journal is empty. Use QUEST <npc> to accept a quest."
 			}
 			parts := make([]string, 0, len(list))
-			for _, q := range list {
-				name := firstNonEmpty(q.Name, n.quest(q.ID))
-				p := q.Status
-				if q.Progress != "" {
-					p += ", " + q.Progress
+			for _, listed := range list {
+				name := firstNonEmpty(listed.Name, narrator.quest(listed.ID))
+				progressText := listed.Status
+				if listed.Progress != "" {
+					progressText += ", " + listed.Progress
 				}
-				entry := fmt.Sprintf("%s (%s)", name, p)
-				if q.Status == "active" && q.Description != "" {
-					entry += " - " + q.Description
+				entry := fmt.Sprintf("%s (%s)", name, progressText)
+				if listed.Status == "active" && listed.Description != "" {
+					entry += " - " + listed.Description
 				}
 				parts = append(parts, entry)
 			}
@@ -322,8 +326,8 @@ func (n *Narrator) success(command, data string) string {
 	return "Server: " + data
 }
 
-func (n *Narrator) look(data string) string {
-	var l struct {
+func (narrator *Narrator) look(data string) string {
+	var lookReply struct {
 		Room struct {
 			ID          string            `json:"id"`
 			Name        string            `json:"name"`
@@ -334,72 +338,72 @@ func (n *Narrator) look(data string) string {
 		Items   []string `json:"items"`
 		NPCs    []string `json:"npcs"`
 	}
-	if json.Unmarshal([]byte(data), &l) != nil {
+	if json.Unmarshal([]byte(data), &lookReply) != nil {
 		return "Server: " + data
 	}
-	var b strings.Builder
-	fmt.Fprintf(&b, "You are in %s.", firstNonEmpty(l.Room.Name, n.room(l.Room.ID)))
-	if l.Room.Description != "" {
-		b.WriteString(" " + l.Room.Description)
+	var builder strings.Builder
+	fmt.Fprintf(&builder, "You are in %s.", firstNonEmpty(lookReply.Room.Name, narrator.room(lookReply.Room.ID)))
+	if lookReply.Room.Description != "" {
+		builder.WriteString(" " + lookReply.Room.Description)
 	}
-	dirs := make([]string, 0, len(l.Room.Exits))
-	for dir := range l.Room.Exits {
+	dirs := make([]string, 0, len(lookReply.Room.Exits))
+	for dir := range lookReply.Room.Exits {
 		dirs = append(dirs, dir)
 	}
-	sort.Slice(dirs, func(i, j int) bool { return dirRank(dirs[i]) < dirRank(dirs[j]) })
+	sort.Slice(dirs, func(left, right int) bool { return dirRank(dirs[left]) < dirRank(dirs[right]) })
 	exits := make([]string, 0, len(dirs))
 	for _, dir := range dirs {
-		exits = append(exits, fmt.Sprintf("%s to %s", dir, n.room(l.Room.Exits[dir])))
+		exits = append(exits, fmt.Sprintf("%s to %s", dir, narrator.room(lookReply.Room.Exits[dir])))
 	}
 	if len(exits) > 0 {
-		b.WriteString(" Exits: " + listOf(exits) + ".")
+		builder.WriteString(" Exits: " + listOf(exits) + ".")
 	} else {
-		b.WriteString(" There are no exits.")
+		builder.WriteString(" There are no exits.")
 	}
-	if len(l.Items) > 0 {
-		b.WriteString(" You see: " + listOf(n.items(l.Items)) + ".")
+	if len(lookReply.Items) > 0 {
+		builder.WriteString(" You see: " + listOf(narrator.items(lookReply.Items)) + ".")
 	}
-	if len(l.NPCs) > 0 {
-		names := make([]string, 0, len(l.NPCs))
-		for _, id := range l.NPCs {
-			names = append(names, n.npc(id))
+	if len(lookReply.NPCs) > 0 {
+		names := make([]string, 0, len(lookReply.NPCs))
+		for _, id := range lookReply.NPCs {
+			names = append(names, narrator.npc(id))
 		}
-		b.WriteString(" Characters here: " + listOf(names) + ".")
+		builder.WriteString(" Characters here: " + listOf(names) + ".")
 	}
 	others := []string{}
-	for _, p := range l.Players {
-		if !strings.EqualFold(p, n.self) {
-			others = append(others, p)
+	for _, player := range lookReply.Players {
+		if !strings.EqualFold(player, narrator.self) {
+			others = append(others, player)
 		}
 	}
 	if len(others) > 0 {
-		b.WriteString(" Other players here: " + listOf(others) + ".")
+		builder.WriteString(" Other players here: " + listOf(others) + ".")
 	}
-	return b.String()
+	return builder.String()
 }
 
-func (n *Narrator) attack(arg, data string) string {
-	var r struct {
+func (narrator *Narrator) attack(arg, data string) string {
+	var attackReply struct {
 		AttackerHP int    `json:"attacker_hp"`
 		TargetHP   int    `json:"target_hp"`
 		Damage     int    `json:"damage"`
 		Counter    int    `json:"counter_damage"`
 		Status     string `json:"status"`
 	}
-	if json.Unmarshal([]byte(data), &r) != nil {
+	if json.Unmarshal([]byte(data), &attackReply) != nil {
 		return "Server: " + data
 	}
-	target := n.npcFromArg(arg)
-	switch r.Status {
+	target := narrator.npcFromArg(arg)
+	switch attackReply.Status {
 	case "victory":
-		return fmt.Sprintf("You strike the %s for %d damage and defeat it!", target, r.Damage)
+		return fmt.Sprintf("You strike the %s for %d damage and defeat it!", target, attackReply.Damage)
 	case "respawn":
-		return fmt.Sprintf("You strike the %s for %d damage (%d HP left), but its counterattack of %d knocks you out!", target, r.Damage, r.TargetHP, r.Counter)
+		return fmt.Sprintf("You strike the %s for %d damage (%d HP left), but its counterattack of %d knocks you out!", target, attackReply.Damage, attackReply.TargetHP, attackReply.Counter)
 	}
-	return fmt.Sprintf("You strike the %s for %d damage (%d HP left). It hits back for %d damage; you have %d HP.", target, r.Damage, r.TargetHP, r.Counter, r.AttackerHP)
+	return fmt.Sprintf("You strike the %s for %d damage (%d HP left). It hits back for %d damage; you have %d HP.", target, attackReply.Damage, attackReply.TargetHP, attackReply.Counter, attackReply.AttackerHP)
 }
 
-func (n *Narrator) failure(command, rest string) string {
+func (narrator *Narrator) failure(command, rest string) string {
 	cmd, arg := splitCommand(command)
 	code, reason, _ := strings.Cut(rest, " ")
 	reason = strings.TrimSpace(reason)
@@ -413,18 +417,18 @@ func (n *Narrator) failure(command, rest string) string {
 	case "AUTH_REQUIRED":
 		return "You must CONNECT with a username first."
 	case "EXIT_LOCKED":
-		if n.cat != nil {
-			if key := n.cat.Rooms[n.where].Locks[strings.ToLower(arg)]; key != "" {
-				return fmt.Sprintf("The way %s is locked. You need the %s to open it.", strings.ToLower(arg), n.item(key))
+		if narrator.cat != nil {
+			if key := narrator.cat.Rooms[narrator.where].Locks[strings.ToLower(arg)]; key != "" {
+				return fmt.Sprintf("The way %s is locked. You need the %s to open it.", strings.ToLower(arg), narrator.item(key))
 			}
 		}
 		return fmt.Sprintf("The way %s is locked. You need a special item to open it.", strings.ToLower(arg))
 	case "NPC_INVULNERABLE":
-		target := n.npcFromArg(arg)
-		if n.cat != nil {
-			for _, c := range n.cat.NPCs {
-				if c.Name == target && c.RequiresQuest != "" {
-					return fmt.Sprintf("Your blows pass straight through the %s! Complete the quest \"%s\" to be able to hurt it.", target, n.quest(c.RequiresQuest))
+		target := narrator.npcFromArg(arg)
+		if narrator.cat != nil {
+			for _, character := range narrator.cat.NPCs {
+				if character.Name == target && character.RequiresQuest != "" {
+					return fmt.Sprintf("Your blows pass straight through the %s! Complete the quest \"%s\" to be able to hurt it.", target, narrator.quest(character.RequiresQuest))
 				}
 			}
 		}
@@ -444,13 +448,13 @@ func (n *Narrator) failure(command, rest string) string {
 	case "NPC_NOT_FOUND":
 		return fmt.Sprintf("There is nobody called \"%s\" here.", arg)
 	case "NPC_NOT_HOSTILE":
-		return fmt.Sprintf("The %s is not hostile; you can't attack them.", n.npcFromArg(arg))
+		return fmt.Sprintf("The %s is not hostile; you can't attack them.", narrator.npcFromArg(arg))
 	case "ALREADY_IN_COMBAT":
 		return "You are already fighting someone else. Finish that fight or FLEE first."
 	case "NOT_IN_COMBAT":
 		return "You are not in combat."
 	case "NO_QUEST_AVAILABLE":
-		return fmt.Sprintf("The %s has no quest for you right now. TALK to them for a hint.", n.npcFromArg(arg))
+		return fmt.Sprintf("The %s has no quest for you right now. TALK to them for a hint.", narrator.npcFromArg(arg))
 	case "NOT_IN_GROUP":
 		return "You are not in a group."
 	case "ALREADY_IN_GROUP":
@@ -484,34 +488,36 @@ func (n *Narrator) failure(command, rest string) string {
 
 // ---------------------------------------------------------------- events
 
-func (n *Narrator) isSelf(name string) bool { return n.self != "" && strings.EqualFold(name, n.self) }
+func (narrator *Narrator) isSelf(name string) bool {
+	return narrator.self != "" && strings.EqualFold(name, narrator.self)
+}
 
-func (n *Narrator) event(body string) string {
+func (narrator *Narrator) event(body string) string {
 	switch {
 	case strings.HasPrefix(body, "ROOM PRESENCE ENTER "):
 		who := strings.TrimPrefix(body, "ROOM PRESENCE ENTER ")
-		if n.isSelf(who) {
+		if narrator.isSelf(who) {
 			return ""
 		}
 		return who + " entered the room."
 	case strings.HasPrefix(body, "ROOM PRESENCE LEAVE "):
 		who := strings.TrimPrefix(body, "ROOM PRESENCE LEAVE ")
-		if n.isSelf(who) {
+		if narrator.isSelf(who) {
 			return ""
 		}
 		return who + " left the room."
 	case strings.HasPrefix(body, "ROOM CHAT "):
-		return n.chat("to the room", strings.TrimPrefix(body, "ROOM CHAT "))
+		return narrator.chat("to the room", strings.TrimPrefix(body, "ROOM CHAT "))
 	case strings.HasPrefix(body, "GLOBAL CHAT "):
-		return n.chat("to everyone", strings.TrimPrefix(body, "GLOBAL CHAT "))
+		return narrator.chat("to everyone", strings.TrimPrefix(body, "GLOBAL CHAT "))
 	case strings.HasPrefix(body, "GROUP CHAT "):
-		return n.chat("to the group", strings.TrimPrefix(body, "GROUP CHAT "))
+		return narrator.chat("to the group", strings.TrimPrefix(body, "GROUP CHAT "))
 	case strings.HasPrefix(body, "GROUP INVITE "):
 		leader := strings.TrimPrefix(body, "GROUP INVITE ")
 		return fmt.Sprintf("%s invited you to their group. Type GROUP JOIN %s to accept.", leader, leader)
 	case strings.HasPrefix(body, "GROUP JOIN "):
 		who := strings.TrimPrefix(body, "GROUP JOIN ")
-		if n.isSelf(who) {
+		if narrator.isSelf(who) {
 			return ""
 		}
 		return who + " joined your group."
@@ -527,72 +533,72 @@ func (n *Narrator) event(body string) string {
 		return "📜 " + strings.TrimPrefix(body, "STORY INTRO ")
 	case strings.HasPrefix(body, "GLOBAL VICTORY "):
 		who := strings.TrimPrefix(body, "GLOBAL VICTORY ")
-		if n.isSelf(who) {
-			if n.cat != nil && n.cat.Story.Victory != "" {
-				return "🏆 " + n.cat.Story.Victory
+		if narrator.isSelf(who) {
+			if narrator.cat != nil && narrator.cat.Story.Victory != "" {
+				return "🏆 " + narrator.cat.Story.Victory
 			}
 			return "🏆 You completed the final quest and won the game!"
 		}
 		return "🏆 " + who + " completed the final quest and won the game!"
 	case strings.HasPrefix(body, "ROOM ITEM RESPAWN "):
-		return fmt.Sprintf("A %s appears here.", n.item(strings.TrimPrefix(body, "ROOM ITEM RESPAWN ")))
+		return fmt.Sprintf("A %s appears here.", narrator.item(strings.TrimPrefix(body, "ROOM ITEM RESPAWN ")))
 	case strings.HasPrefix(body, "ROOM ITEM LOOT "):
-		f := strings.Fields(body)
-		if len(f) >= 5 {
-			return fmt.Sprintf("The %s drops the %s!", n.npc(f[3]), n.item(f[4]))
+		fields := strings.Fields(body)
+		if len(fields) >= 5 {
+			return fmt.Sprintf("The %s drops the %s!", narrator.npc(fields[3]), narrator.item(fields[4]))
 		}
 	case strings.HasPrefix(body, "PLAYER UNLOCK "):
-		f := strings.Fields(body)
-		if len(f) >= 4 {
-			return fmt.Sprintf("You use the %s and the way %s opens.", n.item(f[3]), f[2])
+		fields := strings.Fields(body)
+		if len(fields) >= 4 {
+			return fmt.Sprintf("You use the %s and the way %s opens.", narrator.item(fields[3]), fields[2])
 		}
 	case strings.HasPrefix(body, "ROOM ITEM TAKE "), strings.HasPrefix(body, "ROOM ITEM DROP "):
-		f := strings.Fields(body)
-		if len(f) < 5 || n.isSelf(f[3]) {
+		fields := strings.Fields(body)
+		if len(fields) < 5 || narrator.isSelf(fields[3]) {
 			return ""
 		}
 		verb := "picked up"
-		if f[2] == "DROP" {
+		if fields[2] == "DROP" {
 			verb = "dropped"
 		}
-		return fmt.Sprintf("%s %s the %s.", f[3], verb, n.item(f[4]))
+		return fmt.Sprintf("%s %s the %s.", fields[3], verb, narrator.item(fields[4]))
 	case strings.HasPrefix(body, "ROOM NPC RESPAWN "):
-		return fmt.Sprintf("The %s has returned!", n.npc(strings.TrimPrefix(body, "ROOM NPC RESPAWN ")))
+		return fmt.Sprintf("The %s has returned!", narrator.npc(strings.TrimPrefix(body, "ROOM NPC RESPAWN ")))
 	case strings.HasPrefix(body, "ROOM COMBAT "):
-		return n.combatEvent(strings.Fields(strings.TrimPrefix(body, "ROOM COMBAT ")))
+		return narrator.combatEvent(strings.Fields(strings.TrimPrefix(body, "ROOM COMBAT ")))
 	case strings.HasPrefix(body, "QUEST COMPLETE "):
 		id := strings.TrimPrefix(body, "QUEST COMPLETE ")
-		text := fmt.Sprintf("Quest complete: \"%s\"!", n.quest(id))
-		if n.cat != nil {
-			if q, ok := n.cat.Quests[id]; ok {
-				text += fmt.Sprintf(" You earned %d gold and %d HP.", q.RewardGold, q.RewardHP)
+		text := fmt.Sprintf("Quest complete: \"%s\"!", narrator.quest(id))
+		if narrator.cat != nil {
+			if quest, ok := narrator.cat.Quests[id]; ok {
+				text += fmt.Sprintf(" You earned %d gold and %d HP.", quest.RewardGold, quest.RewardHP)
 			}
 		}
 		return text
 	case strings.HasPrefix(body, "PLAYER RESPAWN"):
 		kv := keyValues(strings.Fields(body))
-		return fmt.Sprintf("You were defeated! You wake up in %s with %s HP.", n.room(kv["room"]), firstNonEmpty(kv["hp"], "?"))
+		return fmt.Sprintf("You were defeated! You wake up in %s with %s HP.", narrator.room(kv["room"]), firstNonEmpty(kv["hp"], "?"))
 	}
 	return "Event: " + body
 }
 
-func (n *Narrator) chat(scope, rest string) string {
+func (narrator *Narrator) chat(scope, rest string) string {
 	who, msg, _ := strings.Cut(rest, " ")
-	if n.isSelf(who) {
+	if narrator.isSelf(who) {
 		return fmt.Sprintf("You say %s: %s", scope, msg)
 	}
 	return fmt.Sprintf("%s says %s: %s", who, scope, msg)
 }
 
-func (n *Narrator) combatEvent(f []string) string {
-	if len(f) < 2 || n.isSelf(f[0]) {
+func (narrator *Narrator) combatEvent(fields []string) string {
+	if len(fields) < 2 || narrator.isSelf(fields[0]) {
 		return ""
 	}
-	who, kv := f[0], keyValues(f)
-	if f[1] == "DEFEND" {
+	who, kv := fields[0], keyValues(fields)
+	if fields[1] == "DEFEND" {
 		return fmt.Sprintf("%s defends and takes %s damage.", who, firstNonEmpty(kv["damage_taken"], "?"))
 	}
-	target := n.npc(f[1])
+	target := narrator.npc(fields[1])
 	switch kv["status"] {
 	case "victory":
 		return fmt.Sprintf("%s strikes the %s for %s damage and defeats it!", who, target, kv["damage"])
@@ -611,38 +617,38 @@ func humanize(id string) string {
 	return strings.ReplaceAll(id, "_", " ")
 }
 
-func (n *Narrator) item(id string) string {
-	if n.cat != nil {
-		if it, ok := n.cat.Items[id]; ok && it.Name != "" {
+func (narrator *Narrator) item(id string) string {
+	if narrator.cat != nil {
+		if it, ok := narrator.cat.Items[id]; ok && it.Name != "" {
 			return it.Name
 		}
 	}
 	return humanize(id)
 }
 
-func (n *Narrator) items(ids []string) []string {
+func (narrator *Narrator) items(ids []string) []string {
 	out := make([]string, 0, len(ids))
 	for _, id := range ids {
-		out = append(out, n.item(id))
+		out = append(out, narrator.item(id))
 	}
 	return out
 }
 
-func (n *Narrator) npc(id string) string {
-	if n.cat != nil {
-		if c, ok := n.cat.NPCs[id]; ok && c.Name != "" {
-			return c.Name
+func (narrator *Narrator) npc(id string) string {
+	if narrator.cat != nil {
+		if character, ok := narrator.cat.NPCs[id]; ok && character.Name != "" {
+			return character.Name
 		}
 	}
 	return humanize(id)
 }
 
 // npcFromArg resolves what the user typed (ID, short ID or display name).
-func (n *Narrator) npcFromArg(arg string) string {
-	if n.cat != nil {
-		for id, c := range n.cat.NPCs {
-			if strings.EqualFold(arg, id) || strings.EqualFold(arg, c.Name) || strings.EqualFold(arg, strings.TrimPrefix(id, "npc.")) {
-				return firstNonEmpty(c.Name, humanize(id))
+func (narrator *Narrator) npcFromArg(arg string) string {
+	if narrator.cat != nil {
+		for id, character := range narrator.cat.NPCs {
+			if strings.EqualFold(arg, id) || strings.EqualFold(arg, character.Name) || strings.EqualFold(arg, strings.TrimPrefix(id, "npc.")) {
+				return firstNonEmpty(character.Name, humanize(id))
 			}
 		}
 	}
@@ -652,19 +658,19 @@ func (n *Narrator) npcFromArg(arg string) string {
 	return arg
 }
 
-func (n *Narrator) room(id string) string {
-	if n.cat != nil {
-		if r, ok := n.cat.Rooms[id]; ok && r.Name != "" {
-			return r.Name
+func (narrator *Narrator) room(id string) string {
+	if narrator.cat != nil {
+		if room, ok := narrator.cat.Rooms[id]; ok && room.Name != "" {
+			return room.Name
 		}
 	}
 	return humanize(id)
 }
 
-func (n *Narrator) quest(id string) string {
-	if n.cat != nil {
-		if q, ok := n.cat.Quests[id]; ok && q.Name != "" {
-			return q.Name
+func (narrator *Narrator) quest(id string) string {
+	if narrator.cat != nil {
+		if quest, ok := narrator.cat.Quests[id]; ok && quest.Name != "" {
+			return quest.Name
 		}
 	}
 	return humanize(id)
@@ -698,18 +704,18 @@ func dirRank(dir string) int {
 
 func keyValues(fields []string) map[string]string {
 	kv := map[string]string{}
-	for _, f := range fields {
-		if k, v, ok := strings.Cut(f, "="); ok {
-			kv[k] = v
+	for _, field := range fields {
+		if key, value, ok := strings.Cut(field, "="); ok {
+			kv[key] = value
 		}
 	}
 	return kv
 }
 
 func firstNonEmpty(values ...string) string {
-	for _, v := range values {
-		if v != "" {
-			return v
+	for _, value := range values {
+		if value != "" {
+			return value
 		}
 	}
 	return ""

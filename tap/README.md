@@ -39,6 +39,7 @@ Useful make targets:
 | `make run-client NAME=alice` | Start the CLI player |
 | `make run-client-gui` | Serve the GUI and TCP bridge |
 | `make lint` | Run `go vet` and check `gofmt` |
+| `make format` | Format Go code (`gofmt`) and the browser files (Prettier, needs Node.js) |
 | `make test` | All unit and integration tests |
 | `make test-race` | All tests with the Go race detector |
 | `make clean` | Delete compiled binaries |
@@ -72,7 +73,7 @@ STATUS
 QUIT
 ```
 
-Each raw protocol line is followed by its English description (see **Activity chat** below):
+Each raw protocol line is followed by its English description (see **Activity messages** below):
 
 ```text
 TAKE Copper Key
@@ -102,12 +103,12 @@ The server's networking design uses one reader and one writer goroutine per TCP 
 
 On disconnect, the server removes the player from the global player index and group, drops carried items into their last room, and **then** broadcasts room `LEAVE` and player count updates. A player can never own an item in two places. A disconnecting group leader transfers leadership to the alphabetically first remaining member. The game resets on server restart; no persistence is required.
 
-### Activity chat (English narration)
+### Activity messages (English narration)
 
 Every action produces a human-readable English message, in **both** clients:
 
 - **CLI:** printed under each raw line, prefixed with `»`.
-- **GUI:** shown in the **Activity** tab of the chat panel (the default tab), with a timestamp. The Global / Room / Group tabs keep only chat messages, and tabs show an unread counter. While the Activity tab is selected, the chat box sends to GLOBAL.
+- **GUI:** shown as subtitles under the scene picture (the latest messages). The chat panel's Global / Room / Group tabs keep only chat messages, with an unread counter on each tab.
 
 What is narrated:
 
@@ -120,7 +121,7 @@ What is narrated:
 
 **Design.** Narration is produced **client-side** by one shared Go package, `internal/narrator`, so the CLI and the GUI produce identical messages. The **TAP wire protocol is unchanged**, so the server stays RFC-compatible and the narrator also works against other teams' servers (it falls back to humanized IDs when their world differs from our catalog). Replies are matched to commands in FIFO order: each command gets exactly one `OK`/`ERR`, and `EVT` lines never consume a command. Your own events (e.g. your own `EVT ROOM ITEM TAKE`) are not repeated, because the reply already described them.
 
-In the GUI, the Go bridge runs the narrator for each session and sends messages as a separate SSE event type (`event: narration`) alongside the raw lines. Automatic GUI refreshes (periodic `LOOK`/`WHO`, refreshes after actions) are posted with `"quiet": true`. They still update the panels, but they are not narrated and their replies are hidden from the protocol log, so the activity feed only shows what actually happened. If a username is rejected at connect time, the bridge also returns an English explanation (`message`).
+In the GUI, the Go bridge runs the narrator for each session and sends messages as a separate SSE event type (`event: narration`) alongside the raw lines. Automatic GUI refreshes (periodic `LOOK`/`WHO`, refreshes after actions) are posted with `"quiet": true`. They still update the panels, but they are not narrated and their replies are hidden from the protocol log, so the scene subtitles only show what actually happened. If a username is rejected at connect time, the bridge also returns an English explanation (`message`).
 
 ### Live map (CLI and GUI)
 
@@ -144,7 +145,7 @@ Long paths (exit to take in brackets):
 
 If output is not a terminal, or the terminal is too small, the map is printed after each move instead (`-map=inline`). Room labels shrink to fit the terminal width, the map is redrawn when the window is resized, and the terminal is restored on `QUIT` or Ctrl+C. Use `NO_COLOR=1` to disable highlighting.
 
-**GUI.** A **Map** panel (SVG) highlights your room with a pulsing "YOU ARE HERE" marker. A **📍 location badge** in the sticky header stays visible while you scroll. Neighbouring rooms are labelled with their direction (e.g. `NORTH →`); clicking one (or pressing Enter on it) sends `MOVE <direction>`. Visited rooms have a brighter border.
+**GUI.** A **Map** panel (SVG) highlights your room with a pulsing "YOU ARE HERE" marker. A **📍 location badge** in the sticky header stays visible while you scroll; next to the connection status, a **QUIT** button (shown only while connected) sends `QUIT`. Between the logo and the location badge, the header also shows your live stats (players in the room, players on the server, HP, gold, attack and defense, plus a 🏆 Champion mark after winning) and a **Refresh room** button (`LOOK`). Neighbouring rooms are labelled with their direction (e.g. `NORTH →`); clicking one (or pressing Enter on it) sends `MOVE <direction>`. Visited rooms have a brighter border.
 
 **Design.**
 
@@ -168,7 +169,7 @@ At the top of the GUI, a **Scene** panel shows an illustration of the room you a
 | An item on the ground | Picked up with a small animation (`TAKE`) |
 | Your hero, or 🎒 Bag | Your inventory with Use (`USE`) and Drop (`DROP`) |
 | Another player | Wave (`CHAT ROOM`), Invite (`GROUP INVITE`), Join (`GROUP JOIN`) |
-| Bottom bar | Look, Status, Quests, Who, Create/Leave group, and "Say" (`CHAT ROOM`) |
+| Bottom bar | Look, Status, Quests, Who, Create/Leave group, and a **raw TAP command** box that sends any command exactly as typed (e.g. `CHAT ROOM hi`, `GROUP INVITE bob`) |
 
 The English activity messages appear as subtitles under the picture.
 
@@ -179,13 +180,13 @@ The English activity messages appear as subtitles under the picture.
 - **FLEE:** your hero runs away and the screen closes.
 - **Getting knocked out** shows **💀 DEFEATED**.
 - **Attacking the Warden without starsteel** shows **🛡 INVULNERABLE** and names the quest you need.
-- **Other players** hitting the same monster appear on your screen too.
+- **Other players** hitting the same monster appear on your screen too. If a teammate lands the final blow, you get a **🏆 TEAM VICTORY!** screen naming who finished it (quest credit goes to the killer); the killer's victory screen thanks the players who helped.
 
 When you win the game, Clockwork Square turns to **dawn** and the clock starts ticking again.
 
 **How it's built.**
 
-- `cmd/gui/scene.js` and `cmd/gui/scene.css` are embedded in the GUI binary and served at `/scene.js` and `/scene.css`.
+- `cmd/gui/scene.js` and `cmd/gui/scene.css` (like `ui.html`, `ui.css` and `ui.js`) are embedded in the GUI binary and served at `/scene.js` and `/scene.css`.
 - **All artwork is original inline SVG drawn in code:** 12 animated room illustrations, 10 item icons, and characters: **players and friendly NPCs are cute cats and rabbits** (cats wag their tails). **Player skins are persistent:** your animal, fur, coat and cape are computed only from your username (case-insensitive FNV-1a hash), so every client draws you the same way on every screen, in every room, in the fight screen and in later sessions. The connect form previews your character as you type your name, while the 5 monsters keep their menacing look. There are no image files and nothing is downloaded.
 - Rooms of other teams' worlds get a generic landscape and generic sprites.
 - The scene only sends ordinary TAP commands and reads ordinary replies and events. Nothing changes on the server or in the protocol.
@@ -196,8 +197,10 @@ When you win the game, Clockwork Square turns to **dawn** and the clock starts t
 ```text
 cmd/server/main.go        TCP server entry point
 cmd/client/main.go        CLI entry point
-cmd/gui/main.go           HTTP GUI launcher; embeds ui.html
-cmd/gui/ui.html           Real browser interface (HTML/CSS/JS)
+cmd/gui/main.go           HTTP GUI launcher; embeds and serves the browser files below
+cmd/gui/ui.html           Page structure of the browser interface
+cmd/gui/ui.css            Page layout and theme
+cmd/gui/ui.js             Connection, command queue, map, quest journal and chat
 cmd/gui/scene.js, scene.css  Illustrated scene view + animated combat screen (original SVG art)
 internal/server/          Protocol, command router and game engine + tests
 internal/bridge/          HTTP/SSE gateway to the TCP server (+ narration SSE events) + tests

@@ -25,101 +25,101 @@ import (
 
 // screen serializes all terminal output and owns the pinned map area.
 type screen struct {
-	mu     sync.Mutex
-	mode   string // "top", "inline" or "off"
-	color  bool
-	rows   int
-	cols   int
-	height int // lines currently reserved for the pinned map
-	m      *worldmap.Map
+	mu       sync.Mutex
+	mode     string // "top", "inline" or "off"
+	color    bool
+	rows     int
+	cols     int
+	height   int // lines currently reserved for the pinned map
+	worldMap *worldmap.Map
 }
 
-func (s *screen) println(lines ...string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (term *screen) println(lines ...string) {
+	term.mu.Lock()
+	defer term.mu.Unlock()
 	for _, line := range lines {
 		fmt.Println(line)
 	}
 }
 
-func (s *screen) mapLines(width int, color bool) []string {
-	snap := s.m.Snapshot()
+func (term *screen) mapLines(width int, color bool) []string {
+	snap := term.worldMap.Snapshot()
 	return append([]string{snap.Header()}, snap.ASCII(width, color)...)
 }
 
 // printMap prints the map into the scrolling output (MAP command, inline mode).
-func (s *screen) printMap() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	for _, line := range s.mapLines(s.cols, s.color) {
+func (term *screen) printMap() {
+	term.mu.Lock()
+	defer term.mu.Unlock()
+	for _, line := range term.mapLines(term.cols, term.color) {
 		fmt.Println(line)
 	}
 }
 
 // redraw repaints the pinned map without disturbing the scrolling area.
-func (s *screen) redraw() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.redrawLocked()
+func (term *screen) redraw() {
+	term.mu.Lock()
+	defer term.mu.Unlock()
+	term.redrawLocked()
 }
 
-func (s *screen) redrawLocked() {
-	if s.mode != "top" {
+func (term *screen) redrawLocked() {
+	if term.mode != "top" {
 		return
 	}
-	lines := append(s.mapLines(s.cols, s.color), strings.Repeat("─", s.cols))
-	if len(lines)+4 > s.rows {
+	lines := append(term.mapLines(term.cols, term.color), strings.Repeat("─", term.cols))
+	if len(lines)+4 > term.rows {
 		// Terminal too small for a pinned map: fall back to inline maps.
-		s.mode, s.height = "inline", 0
+		term.mode, term.height = "inline", 0
 		fmt.Print("\x1b[r\x1b[2J\x1b[H")
 		fmt.Println("(terminal too small for the pinned map: the map is now printed after each move; type MAP to show it)")
 		return
 	}
-	if len(lines) != s.height {
+	if len(lines) != term.height {
 		// Reserve the top lines; the rest of the screen scrolls normally.
-		fmt.Printf("\x1b[%d;%dr\x1b[%d;1H", len(lines)+1, s.rows, s.rows)
-		s.height = len(lines)
+		fmt.Printf("\x1b[%d;%dr\x1b[%d;1H", len(lines)+1, term.rows, term.rows)
+		term.height = len(lines)
 	}
-	var b strings.Builder
-	b.WriteString("\x1b7") // save cursor
-	for i, line := range lines {
-		fmt.Fprintf(&b, "\x1b[%d;1H\x1b[2K%s", i+1, line)
+	var builder strings.Builder
+	builder.WriteString("\x1b7") // save cursor
+	for row, line := range lines {
+		fmt.Fprintf(&builder, "\x1b[%d;1H\x1b[2K%s", row+1, line)
 	}
-	b.WriteString("\x1b8") // restore cursor
-	fmt.Print(b.String())
+	builder.WriteString("\x1b8") // restore cursor
+	fmt.Print(builder.String())
 }
 
-func (s *screen) start() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.mode == "top" {
+func (term *screen) start() {
+	term.mu.Lock()
+	defer term.mu.Unlock()
+	if term.mode == "top" {
 		fmt.Print("\x1b[2J\x1b[H")
-		s.redrawLocked()
+		term.redrawLocked()
 	}
 }
 
-func (s *screen) resize() {
+func (term *screen) resize() {
 	rows, cols, ok := termSize()
 	if !ok {
 		return
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.mode != "top" {
+	term.mu.Lock()
+	defer term.mu.Unlock()
+	if term.mode != "top" {
 		return
 	}
-	s.rows, s.cols, s.height = rows, cols, 0
+	term.rows, term.cols, term.height = rows, cols, 0
 	fmt.Print("\x1b[2J")
-	s.redrawLocked()
+	term.redrawLocked()
 }
 
 // stop gives the whole terminal back to the shell.
-func (s *screen) stop() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.mode == "top" {
-		fmt.Printf("\x1b[r\x1b[%d;1H\n", s.rows)
-		s.mode = "off"
+func (term *screen) stop() {
+	term.mu.Lock()
+	defer term.mu.Unlock()
+	if term.mode == "top" {
+		fmt.Printf("\x1b[r\x1b[%d;1H\n", term.rows)
+		term.mode = "off"
 	}
 }
 
@@ -134,7 +134,7 @@ func main() {
 
 	catalog := narrator.LoadCatalog(*worldPath)
 	story := narrator.New(catalog, "")
-	scr := &screen{m: worldmap.New(catalog), mode: *mapMode}
+	scr := &screen{worldMap: worldmap.New(catalog), mode: *mapMode}
 	rows, cols, isTerm := termSize()
 	switch scr.mode {
 	case "auto":
@@ -154,12 +154,12 @@ func main() {
 	scr.rows, scr.cols = rows, cols
 	scr.color = isTerm && os.Getenv("NO_COLOR") == ""
 
-	c, err := net.Dial("tcp", *addr)
+	connection, err := net.Dial("tcp", *addr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "ERR 900 CONNECTION_FAILED:", err)
 		os.Exit(1)
 	}
-	defer c.Close()
+	defer connection.Close()
 	scr.start()
 	defer scr.stop()
 
@@ -171,7 +171,7 @@ func main() {
 		for sig := range signals {
 			if sig == os.Interrupt || sig == syscall.SIGTERM {
 				scr.stop()
-				_ = c.Close()
+				_ = connection.Close()
 				os.Exit(130)
 			}
 			scr.resize()
@@ -185,7 +185,7 @@ func main() {
 		sendMu.Lock()
 		defer sendMu.Unlock()
 		story.Expect(line, quiet)
-		if _, err := fmt.Fprintln(c, line); err != nil {
+		if _, err := fmt.Fprintln(connection, line); err != nil {
 			story.Cancel()
 			return err
 		}
@@ -195,7 +195,7 @@ func main() {
 	var once sync.Once
 	done := make(chan struct{})
 	go func() {
-		sc := bufio.NewScanner(c)
+		sc := bufio.NewScanner(connection)
 		sc.Buffer(make([]byte, 1024), 64*1024)
 		for sc.Scan() {
 			line := strings.TrimSuffix(sc.Text(), "\r")
@@ -208,7 +208,7 @@ func main() {
 				out = append(out, "  » "+text)
 			}
 			scr.println(out...)
-			changed, moved := scr.m.Observe(line)
+			changed, moved := scr.worldMap.Observe(line)
 			if changed {
 				scr.redraw()
 			}
@@ -217,8 +217,8 @@ func main() {
 			}
 			// In a world we don't know (another team's server), look around
 			// automatically to discover the exits of the new room.
-			unknownStart := line == "OK connected" && scr.m.Snapshot().Current == ""
-			if unknownStart || (moved && !strings.HasPrefix(line, "OK {") && !scr.m.CurrentExplored()) {
+			unknownStart := line == "OK connected" && scr.worldMap.Snapshot().Current == ""
+			if unknownStart || (moved && !strings.HasPrefix(line, "OK {") && !scr.worldMap.CurrentExplored()) {
 				_ = sendLine("LOOK", true)
 			}
 			if line == "OK bye" {
@@ -256,7 +256,7 @@ func main() {
 				if *narrate {
 					scr.println("  » Your command could not be sent to the server.")
 				}
-				_ = c.Close()
+				_ = connection.Close()
 				return
 			}
 			if strings.EqualFold(line, "QUIT") {
@@ -265,7 +265,7 @@ func main() {
 		}
 		// On stdin EOF, send QUIT instead of dropping queued responses.
 		if err := sendLine("QUIT", false); err != nil {
-			_ = c.Close()
+			_ = connection.Close()
 		}
 	}()
 	<-done

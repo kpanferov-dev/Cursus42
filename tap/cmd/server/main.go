@@ -20,7 +20,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	s, err := server.New(data, os.Stderr)
+	tapServer, err := server.New(data, os.Stderr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,8 +31,8 @@ func main() {
 	fmt.Printf("TAP server listening on %s\n", listener.Addr().String())
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-	go func() { <-stop; _ = s.Close() }()
-	if err := s.Serve(listener); err != nil {
+	go func() { <-stop; _ = tapServer.Close() }()
+	if err := tapServer.Serve(listener); err != nil {
 		log.Fatal(err)
 	}
 }

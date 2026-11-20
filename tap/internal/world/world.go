@@ -44,14 +44,14 @@ type NPC struct {
 }
 
 // QuestList returns the quests offered by the NPC, in order.
-func (n NPC) QuestList() []string {
+func (npc NPC) QuestList() []string {
 	out := []string{}
-	if n.Quest != "" {
-		out = append(out, n.Quest)
+	if npc.Quest != "" {
+		out = append(out, npc.Quest)
 	}
-	for _, q := range n.Quests {
-		if q != n.Quest {
-			out = append(out, q)
+	for _, questID := range npc.Quests {
+		if questID != npc.Quest {
+			out = append(out, questID)
 		}
 	}
 	return out
@@ -88,56 +88,56 @@ type Data struct {
 }
 
 func Load(path string) (*Data, error) {
-	b, err := os.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	var d Data
-	if err := json.Unmarshal(b, &d); err != nil {
+	var data Data
+	if err := json.Unmarshal(content, &data); err != nil {
 		return nil, fmt.Errorf("parse world: %w", err)
 	}
-	if err := d.Validate(); err != nil {
+	if err := data.Validate(); err != nil {
 		return nil, err
 	}
-	return &d, nil
+	return &data, nil
 }
-func (d *Data) Validate() error {
-	if _, ok := d.Rooms[d.Start]; !ok {
-		return fmt.Errorf("start room %q does not exist", d.Start)
+func (data *Data) Validate() error {
+	if _, ok := data.Rooms[data.Start]; !ok {
+		return fmt.Errorf("start room %q does not exist", data.Start)
 	}
-	if len(d.Rooms) < 8 {
-		return fmt.Errorf("at least 8 rooms required, got %d", len(d.Rooms))
+	if len(data.Rooms) < 8 {
+		return fmt.Errorf("at least 8 rooms required, got %d", len(data.Rooms))
 	}
 	usedCells := make(map[[2]int]string)
-	for id, r := range d.Rooms {
-		if r.Map == nil {
+	for id, room := range data.Rooms {
+		if room.Map == nil {
 			continue
 		}
-		if len(r.Map) != 2 {
+		if len(room.Map) != 2 {
 			return fmt.Errorf("room %s map position must be [x, y]", id)
 		}
-		cell := [2]int{r.Map[0], r.Map[1]}
+		cell := [2]int{room.Map[0], room.Map[1]}
 		if prev, ok := usedCells[cell]; ok {
-			return fmt.Errorf("rooms %s and %s share map position %v", prev, id, r.Map)
+			return fmt.Errorf("rooms %s and %s share map position %v", prev, id, room.Map)
 		}
 		usedCells[cell] = id
 	}
 	usedItems := make(map[string]string)
 	usedNPCs := make(map[string]string)
-	for id, r := range d.Rooms {
-		if id == "" || r.Name == "" || r.Description == "" {
+	for id, room := range data.Rooms {
+		if id == "" || room.Name == "" || room.Description == "" {
 			return fmt.Errorf("incomplete room %q", id)
 		}
-		for dir, dest := range r.Exits {
-			if _, ok := d.Rooms[dest]; !ok {
+		for dir, dest := range room.Exits {
+			if _, ok := data.Rooms[dest]; !ok {
 				return fmt.Errorf("room %s exit %s references missing %s", id, dir, dest)
 			}
 			if dir != "north" && dir != "south" && dir != "east" && dir != "west" {
 				return fmt.Errorf("invalid direction %s in %s", dir, id)
 			}
 		}
-		for _, itemID := range r.Items {
-			if _, ok := d.Items[itemID]; !ok {
+		for _, itemID := range room.Items {
+			if _, ok := data.Items[itemID]; !ok {
 				return fmt.Errorf("room %s references unknown item %s", id, itemID)
 			}
 			if prev, ok := usedItems[itemID]; ok {
@@ -145,8 +145,8 @@ func (d *Data) Validate() error {
 			}
 			usedItems[itemID] = id
 		}
-		for _, npcID := range r.NPCs {
-			if _, ok := d.NPCs[npcID]; !ok {
+		for _, npcID := range room.NPCs {
+			if _, ok := data.NPCs[npcID]; !ok {
 				return fmt.Errorf("room %s references unknown NPC %s", id, npcID)
 			}
 			if prev, ok := usedNPCs[npcID]; ok {
@@ -156,44 +156,44 @@ func (d *Data) Validate() error {
 		}
 	}
 	// All rooms must be reachable from start, irrespective of optional branches.
-	visited := map[string]bool{d.Start: true}
-	queue := []string{d.Start}
+	visited := map[string]bool{data.Start: true}
+	queue := []string{data.Start}
 	for len(queue) > 0 {
 		room := queue[0]
 		queue = queue[1:]
-		for _, dest := range d.Rooms[room].Exits {
+		for _, dest := range data.Rooms[room].Exits {
 			if !visited[dest] {
 				visited[dest] = true
 				queue = append(queue, dest)
 			}
 		}
 	}
-	if len(visited) != len(d.Rooms) {
-		return fmt.Errorf("world is disconnected: %d of %d rooms reachable", len(visited), len(d.Rooms))
+	if len(visited) != len(data.Rooms) {
+		return fmt.Errorf("world is disconnected: %d of %d rooms reachable", len(visited), len(data.Rooms))
 	}
-	if len(d.Items) < 4 || len(d.NPCs) < 3 || len(d.Quests) < 2 {
+	if len(data.Items) < 4 || len(data.NPCs) < 3 || len(data.Quests) < 2 {
 		return fmt.Errorf("world needs 4 items, 3 NPCs, and 2 quests")
 	}
-	for id, n := range d.NPCs {
-		if n.HP < 1 || n.Name == "" {
+	for id, npc := range data.NPCs {
+		if npc.HP < 1 || npc.Name == "" {
 			return fmt.Errorf("invalid NPC %s", id)
 		}
 		if _, ok := usedNPCs[id]; !ok {
 			return fmt.Errorf("NPC %s has no spawn room", id)
 		}
-		for _, q := range n.QuestList() {
-			if _, ok := d.Quests[q]; !ok {
-				return fmt.Errorf("NPC %s points to nonexistent quest %s", id, q)
+		for _, questID := range npc.QuestList() {
+			if _, ok := data.Quests[questID]; !ok {
+				return fmt.Errorf("NPC %s points to nonexistent quest %s", id, questID)
 			}
 		}
-		if n.Loot != "" {
-			if _, ok := d.Items[n.Loot]; !ok {
-				return fmt.Errorf("NPC %s drops unknown item %s", id, n.Loot)
+		if npc.Loot != "" {
+			if _, ok := data.Items[npc.Loot]; !ok {
+				return fmt.Errorf("NPC %s drops unknown item %s", id, npc.Loot)
 			}
 		}
-		if n.RequiresQuest != "" {
-			if _, ok := d.Quests[n.RequiresQuest]; !ok {
-				return fmt.Errorf("NPC %s requires unknown quest %s", id, n.RequiresQuest)
+		if npc.RequiresQuest != "" {
+			if _, ok := data.Quests[npc.RequiresQuest]; !ok {
+				return fmt.Errorf("NPC %s requires unknown quest %s", id, npc.RequiresQuest)
 			}
 		}
 	}
@@ -202,52 +202,52 @@ func (d *Data) Validate() error {
 		if _, ok := usedItems[item]; ok {
 			return true
 		}
-		for _, n := range d.NPCs {
-			if n.Loot == item {
+		for _, npc := range data.NPCs {
+			if npc.Loot == item {
 				return true
 			}
 		}
 		return false
 	}
-	for id, it := range d.Items {
+	for id, it := range data.Items {
 		if it.Heal < 0 || it.Attack < 0 || it.Defense < 0 {
 			return fmt.Errorf("item %s has negative stats", id)
 		}
 	}
-	for id, r := range d.Rooms {
-		for dir, item := range r.Locks {
-			if _, ok := r.Exits[dir]; !ok {
+	for id, room := range data.Rooms {
+		for dir, item := range room.Locks {
+			if _, ok := room.Exits[dir]; !ok {
 				return fmt.Errorf("room %s locks missing exit %s", id, dir)
 			}
-			if _, ok := d.Items[item]; !ok || !obtainable(item) {
+			if _, ok := data.Items[item]; !ok || !obtainable(item) {
 				return fmt.Errorf("room %s lock needs unobtainable item %s", id, item)
 			}
 		}
 	}
-	for id, q := range d.Quests {
-		giver, ok := d.NPCs[q.Giver]
+	for id, quest := range data.Quests {
+		giver, ok := data.NPCs[quest.Giver]
 		if !ok || !contains(giver.QuestList(), id) {
 			return fmt.Errorf("quest %s has an invalid giver", id)
 		}
-		for _, req := range q.Requires {
-			if _, ok := d.Quests[req]; !ok || req == id {
+		for _, req := range quest.Requires {
+			if _, ok := data.Quests[req]; !ok || req == id {
 				return fmt.Errorf("quest %s requires invalid quest %s", id, req)
 			}
 		}
-		switch q.Kind {
+		switch quest.Kind {
 		case "deliver":
-			if _, ok := d.Items[q.Target]; !ok {
+			if _, ok := data.Items[quest.Target]; !ok {
 				return fmt.Errorf("quest %s missing target item", id)
 			}
-			if !obtainable(q.Target) {
+			if !obtainable(quest.Target) {
 				return fmt.Errorf("quest %s target item has no room spawn or NPC drop", id)
 			}
 		case "defeat":
-			if n, ok := d.NPCs[q.Target]; !ok || n.Role != "enemy" {
+			if npc, ok := data.NPCs[quest.Target]; !ok || npc.Role != "enemy" {
 				return fmt.Errorf("quest %s missing enemy", id)
 			}
 		default:
-			return fmt.Errorf("quest %s invalid kind %s", id, q.Kind)
+			return fmt.Errorf("quest %s invalid kind %s", id, quest.Kind)
 		}
 	}
 	// Prerequisites must not form a cycle, or the storyline could not be finished.
@@ -261,7 +261,7 @@ func (d *Data) Validate() error {
 			return nil
 		}
 		state[id] = 1
-		for _, req := range d.Quests[id].Requires {
+		for _, req := range data.Quests[id].Requires {
 			if err := visit(req); err != nil {
 				return err
 			}
@@ -269,13 +269,13 @@ func (d *Data) Validate() error {
 		state[id] = 2
 		return nil
 	}
-	for _, id := range SortedKeys(d.Quests) {
+	for _, id := range SortedKeys(data.Quests) {
 		if err := visit(id); err != nil {
 			return err
 		}
 	}
 	// Story text is sent on single protocol lines.
-	for _, text := range []string{d.Story.Title, d.Story.Intro, d.Story.Victory} {
+	for _, text := range []string{data.Story.Title, data.Story.Intro, data.Story.Victory} {
 		if strings.IndexFunc(text, unicode.IsControl) >= 0 {
 			return fmt.Errorf("story text must be a single line without control characters")
 		}
@@ -284,16 +284,16 @@ func (d *Data) Validate() error {
 }
 
 func contains(list []string, value string) bool {
-	for _, v := range list {
-		if v == value {
+	for _, item := range list {
+		if item == value {
 			return true
 		}
 	}
 	return false
 }
-func SortedKeys[V any](m map[string]V) []string {
-	out := make([]string, 0, len(m))
-	for key := range m {
+func SortedKeys[Value any](values map[string]Value) []string {
+	out := make([]string, 0, len(values))
+	for key := range values {
 		out = append(out, key)
 	}
 	sort.Strings(out)
