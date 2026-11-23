@@ -16,16 +16,9 @@
         <small id="storyTitle">A shared-world text adventure over RFC 42TAP</small>
       </div>
       <div class="hud" id="hud" aria-label="Your stats">
-        <div class="hud-item" title="Players in your room">
-          <small>In room</small>
-          <b id="roomPlayers">0</b>
-        </div>
-        <div class="hud-item" title="Players on the server">
-          <small>On server</small>
-          <b id="serverPlayers">0</b>
-        </div>
-        <div class="hud-item" title="Health points">
+        <div class="hud-item hud-hp" title="Health points">
           <small>HP</small>
+          <span class="hp-bar" aria-hidden="true"><i id="hpFill"></i></span>
           <b>
             <span id="health">100</span>
             <i id="maxHp">/100</i>
@@ -33,7 +26,7 @@
         </div>
         <div class="hud-item" title="Gold">
           <small>Gold</small>
-          <b id="gold">0</b>
+          <b id="gold" class="coin">0</b>
         </div>
         <div class="hud-item" title="Damage you deal per attack">
           <small>Attack</small>
@@ -43,11 +36,19 @@
           <small>Defense</small>
           <b id="defense">—</b>
         </div>
+        <div class="hud-item" title="Players in your room">
+          <small>In room</small>
+          <b id="roomPlayers">0</b>
+        </div>
+        <div class="hud-item" title="Players on the server">
+          <small>On server</small>
+          <b id="serverPlayers">0</b>
+        </div>
         <div class="hud-item champ hide" id="champBadge" title="You completed the final quest">
           Champion
         </div>
         <button
-          class="hud-refresh"
+          class="hud-refresh small"
           id="refreshRoom"
           data-action="LOOK"
           title="Look around again (LOOK)"

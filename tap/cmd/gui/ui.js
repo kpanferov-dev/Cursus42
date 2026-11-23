@@ -101,6 +101,7 @@ function setOnline(ok) {
     ])
       setText(id, resetValue);
     byId('health')?.closest('.hud-item')?.classList.remove('low');
+    setHealthBar(100, 100);
     byId('champBadge')?.classList.add('hide');
     byId('wherePill').textContent = 'Not in the world';
     byId('mapWhere').textContent = 'Not connected';
@@ -109,8 +110,16 @@ function setOnline(ok) {
   byId('quitBtn')?.classList.toggle('hide', !ok);
   const statusPill = byId('connectionStatus');
   statusPill.textContent = ok ? 'Connected' : 'Disconnected';
-  statusPill.style.color = ok ? '#65e2cb' : '#f3be78';
+  statusPill.classList.toggle('online', ok);
   byId('connectPanel').classList.toggle('hide', ok);
+}
+
+// Width of the HP bar in the header, as a share of the maximum health.
+function setHealthBar(health, maxHealth) {
+  const fill = byId('hpFill');
+  if (!fill) return;
+  const share = maxHealth > 0 ? Math.max(0, Math.min(1, health / maxHealth)) : 0;
+  fill.style.width = Math.round(share * 100) + '%';
 }
 
 async function api(path, body) {
@@ -225,6 +234,7 @@ function onServerLine(line) {
       byId('health')
         ?.closest('.hud-item')
         ?.classList.toggle('low', data.hp < (data.max_hp ?? 100) / 2);
+      setHealthBar(data.hp, data.max_hp ?? 100);
       setText('gold', data.gold ?? '0');
       if (data.attack !== undefined) {
         setText('attack', data.attack);

@@ -1459,7 +1459,7 @@
   }
 
   function confetti(host) {
-    const colors = ['#c9a24a', '#8fcfb5', '#ece3cc', '#d9695f', '#e6c77a'];
+    const colors = ['#f4c06a', '#9fe0c4', '#c9d3e6', '#ff7b72', '#f1ead6'];
     for (let index = 0; index < 40; index++) {
       const piece = el('span', 'confetti');
       piece.style.left = Math.random() * 100 + '%';

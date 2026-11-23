@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by <login1>, <login2>.*
+*This project has been created as part of the 42 curriculum by huwang, kpanfero.*
 
 # TAP — The Answer Protocol (RFC 42TAP)
 
@@ -7,8 +7,6 @@
 TAP is a multiplayer, in-memory text adventure implemented in **Go**. A line-oriented **TCP server** maintains the shared game world and exposes the protocol described by the accompanying `RFC-42TAP.html`. Players may connect through a fully asynchronous **terminal CLI** or the interactive **browser GUI** (served by a small Go HTTP/SSE-to-TCP bridge). Both clients speak to the same unmodified TAP server; the GUI bridge opens one real TAP TCP session per browser player.
 
 Features: a complete **storyline you can win** (*The Stopped Clock*: 6 chained main quests, 2 side quests, 5 monsters including a final boss); twelve rooms with multiple cycles, optional branches and **locked doors**; ten unique items (keys, weapons, armour, healing items, boss loot) with ID/name lookup; dialogue/quest-giving/enemy NPCs; cooperative chat and groups; an **English activity chat** that narrates every action in both clients; a **live map** showing your position in both clients; an **illustrated scene view** with clickable characters, items and exits plus an **animated combat screen** in the GUI; turn-based combat and respawns; fully concurrent TCP handling; JSON world validation; structured JSON logs; multiplayer integration tests.
-
-> Before submitting, **replace `<login1>, <login2>` with the actual 42 Intra logins**, validate everything yourself and update the contributions section based on actual Git history.
 
 ## Instructions
 
@@ -199,9 +197,10 @@ cmd/server/main.go        TCP server entry point
 cmd/client/main.go        CLI entry point
 cmd/gui/main.go           HTTP GUI launcher; embeds and serves the browser files below
 cmd/gui/ui.html           Page structure of the browser interface
-cmd/gui/ui.css            Page layout and theme
+cmd/gui/ui.css            Page layout and theme ("Midnight ball": night-sky glass panels, storybook type)
 cmd/gui/ui.js             Connection, command queue, map, quest journal and chat
 cmd/gui/scene.js, scene.css  Illustrated scene view + animated combat screen (original SVG art)
+cmd/gui/fonts/            IM Fell English + EB Garamond, bundled so the GUI works offline (SIL OFL, see OFL.txt)
 internal/server/          Protocol, command router and game engine + tests
 internal/bridge/          HTTP/SSE gateway to the TCP server (+ narration SSE events) + tests
 internal/narrator/        Shared English narration of TAP replies/events (CLI + GUI) + tests
@@ -438,4 +437,4 @@ Authentication is username uniqueness only (as in the RFC); do not put this serv
 
 ### Use of AI
 
-An AI coding assistant was used to draft the initial Go architecture, TCP command implementation, JSON world, browser GUI, documentation and initial test cases; the team must independently inspect, run, understand, modify and peer-review all AI-generated work. The AI did not replace execution of the evaluation, hands-on team contribution, or the required peer reviews. Update this section with the team's **actual** AI usage if it differs.
+Animations

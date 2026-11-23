@@ -1,7 +1,7 @@
 package main
 
 import (
-	_ "embed"
+	"embed"
 	"flag"
 	"fmt"
 	"log"
@@ -31,6 +31,11 @@ var sceneJS []byte
 //go:embed scene.css
 var sceneCSS []byte
 
+// IM Fell English and EB Garamond, the typefaces of the interface (SIL Open Font License, see fonts/OFL.txt).
+//
+//go:embed fonts
+var fonts embed.FS
+
 func static(contentType string, body []byte) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", contentType)
@@ -58,6 +63,7 @@ func main() {
 	mux.HandleFunc("/ui.js", static("text/javascript; charset=utf-8", uiJS))
 	mux.HandleFunc("/scene.js", static("text/javascript; charset=utf-8", sceneJS))
 	mux.HandleFunc("/scene.css", static("text/css; charset=utf-8", sceneCSS))
+	mux.Handle("/fonts/", http.FileServer(http.FS(fonts)))
 	mux.HandleFunc("/api/catalog", func(writer http.ResponseWriter, request *http.Request) {
 		content, err := os.ReadFile(*worldPath)
 		if err != nil {

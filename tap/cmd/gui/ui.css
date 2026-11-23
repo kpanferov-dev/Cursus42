@@ -1,17 +1,81 @@
-/* Page layout and theme of the TAP browser client (the scene has its own scene.css). */
+/*
+ * Page layout and theme of the TAP browser client (the scene has its own scene.css).
+ *
+ * Theme "Midnight ball": a fairytale night. Midnight-blue glass panels with a thin
+ * silver double line and a star on each top corner, moonlight glow on hover,
+ * lantern gold for the main actions. Titles use IM Fell English, everything
+ * else EB Garamond; both are bundled in fonts/ so the GUI works offline.
+ */
+@font-face {
+  font-family: 'IM Fell English';
+  src: url('/fonts/im-fell-english-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IM Fell English';
+  src: url('/fonts/im-fell-english-latin-400-italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'EB Garamond';
+  src: url('/fonts/eb-garamond-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'EB Garamond';
+  src: url('/fonts/eb-garamond-latin-400-italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'EB Garamond';
+  src: url('/fonts/eb-garamond-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'EB Garamond';
+  src: url('/fonts/eb-garamond-latin-600-normal.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
-  --bg: #1c2a2b;
-  --panel: #24383a;
-  --line: #4d6663;
-  --ink: #ece3cc;
-  --muted: #a9b5a6;
-  --accent: #8fcfb5;
-  --gold: #c9a24a;
-  --danger: #d9695f;
-  --well: #182425;
-  --raised: #2c4547;
-  --serif: 'Palatino Linotype', 'Book Antiqua', Palatino, 'URW Palladio L', P052, Georgia, serif;
+
+  /* Night sky and the glass panels floating on it. */
+  --night: #0a1033;
+  --night-deep: #060a24;
+  --window: rgba(22, 32, 86, 0.78);
+  --window-raised: rgba(52, 70, 150, 0.6);
+  --well: rgba(8, 13, 44, 0.75);
+
+  /* Silver glitter, moonlight ivory and the lantern. */
+  --frame: #c9d3e6;
+  --rule: rgba(201, 211, 230, 0.28);
+  --ink: #f1ead6;
+  --muted: #a7b2d6;
+  --coin: #f4c06a;
+  --life: #9fe0c4;
+  --danger: #ff7b72;
+  --glow: rgba(159, 183, 255, 0.45);
+
+  --display: 'IM Fell English', Georgia, serif;
+  --text: 'EB Garamond', Georgia, serif;
 }
 
 * {
@@ -22,99 +86,299 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  font:
-    15px/1.5 system-ui,
-    -apple-system,
-    Segoe UI,
-    sans-serif;
-  background: var(--bg);
+  font: 16px/1.5 var(--text);
   color: var(--ink);
+  background-color: var(--night);
 }
 
+/* Night sky: a moon glow in the top-left corner and three layers of small stars. */
+body {
+  background:
+    radial-gradient(
+      circle at 8% 4%,
+      rgba(255, 244, 214, 0.22) 0 70px,
+      rgba(255, 244, 214, 0.06) 140px,
+      transparent 300px
+    ),
+    radial-gradient(1.2px 1.2px at 20% 30%, #fff 50%, transparent 51%) 0 0 / 180px 160px,
+    radial-gradient(1px 1px at 70% 60%, #dfe6ff 50%, transparent 51%) 0 0 / 230px 210px,
+    radial-gradient(1.4px 1.4px at 40% 80%, #ffffff88 50%, transparent 51%) 0 0 / 310px 260px,
+    linear-gradient(180deg, #0b1440 0%, #0a1033 45%, #070b26 100%);
+  background-attachment: fixed;
+}
+
+/* The glass window shared by panels and the header. */
+.panel,
 header {
-  background: #172324;
-  border-bottom: 2px solid var(--gold);
-  padding: 14px clamp(14px, 2vw, 32px);
+  position: relative;
+  background: var(--window);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(201, 211, 230, 0.55);
+  border-radius: 14px;
+  box-shadow:
+    inset 0 0 0 5px rgba(201, 211, 230, 0.12),
+    0 0 40px rgba(111, 143, 216, 0.12);
+}
+
+/* A small silver star sits on each top corner of every window. */
+.panel::before,
+.panel::after,
+header::before,
+header::after {
+  content: '\2726';
+  position: absolute;
+  top: -11px;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--frame);
+  text-shadow: 0 0 8px #bcd0ff;
+  pointer-events: none;
+}
+
+.panel::before,
+header::before {
+  left: 22px;
+}
+
+.panel::after,
+header::after {
+  right: 22px;
+}
+
+/* ------------------------------------------------------------------ header */
+
+header {
+  position: sticky;
+  top: 8px;
+  z-index: 20;
+  margin: 8px clamp(8px, 1.2vw, 18px) 0;
+  padding: 12px clamp(14px, 1.6vw, 26px);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 10px 22px;
   flex-wrap: wrap;
+  /* The extra night-coloured shadow hides the page scrolling past above the header. */
+  box-shadow:
+    inset 0 0 0 5px rgba(201, 211, 230, 0.12),
+    0 0 40px rgba(111, 143, 216, 0.12),
+    0 -14px 0 0 #0b1440;
 }
 
 header strong {
-  font-family: var(--serif);
-  font-size: 25px;
-  font-weight: 600;
-  font-variant: small-caps;
-  letter-spacing: 0.03em;
-  color: var(--gold);
+  display: block;
+  font-family: var(--display);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--ink);
+  text-shadow: 0 0 18px rgba(244, 192, 106, 0.35);
+}
+
+/* A crescent moon before the title. */
+header strong::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  border-radius: 50%;
+  box-shadow: inset -6px 2px 0 0 #f6ecd0;
+  vertical-align: -2px;
 }
 
 header small {
   display: block;
-  font-size: 13px;
-  font-family: var(--serif);
+  margin-top: 2px;
+  font-family: var(--display);
   font-style: italic;
+  font-size: 15px;
   color: var(--muted);
 }
 
-.status-pill {
-  border: 1px solid var(--line);
-  border-radius: 3px;
-  padding: 4px 10px;
-  color: var(--gold);
+.where-pill {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 19px;
+  color: var(--ink);
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.status-pill {
+  font-size: 16px;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.status-pill::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--coin);
+  box-shadow: 0 0 6px var(--coin);
+}
+
+.status-pill.online {
+  color: var(--ink);
+}
+
+.status-pill.online::before {
+  background: var(--life);
+  box-shadow: 0 0 6px var(--life);
+}
+
+/* Stats read as one line of italic labels and numbers. */
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.hud-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.hud-item small {
+  font-style: italic;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.hud-item b {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.hud-item b i {
+  font-style: normal;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.hud-item b span {
+  display: inline;
+}
+
+.hud-item .coin {
+  color: var(--coin);
+}
+
+.hud-hp {
+  align-items: center;
+}
+
+.hp-bar {
+  display: block;
+  width: 110px;
+  height: 10px;
+  border: 1px solid var(--frame);
+  border-radius: 999px;
+  background: var(--night-deep);
+  padding: 1px;
+}
+
+.hp-bar i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--life), #e8fff5);
+  box-shadow: 0 0 8px var(--life);
+  transition: width 0.5s ease-out;
+}
+
+.hud-item.low b {
+  color: var(--danger);
+}
+
+.hud-item.low .hp-bar i {
+  background: var(--danger);
+  box-shadow: 0 0 8px var(--danger);
+}
+
+.hud-item.champ {
+  padding: 1px 12px;
+  border: 1px solid var(--coin);
+  border-radius: 999px;
+  color: var(--coin);
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 17px;
+  box-shadow: 0 0 12px rgba(244, 192, 106, 0.35);
+}
+
+/* ------------------------------------------------------------------ layout */
 
 main {
   max-width: 1460px;
-  margin: 22px auto;
+  margin: 24px auto;
   padding: 0 18px;
   display: grid;
   grid-template-columns: minmax(300px, 1fr) minmax(330px, 1fr);
-  gap: 17px;
+  gap: 26px 22px;
+}
+
+/* Grid children may shrink below their content (the map scrolls inside its own box). */
+main > *,
+.stack > * {
+  min-width: 0;
 }
 
 .panel {
-  padding: 20px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: var(--panel);
+  padding: 16px 22px 22px;
 }
 
 h2 {
-  font-family: var(--serif);
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0 0 12px;
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 400;
+  margin: 0 0 10px;
   color: var(--ink);
 }
 
 h3 {
-  font-family: var(--serif);
-  font-size: 15px;
-  font-style: italic;
+  font-family: var(--display);
+  font-size: 19px;
   font-weight: 400;
-  color: var(--gold);
-  margin: 17px 0 9px;
+  font-style: italic;
+  color: var(--coin);
+  margin: 16px 0 8px;
 }
 
 .subtitle {
-  font-size: 13px;
+  font-style: italic;
+  font-size: 15px;
   color: var(--muted);
 }
 
 .headerline {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
   gap: 14px;
   flex-wrap: wrap;
 }
 
 .stack {
   display: grid;
-  gap: 12px;
+  gap: 26px;
+  align-content: start;
 }
 
 .row {
@@ -128,59 +392,8 @@ h3 {
   min-width: 0;
 }
 
-input,
-select,
-button {
-  font: inherit;
-  border: 1px solid var(--line);
-  border-radius: 3px;
-  padding: 8px 11px;
-  color: var(--ink);
-  background: var(--well);
-}
-
-input {
-  flex: 1;
-  min-width: 90px;
-}
-
-input:focus,
-select:focus,
-button:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 1px;
-}
-
-button {
-  cursor: pointer;
-  transition: background 0.12s;
-}
-
-button:hover:not(:disabled) {
-  background: var(--raised);
-  border-color: var(--gold);
-}
-
-button:disabled {
-  opacity: 0.48;
-  cursor: not-allowed;
-}
-
-button.primary {
-  background: var(--gold);
-  color: #1c2a2b;
-  border-color: var(--gold);
-  font-weight: 700;
-}
-
-button.warn {
-  border-color: var(--danger);
-  color: #f2b8b1;
-}
-
-button.small {
-  font-size: 12px;
-  padding: 5px 9px;
+.hide {
+  display: none !important;
 }
 
 .empty {
@@ -188,45 +401,156 @@ button.small {
   font-style: italic;
 }
 
+/* ------------------------------------------------------------------ controls */
+
+input,
+select {
+  font: 16px var(--text);
+  color: var(--ink);
+  background: var(--well);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 7px 16px;
+}
+
+input {
+  flex: 1;
+  min-width: 90px;
+}
+
+input::placeholder {
+  color: #7d88b4;
+  font-style: italic;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--frame);
+  box-shadow: 0 0 12px var(--glow);
+}
+
+/* Buttons: silver-edged pills that glow like moonlight on hover. */
+button {
+  font: 500 16px/1.2 var(--text);
+  color: var(--ink);
+  background: rgba(8, 13, 44, 0.5);
+  border: 1px solid rgba(201, 211, 230, 0.5);
+  border-radius: 999px;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--frame);
+  box-shadow: 0 0 14px var(--glow);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--frame);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* The main action of a form is lit like the lantern. */
+button.primary {
+  background: var(--coin);
+  border-color: var(--coin);
+  color: #2a1a05;
+  font-weight: 600;
+  box-shadow: 0 0 16px rgba(244, 192, 106, 0.4);
+}
+
+button.primary:hover:not(:disabled) {
+  background: #ffd58a;
+  box-shadow: 0 0 22px rgba(244, 192, 106, 0.6);
+}
+
+button.warn {
+  border-color: var(--danger);
+  color: #ffc2bc;
+}
+
+button.warn:hover:not(:disabled) {
+  background: rgba(255, 123, 114, 0.15);
+  border-color: var(--danger);
+  box-shadow: 0 0 14px rgba(255, 123, 114, 0.45);
+}
+
+button.small {
+  font-size: 15px;
+  padding: 4px 14px;
+}
+
+/* ------------------------------------------------------------------ chat */
+
 .scroller {
   height: 210px;
   overflow: auto;
-  border: 1px solid var(--line);
-  border-radius: 3px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
   background: var(--well);
-  padding: 10px 12px;
-  font:
-    13px/1.6 system-ui,
-    -apple-system,
-    Segoe UI,
-    sans-serif;
+  padding: 8px 14px;
+  font: 16px/1.5 var(--text);
   overflow-wrap: anywhere;
 }
 
 .scroller div {
-  border-bottom: 1px solid #2b3d3e;
-  padding: 4px 0;
+  padding: 3px 0;
 }
 
 .scroller .evt {
-  color: var(--accent);
+  color: var(--life);
 }
 
 .scroller .err {
   color: var(--danger);
 }
 
+.scroller .time {
+  color: #7d88b4;
+  margin-right: 8px;
+  font-style: italic;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.scroller .self {
+  color: var(--coin);
+}
+
+#chatLog {
+  height: 300px;
+}
+
 .tabs {
-  margin-top: 8px;
+  margin: 4px 0 8px;
   display: flex;
-  gap: 7px;
+  gap: 6px;
+}
+
+.tabs button {
+  background: none;
+  border-color: transparent;
+  color: var(--muted);
 }
 
 .tabs button[aria-selected='true'] {
-  border-color: var(--gold);
   color: var(--ink);
-  background: var(--raised);
-  box-shadow: inset 0 -2px 0 var(--gold);
+  border-color: var(--frame);
+  background: var(--window-raised);
+}
+
+.tabs .badge {
+  margin-left: 5px;
+  font-size: 14px;
+  color: var(--coin);
 }
 
 .inline-actions {
@@ -235,54 +559,106 @@ button.small {
   gap: 8px;
 }
 
-.hide {
-  display: none !important;
+/* ------------------------------------------------------------------ victory and quests */
+
+.victory {
+  border-color: var(--coin);
+  text-align: center;
+  box-shadow:
+    inset 0 0 0 5px rgba(244, 192, 106, 0.15),
+    0 0 50px rgba(244, 192, 106, 0.25);
 }
 
-.scroller .time {
+.victory::before,
+.victory::after {
+  color: var(--coin);
+}
+
+.victory h2 {
+  font-size: 34px;
+  margin-bottom: 4px;
+  color: var(--coin);
+}
+
+.victory p {
+  margin: 0;
+}
+
+.quest {
+  padding: 10px 0 10px 22px;
+  border-bottom: 1px solid var(--rule);
+  position: relative;
+}
+
+.quest:last-child {
+  border-bottom: 0;
+}
+
+/* A small round marker shows the quest state: empty, lit (active) or done. */
+.quest::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 18px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid var(--muted);
+}
+
+.quest.active::before {
+  border-color: var(--coin);
+  background: var(--coin);
+  box-shadow: 0 0 8px var(--coin);
+}
+
+.quest.completed::before {
+  border-color: var(--life);
+  background: var(--life);
+}
+
+.quest b {
+  display: block;
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 400;
+}
+
+.quest .state {
+  float: right;
+  font-style: italic;
+  font-size: 15px;
   color: var(--muted);
-  margin-right: 8px;
-  font-variant-numeric: tabular-nums;
 }
 
-.scroller .self {
-  color: var(--gold);
+.quest.active .state {
+  color: var(--coin);
 }
 
-.tabs .badge {
-  margin-left: 5px;
-  font-size: 11px;
-  color: var(--gold);
+.quest.completed {
+  opacity: 0.7;
 }
 
-#chatLog {
-  height: 300px;
+.quest.completed .state {
+  color: var(--life);
 }
 
-header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
+.quest.final b {
+  color: var(--coin);
 }
 
-.where-pill {
-  border: 1px solid var(--line);
-  color: var(--accent);
-  border-radius: 3px;
-  padding: 4px 11px;
-  font-family: var(--serif);
-  font-size: 16px;
-  font-weight: 600;
-  max-width: 210px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.quest p {
+  margin: 4px 0 0;
+  font-size: 15px;
+  color: #d3d8ee;
 }
+
+/* ------------------------------------------------------------------ map */
 
 .mapview {
   overflow: auto;
-  border: 1px solid var(--line);
-  border-radius: 3px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
   background: var(--well);
   padding: 6px;
 }
@@ -295,160 +671,32 @@ header {
 }
 
 .maphint {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 7px;
-}
-
-.victory {
-  background: #2a3326;
-  border-color: var(--gold);
-  text-align: center;
-}
-
-.victory h2 {
-  font-size: 26px;
   font-style: italic;
-  color: var(--gold);
-  margin-bottom: 6px;
-}
-
-.victory p {
-  margin: 0;
-  color: var(--ink);
-}
-
-.quest {
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--line);
-  border-radius: 3px;
-  padding: 9px 11px;
-  margin: 7px 0;
-  background: var(--well);
-}
-
-.quest b {
-  display: block;
-  font-family: var(--serif);
-  font-size: 16px;
-}
-
-.quest .state {
-  float: right;
-  font-size: 12px;
-  font-style: italic;
+  font-size: 15px;
   color: var(--muted);
-}
-
-.quest.active {
-  border-left-color: var(--gold);
-}
-
-.quest.active .state {
-  color: var(--gold);
-}
-
-.quest.completed {
-  opacity: 0.72;
-}
-
-.quest.completed .state {
-  color: var(--accent);
-}
-
-.quest p {
-  margin: 5px 0 0;
-  font-size: 14px;
-  color: #d6dcc9;
-}
-
-.quest.final {
-  border-left-color: var(--gold);
-  border-left-width: 5px;
-}
-
-.hud {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  justify-content: center;
-  align-items: stretch;
-  flex: 1;
-  min-width: 0;
-}
-
-.hud-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3px 8px;
-  border: 1px solid var(--line);
-  border-radius: 3px;
-  background: var(--well);
-  line-height: 1.15;
-  white-space: nowrap;
-}
-
-.hud-item small {
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.hud-item b {
-  font-family: var(--serif);
-  font-size: 19px;
-  font-weight: 600;
-  color: var(--accent);
-  font-variant-numeric: lining-nums tabular-nums;
-}
-
-.hud-item b i {
-  font-style: normal;
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.hud-item.low b {
-  color: var(--danger);
-}
-
-.hud-refresh {
-  font-size: 12px;
-  padding: 3px 8px;
-  white-space: nowrap;
-}
-
-.hud-item.champ {
-  justify-content: center;
-  color: var(--gold);
-  border-color: var(--gold);
-  font-family: var(--serif);
-  font-style: italic;
-  font-weight: 600;
+  margin-top: 8px;
 }
 
 .room rect {
-  fill: #24383a;
-  stroke: #4d6663;
+  rx: 10;
+  fill: rgba(22, 32, 86, 0.9);
+  stroke: rgba(201, 211, 230, 0.35);
   stroke-width: 1.5;
 }
 
 .room.visited rect {
-  stroke: #7d958f;
+  stroke: rgba(201, 211, 230, 0.7);
 }
 
 .room.unexplored rect {
-  fill: #1d2b2c;
+  fill: var(--well);
   stroke-dasharray: 5 4;
 }
 
 .room.current rect {
-  fill: #2f5148;
-  stroke: var(--accent);
-  stroke-width: 3;
+  fill: rgba(52, 70, 150, 0.9);
+  stroke: var(--coin);
+  stroke-width: 2.5;
 }
 
 .room.reachable {
@@ -457,13 +705,14 @@ header {
 
 .room.reachable:hover rect,
 .room.reachable:focus rect {
-  fill: #2c4547;
-  stroke: var(--gold);
+  fill: rgba(52, 70, 150, 0.8);
+  stroke: var(--frame);
 }
 
 .room text {
   fill: var(--ink);
-  font-size: 13px;
+  font-family: var(--text);
+  font-size: 15px;
   text-anchor: middle;
   pointer-events: none;
 }
@@ -473,37 +722,38 @@ header {
 }
 
 .room .tag {
-  fill: var(--gold);
-  font-size: 12.5px;
+  fill: var(--coin);
   font-style: italic;
-  font-family: var(--serif);
+  font-size: 13px;
 }
 
 .room.current .tag {
-  fill: #eaf6ef;
+  fill: var(--frame);
 }
 
 .link {
-  stroke: #5e7a75;
-  stroke-width: 3;
+  stroke: rgba(201, 211, 230, 0.4);
+  stroke-width: 2;
   fill: none;
 }
 
 .link.long {
-  stroke-dasharray: 7 6;
+  stroke-dasharray: 6 6;
 }
 
 .linklabel {
   fill: var(--muted);
-  font-size: 11px;
+  font-family: var(--text);
+  font-style: italic;
+  font-size: 13px;
   text-anchor: middle;
 }
 
 .you-ring {
   fill: none;
-  stroke: var(--accent);
+  stroke: var(--coin);
   stroke-width: 2;
-  animation: pulse 1.6s ease-out infinite;
+  animation: pulse 1.8s ease-out infinite;
 }
 
 @keyframes pulse {
@@ -518,8 +768,10 @@ header {
   }
 }
 
+/* ------------------------------------------------------------------ small screens */
+
 /* Narrower screens: the stats get their own centered line inside the header. */
-@media (max-width: 1420px) {
+@media (max-width: 1720px) {
   .hud {
     order: 3;
     flex-basis: 100%;
@@ -529,5 +781,27 @@ header {
 @media (max-width: 900px) {
   main {
     grid-template-columns: 1fr;
+  }
+
+  header {
+    position: static;
+  }
+
+  main {
+    padding: 0 10px;
+  }
+
+  .panel {
+    padding: 14px 14px 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .you-ring {
+    animation: none;
+  }
+
+  button {
+    transition: none;
   }
 }

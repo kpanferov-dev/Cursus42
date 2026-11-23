@@ -1,4 +1,5 @@
-/* Scene view: illustrated room, clickable characters/items/exits, combat screen. */
+/* Scene view: illustrated room, clickable characters/items/exits, combat screen.
+   Colours and fonts come from the variables in ui.css. */
 .scene-panel {
   grid-column: 1/-1;
 }
@@ -6,10 +7,15 @@
   position: relative;
   aspect-ratio: 1000/420;
   min-height: 260px;
-  border-radius: 6px;
+  /* The scene sits in an arched castle window. */
+  border-radius: 50% 50% 14px 14px / 70px 70px 14px 14px;
   overflow: hidden;
-  background: #0f1819;
-  border: 1px solid var(--line);
+  background: var(--well);
+  border: 1px solid var(--frame);
+  box-shadow:
+    0 0 0 6px rgba(22, 32, 86, 0.9),
+    0 0 0 7px rgba(201, 211, 230, 0.35),
+    0 0 50px rgba(111, 143, 216, 0.25);
   user-select: none;
 }
 .scene-bg,
@@ -40,8 +46,8 @@
   display: grid;
   place-items: center;
   color: var(--muted);
-  font: italic 20px var(--serif);
-  background: #182425;
+  font: italic 24px var(--display);
+  background: var(--well);
 }
 .scene-layer {
   position: absolute;
@@ -81,37 +87,35 @@
   outline: none;
 }
 .actor .tag {
-  margin-top: 2px;
-  font:
-    600 12px/1.2 system-ui,
-    sans-serif;
-  background: #141e1fdd;
-  border: 1px solid #ffffff2e;
-  border-radius: 3px;
-  padding: 2px 7px;
+  margin-top: 3px;
+  font: 500 15px/1.2 var(--text);
+  background: rgba(10, 16, 51, 0.82);
+  border: 1px solid rgba(201, 211, 230, 0.7);
+  border-radius: 999px;
+  padding: 1px 9px;
   white-space: nowrap;
   max-width: 160%;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .actor.enemy .tag {
-  border-color: #ff8f8f;
-  color: #ffd0d0;
+  border-color: var(--danger);
+  color: #ffcdc9;
 }
 .actor.giver .tag {
-  border-color: var(--gold);
-  color: #ffe6bd;
+  border-color: var(--coin);
+  color: var(--coin);
 }
 .actor.me .tag {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--life);
+  color: var(--life);
 }
 .actor .mark {
   position: absolute;
   top: -14px;
-  font: 900 18px system-ui;
-  color: var(--gold);
-  text-shadow: 0 0 8px #000;
+  font: 600 26px var(--text);
+  color: var(--coin);
+  text-shadow: 0 0 10px rgba(244, 192, 106, 0.7);
   animation: bob 1.6s ease-in-out infinite;
 }
 .actor .sprite {
@@ -268,27 +272,29 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  background: #182425e6;
-  border: 1px solid #c9a24aaa;
+  background: rgba(10, 16, 51, 0.82);
+  border: 1px solid rgba(201, 211, 230, 0.7);
   color: var(--ink);
-  border-radius: 3px;
-  padding: 6px 12px;
-  font: 600 13px system-ui;
+  border-radius: 999px;
+  padding: 4px 14px;
+  font: 500 15px var(--text);
   cursor: pointer;
-  backdrop-filter: blur(3px);
   transition:
     transform 0.15s,
-    background 0.15s;
+    background 0.15s,
+    box-shadow 0.15s;
   white-space: nowrap;
 }
 .exit:hover,
 .exit:focus-visible {
-  background: #2c4547;
+  background: var(--window-raised);
+  border-color: var(--frame);
+  box-shadow: 0 0 14px var(--glow);
   outline: none;
 }
 .exit .arrow {
-  font-size: 14px;
-  color: var(--gold);
+  font-size: 13px;
+  color: var(--coin);
   animation: nudge 1.4s ease-in-out infinite;
 }
 .exit.north {
@@ -311,7 +317,7 @@
 }
 .exit.locked {
   border-style: dashed;
-  color: #e6d9b8;
+  color: var(--muted);
 }
 .exit.denied {
   animation: shakeX 0.45s;
@@ -361,12 +367,14 @@
 .bubble {
   position: absolute;
   max-width: min(44%, 420px);
-  background: #f4ecd6;
-  color: #2a2418;
-  border-radius: 6px;
-  padding: 9px 13px;
-  font: 14px/1.4 system-ui;
-  box-shadow: 0 6px 18px #0009;
+  background: var(--window);
+  color: var(--ink);
+  background: rgba(16, 24, 70, 0.92);
+  border: 1px solid var(--frame);
+  border-radius: 14px;
+  padding: 8px 15px;
+  font: 17px/1.4 var(--text);
+  box-shadow: 0 0 30px rgba(111, 143, 216, 0.35);
   transform: translateX(-50%);
   animation: pop 0.25s ease-out;
   z-index: 5;
@@ -378,13 +386,13 @@
   bottom: -9px;
   margin-left: -9px;
   border: 9px solid transparent;
-  border-top-color: #f4ecd6;
+  border-top-color: var(--frame);
   border-bottom: 0;
 }
 .bubble b {
   display: block;
-  font: italic 600 14px var(--serif);
-  color: #7a5418;
+  font: italic 17px var(--display);
+  color: var(--coin);
   margin-bottom: 2px;
 }
 @keyframes pop {
@@ -402,16 +410,18 @@
   z-index: 6;
   min-width: 190px;
   max-width: 260px;
-  background: #1d2c2df5;
-  border: 1px solid #c9a24aaa;
-  border-radius: 4px;
-  padding: 10px;
+  background: rgba(16, 24, 70, 0.94);
+  border: 1px solid var(--frame);
+  border-radius: 14px;
+  box-shadow: 0 0 30px rgba(111, 143, 216, 0.35);
+  padding: 10px 14px;
   transform: translateX(-50%);
   animation: pop 0.2s ease-out;
 }
 .menu h4 {
   margin: 0 0 3px;
-  font: 600 16px var(--serif);
+  font: 400 20px var(--display);
+  color: var(--coin);
 }
 .menu p {
   margin: 0 0 8px;
@@ -424,34 +434,52 @@
   gap: 6px;
 }
 .menu button {
-  font-size: 12px;
-  padding: 6px 9px;
+  font-size: 14px;
+  padding: 5px 14px;
 }
 .menu button.danger {
   border-color: var(--danger);
-  color: #f2b8b1;
+  color: #ffb9b3;
 }
 .menu button.close {
   margin-left: auto;
 }
+/* Captions: a veil of tulle read like a storybook line; the newest ends in a twinkling star. */
 .scene-captions {
-  min-height: 46px;
-  margin-top: 8px;
+  min-height: 96px;
+  margin-top: 16px;
+  padding: 10px 20px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  justify-content: flex-end;
+  gap: 4px;
+  background: rgba(241, 234, 214, 0.05);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
 }
 .scene-captions div {
-  font: 14px/1.45 system-ui;
+  font: italic 19px/1.45 var(--text);
   color: var(--ink);
-  background: #182425;
-  border-left: 3px solid var(--gold);
-  border-radius: 2px;
-  padding: 4px 10px;
   animation: capIn 0.3s ease-out;
 }
 .scene-captions div.old {
-  opacity: 0.55;
+  color: var(--muted);
+  font-size: 16px;
+}
+.scene-captions div:last-child::after {
+  content: '\2726';
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 14px;
+  font-style: normal;
+  color: var(--coin);
+  animation: twinkle 1.6s ease-in-out infinite;
+}
+@keyframes twinkle {
+  50% {
+    opacity: 0.25;
+    transform: scale(0.7);
+  }
 }
 @keyframes capIn {
   from {
@@ -462,13 +490,9 @@
 .scene-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
-  margin-top: 9px;
+  gap: 6px;
+  margin-top: 12px;
   align-items: center;
-}
-.scene-bar button {
-  font-size: 13px;
-  padding: 7px 11px;
 }
 .scene-bar form {
   display: flex;
@@ -484,19 +508,21 @@
   width: min(330px, 90%);
   max-height: 80%;
   overflow: auto;
-  background: #1d2c2df8;
-  border: 1px solid var(--gold);
-  border-radius: 4px;
-  padding: 10px;
+  background: rgba(16, 24, 70, 0.94);
+  border: 1px solid var(--frame);
+  border-radius: 14px;
+  box-shadow: 0 0 30px rgba(111, 143, 216, 0.35);
+  padding: 10px 14px;
   animation: pop2 0.2s ease-out;
 }
 .bag h4 {
   margin: 0 0 6px;
-  font: 600 17px var(--serif);
+  font: 400 21px var(--display);
+  color: var(--coin);
 }
 .bag .row {
   justify-content: space-between;
-  border-bottom: 1px solid #2b3d3e;
+  border-bottom: 1px solid var(--rule);
   padding: 5px 0;
   flex-wrap: nowrap;
 }
@@ -504,15 +530,15 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 13px;
+  font: 16px var(--text);
 }
 .bag svg {
   width: 28px;
   height: 28px;
 }
 .bag button {
-  font-size: 12px;
-  padding: 4px 8px;
+  font-size: 14px;
+  padding: 3px 12px;
 }
 @keyframes pop2 {
   from {
@@ -526,8 +552,7 @@
   position: absolute;
   inset: 0;
   z-index: 10;
-  background: #1a1414e8;
-  backdrop-filter: blur(3px);
+  background: #0b0f26ee;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -551,8 +576,9 @@
   }
 }
 .combat-title {
-  font: italic 600 26px/1.1 var(--serif);
-  color: #f0d9c4;
+  font: 400 32px/1.1 var(--display);
+  color: #ffe4dc;
+  text-shadow: 0 0 18px rgba(255, 123, 114, 0.6);
 }
 .arena {
   flex: 1;
@@ -565,8 +591,9 @@
 }
 .vs {
   align-self: center;
-  font: italic 28px var(--serif);
-  color: var(--gold);
+  font: italic 36px var(--display);
+  color: var(--coin);
+  text-shadow: 0 0 14px rgba(244, 192, 106, 0.6);
 }
 .fighter {
   position: relative;
@@ -596,32 +623,36 @@
   transform: scaleX(-1);
 }
 .fighter .name {
-  font: 600 15px var(--serif);
+  font: 400 20px var(--display);
 }
 .hp {
   width: min(190px, 30vw);
-  height: 10px;
-  border-radius: 2px;
-  background: #2b1d1b;
-  border: 1px solid #ffffff33;
+  height: 12px;
+  padding: 1px;
+  background: var(--night-deep);
+  border: 1px solid var(--frame);
+  border-radius: 999px;
   overflow: hidden;
 }
 .hp i {
   display: block;
   height: 100%;
   width: 100%;
-  background: var(--accent);
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--life), #e8fff5);
+  box-shadow: 0 0 8px var(--life);
   transition:
     width 0.45s ease-out,
     background 0.3s;
 }
 .hp.low i {
   background: var(--danger);
+  box-shadow: 0 0 8px var(--danger);
 }
 .hp-text {
-  font: 12px system-ui;
+  font: 600 16px var(--text);
   color: var(--ink);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 .fighter.lunge-r .sprite {
   animation: lungeR 0.35s ease-in-out;
@@ -710,17 +741,18 @@
   position: absolute;
   top: 10%;
   left: 50%;
-  font: 900 26px system-ui;
-  color: #ff5b6e;
+  font: 600 34px var(--text);
+  font-variant-numeric: lining-nums;
+  color: #ff8a80;
   text-shadow:
-    0 2px 0 #000,
-    0 0 10px #000;
+    0 0 10px #000,
+    0 2px 0 #000;
   pointer-events: none;
   animation: floatUp 1s ease-out forwards;
   white-space: nowrap;
 }
 .float.heal {
-  color: #6dff9e;
+  color: var(--life);
 }
 .float.info {
   color: #c9a2ff;
@@ -751,16 +783,17 @@
   justify-content: center;
 }
 .combat-actions button {
-  font: 600 14px system-ui;
-  padding: 8px 16px;
+  font: 600 18px var(--text);
+  padding: 8px 24px;
 }
 .combat-actions .atk {
-  background: #8f3a31;
+  background: #b8434a;
   border-color: var(--danger);
-  color: #fff3ea;
+  color: #fff;
+  box-shadow: 0 0 16px rgba(255, 123, 114, 0.45);
 }
 .combat-actions .flee {
-  border-color: var(--gold);
+  border-color: var(--frame);
   color: var(--ink);
 }
 .combat-result {
@@ -769,32 +802,35 @@
   display: grid;
   place-items: center;
   text-align: center;
-  background: #0f1819b8;
+  background: rgba(6, 10, 36, 0.72);
   animation: fightIn 0.4s ease-out;
 }
 .combat-result .box {
-  background: #1d2c2df8;
-  border: 1px solid var(--gold);
-  border-top-width: 3px;
-  border-radius: 4px;
-  padding: 18px 28px;
+  background: rgba(16, 24, 70, 0.94);
+  border: 1px solid var(--coin);
+  border-radius: 14px;
+  box-shadow:
+    inset 0 0 0 5px rgba(244, 192, 106, 0.12),
+    0 0 50px rgba(244, 192, 106, 0.3);
+  padding: 18px 34px;
   max-width: 80%;
 }
 .combat-result h3 {
   margin: 0 0 6px;
-  font: italic 600 36px var(--serif);
-  color: var(--gold);
+  font: 400 46px var(--display);
+  color: var(--coin);
+  text-shadow: 0 0 20px rgba(244, 192, 106, 0.6);
   animation: victoryPop 0.6s cubic-bezier(0.2, 1.6, 0.4, 1);
 }
 .combat-result.lose h3 {
-  color: #ff8f8f;
+  color: var(--danger);
 }
 .combat-result p {
   margin: 4px 0;
   color: var(--ink);
 }
 .combat-result .extra p {
-  color: #e6d9b8;
+  color: var(--muted);
 }
 .combat-result button {
   margin-top: 10px;
@@ -1048,7 +1084,7 @@
 }
 .scene button.exit:hover:not(:disabled),
 .scene button.exit:focus-visible {
-  background: #2c4547;
+  background: var(--window-raised);
 }
 /* Cute critters: cats wag their tails. */
 .actor svg .tail,
@@ -1064,5 +1100,15 @@
   }
   50% {
     transform: rotate(-10deg);
+  }
+}
+
+/* Phones: the scene keeps a usable height and fits the screen width instead of forcing a wide page. */
+@media (max-width: 700px) {
+  .scene {
+    aspect-ratio: auto;
+    height: 320px;
+    min-height: 0;
+    border-radius: 50% 50% 10px 10px / 34px 34px 10px 10px;
   }
 }
